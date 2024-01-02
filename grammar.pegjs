@@ -4,7 +4,7 @@ file
 line
 	= nonNewlineWhitespace* lineContents endOfLine+
 lineContents
-	= block
+	= nonNewlineWhitespace* block
 endOfLine
 	= nonNewlineWhitespace* "\n"
 
