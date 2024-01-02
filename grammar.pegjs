@@ -14,6 +14,7 @@ actualBlock
 	= parenthesisBlock
 	/ binaryOperatorBlock
 	/ blockName
+	/ comment
 blockContainer
 	= whitespace* ":"
 
@@ -28,6 +29,9 @@ parenthesisBlock
 
 parameterValue
 	= whitespace* value
+
+comment
+	= "#" (!"\n" .)+
 
 blockName
 	= identifier
