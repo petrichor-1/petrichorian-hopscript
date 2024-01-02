@@ -14,13 +14,13 @@ block
 	/ blockName
 
 assignmentBlock
-	= blockName whitespace* "=" (parameterValue ",")* parameterValue
+	= blockName whitespace* "=" (parameterValue  whitespace* ",")* parameterValue
 
 parenthesisBlock
-	= blockName whitespace* "(" (parameterValue ",")* parameterValue? ")"
+	= blockName whitespace* "(" (parameterValue  whitespace* ",")* parameterValue?  whitespace* ")"
 
 parameterValue
-	= whitespace* value whitespace*
+	= whitespace* value
 
 blockName
 	= identifier
