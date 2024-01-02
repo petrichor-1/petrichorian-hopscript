@@ -10,11 +10,14 @@ endOfLine
 
 block
 	= parenthesisBlock
-	/ assignmentBlock
+	/ binaryOperatorBlock
 	/ blockName
 
-assignmentBlock
-	= blockName whitespace* "=" (parameterValue  whitespace* ",")* parameterValue
+binaryOperatorBlock
+	= blockName whitespace* binaryOperatorKeyword (parameterValue  whitespace* ",")* parameterValue
+binaryOperatorKeyword
+	= "="
+	/ "MATCHES"
 
 parenthesisBlock
 	= blockName whitespace* "(" (parameterValue  whitespace* ",")* parameterValue?  whitespace* ")"
