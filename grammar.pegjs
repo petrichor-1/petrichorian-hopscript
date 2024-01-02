@@ -11,6 +11,7 @@ endOfLine
 block
 	= parenthesisBlock
 	/ assignmentBlock
+	/ blockName
 
 assignmentBlock
 	= blockName whitespace* "=" whitespace* value
