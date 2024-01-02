@@ -9,9 +9,13 @@ endOfLine
 	= nonNewlineWhitespace* "\n"
 
 block
+	= actualBlock blockContainer?
+actualBlock
 	= parenthesisBlock
 	/ binaryOperatorBlock
 	/ blockName
+blockContainer
+	= whitespace* ":"
 
 binaryOperatorBlock
 	= blockName whitespace* binaryOperatorKeyword (parameterValue  whitespace* ",")* parameterValue
