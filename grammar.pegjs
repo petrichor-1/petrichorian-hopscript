@@ -10,19 +10,32 @@ endOfLine
 
 block
 	= actualBlock blockContainer?
+	/ "(" actualBlock ")"
 actualBlock
+	= binaryOperatorBlock
+	/ nonBinaryOperatorBlock
+
+nonBinaryOperatorBlock
 	= parenthesisBlock
-	/ binaryOperatorBlock
 	/ blockName
 	/ comment
 blockContainer
 	= whitespace* ":"
 
 binaryOperatorBlock
-	= blockName whitespace* binaryOperatorKeyword (parameterValue  whitespace* ",")* parameterValue
+	= binaryOperatorBlockInitialValue whitespace* binaryOperatorKeyword (parameterValue  whitespace* ",")* parameterValue
 binaryOperatorKeyword
 	= "="
 	/ "MATCHES"
+	/ "-"
+	/ "/"
+
+binaryOperatorBlockInitialValue
+= number
+	/ string
+	/ regex
+	/ "(" whitespace* binaryOperatorBlock whitespace* ")"
+	/ nonBinaryOperatorBlock
 
 parenthesisBlock
 	= blockName whitespace* "(" (parameterValue  whitespace* ",")* parameterValue?  whitespace* ")"
