@@ -32,16 +32,23 @@ identifierAllowedFirstCharacter
 	= ![0-9] identifierAllowedCharacter
 
 identifierAllowedCharacter
-	= !whitespace !"#" !"(" !")" !"=" .
+	= !whitespace !"#" !"(" !")" !"=" !"\"" !"," .
 
 value
 	= block
 	/ number
+	/ string
 
 number
 	// Regex from webplayer: 
 	// /^\-?[0-9]+(e\+?[0-9]+)?(\.[0-9]+(e[\+\-]?[0-9]+)?)?$/
 	= "-"? [0-9]+("e""+"?[0-9]+)?("."[0-9]+("e"[+\-]?[0-9]+)?)?
+
+string
+	= "\"" stringContentsCharacter* "\""
+stringContentsCharacter
+	= "\\\""
+	/ !"\"" .
 
 whitespace
 	= [ \t\n]
