@@ -2,7 +2,7 @@ file
 	= line* lineContents? whitespace*
 
 line
-	= lineContents endOfLine+
+	= nonNewlineWhitespace* lineContents endOfLine+
 lineContents
 	= block
 endOfLine
