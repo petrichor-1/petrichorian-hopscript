@@ -6,7 +6,7 @@ line
 lineContents
 	= block
 endOfLine
-	= (!"\n" whitespace)* "\n"
+	= nonNewlineWhitespace* "\n"
 
 block
 	= parenthesisBlock
@@ -55,3 +55,6 @@ stringContentsCharacter
 
 whitespace
 	= [ \t\n]
+
+nonNewlineWhitespace
+	= !"\n" whitespace
