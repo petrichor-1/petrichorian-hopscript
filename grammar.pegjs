@@ -39,12 +39,13 @@ identifierAllowedFirstCharacter
 	= ![0-9] identifierAllowedCharacter
 
 identifierAllowedCharacter
-	= !whitespace !"#" !"(" !")" !"=" !"\"" !"," .
+	= !whitespace !"#" !"(" !")" !"=" !"\"" !"," !"/" .
 
 value
 	= block
 	/ number
 	/ string
+	/ regex
 
 number
 	// Regex from webplayer: 
@@ -56,6 +57,12 @@ string
 stringContentsCharacter
 	= "\\\""
 	/ !"\"" .
+
+regex
+	= "/" regexContentsCharacter* "/"
+regexContentsCharacter
+	= "\\/"
+	/ !"/" .
 
 whitespace
 	= [ \t\n]
