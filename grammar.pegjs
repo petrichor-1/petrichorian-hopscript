@@ -25,7 +25,8 @@ blockContainer
 binaryOperatorBlock
 	= binaryOperatorBlockInitialValue whitespace* binaryOperatorKeyword (parameterValue  whitespace* ",")* parameterValue
 binaryOperatorKeyword
-	= "="
+	= "=="
+	/ "="
 	/ "MATCHES"
 	/ "-"
 	/ "/"
