@@ -1,3 +1,9 @@
+{
+	const Types = {
+		number: "Number",
+	}
+}
+
 file
 	= line* lineContents? whitespace*
 
@@ -83,7 +89,14 @@ value
 number
 	// Regex from webplayer: 
 	// /^\-?[0-9]+(e\+?[0-9]+)?(\.[0-9]+(e[\+\-]?[0-9]+)?)?$/
-	= "-"? [0-9]+("e""+"?[0-9]+)?("."[0-9]+("e"[+\-]?[0-9]+)?)?
+	= val:("-"? [0-9]+("e""+"?[0-9]+)?("."[0-9]+("e"[+\-]?[0-9]+)?)?)
+	{
+		return {
+			type: Types.number,
+			// Magic hack to just get all extant characters to be in a single string
+			value: val.flatMap((e) => e).filter(e=>!!e).join('')
+		}
+	}
 
 string
 	= "\"" stringContentsCharacter* "\""
