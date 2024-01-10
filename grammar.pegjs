@@ -2,6 +2,7 @@
 	const Types = {
 		number: "Number",
 		parenthesisBlock: "parenthesisBlock",
+		parameterValue: "parameterValue",
 	}
 }
 
@@ -60,7 +61,13 @@ parenthesisBlock
 	}
 
 parameterValue
-	= whitespace* value
+	= whitespace* val:value
+	{
+		return {
+			type: Types.parameterValue,
+			value: val
+		}
+	}
 
 comment
 	= "#" (!"\n" .)+
