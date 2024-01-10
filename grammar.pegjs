@@ -48,7 +48,11 @@ comment
 	= "#" (!"\n" .)+
 
 blockName
-	= identifier
+	= customAbilityReferenceName
+	/ identifier
+
+customAbilityReferenceName
+	= "custom_ability" whitespace+ identifier
 
 identifier
 	= identifierAllowedFirstCharacter identifierAllowedCharacter*
