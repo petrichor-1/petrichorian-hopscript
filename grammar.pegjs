@@ -56,10 +56,14 @@ squareBracketsBlock
 
 blockName
 	= customAbilityReferenceName
+	/ whenBlockName
 	/ identifier
 
 customAbilityReferenceName
 	= "custom_ability" whitespace+ identifier
+
+whenBlockName
+	= "When" whitespace+ identifier
 
 identifier
 	= identifierAllowedFirstCharacter identifierAllowedCharacter*
