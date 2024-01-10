@@ -1,6 +1,7 @@
 {
 	const Types = {
 		number: "Number",
+		parenthesisBlock: "parenthesisBlock",
 	}
 }
 
@@ -49,7 +50,14 @@ binaryOperatorBlockInitialValue
 	/ nonBinaryOperatorBlock
 
 parenthesisBlock
-	= blockName whitespace* "(" (parameterValue  whitespace* ",")* parameterValue?  whitespace* ")"
+	= name:blockName whitespace* "(" firstFewValues:(value:parameterValue  whitespace* ",")* finalValue:parameterValue?  whitespace* ")"
+	{
+		return {
+			type: Types.parenthesisBlock,
+			name: name,
+			parameters: [firstFewValues, finalValue].flatMap(e=>e)
+		}
+	}
 
 parameterValue
 	= whitespace* value
