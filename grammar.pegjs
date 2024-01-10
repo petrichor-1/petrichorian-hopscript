@@ -17,6 +17,7 @@ actualBlock
 
 nonBinaryOperatorBlock
 	= parenthesisBlock
+	/ squareBracketsBlock
 	/ blockName
 	/ comment
 blockContainer
@@ -49,6 +50,9 @@ parameterValue
 comment
 	= "#" (!"\n" .)+
 
+squareBracketsBlock
+	= blockName whitespace* "[" (parameterValue  whitespace* ",")* parameterValue?  whitespace* "]"
+
 blockName
 	= customAbilityReferenceName
 	/ identifier
@@ -63,7 +67,7 @@ identifierAllowedFirstCharacter
 	= ![0-9] identifierAllowedCharacter
 
 identifierAllowedCharacter
-	= !whitespace !"#" !"(" !")" !"=" !"\"" !"," !"/" .
+	= !whitespace !"#" !"(" !")" !"=" !"\"" !"," !"/" !"[" !"]".
 
 value
 	= block
