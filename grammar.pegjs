@@ -51,7 +51,7 @@ comment
 	= "#" (!"\n" .)+
 
 squareBracketsBlock
-	= blockName whitespace* "[" (parameterValue  whitespace* ",")* parameterValue?  whitespace* "]"
+	= (blockName / string) whitespace* "[" (parameterValue  whitespace* ",")* parameterValue?  whitespace* "]"
 
 blockName
 	= customAbilityReferenceName
