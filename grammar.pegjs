@@ -30,6 +30,8 @@ binaryOperatorKeyword
 	/ "MATCHES"
 	/ "-"
 	/ "/"
+	/ "*"
+	/ "+"
 
 binaryOperatorBlockInitialValue
 = number
