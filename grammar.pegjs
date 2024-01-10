@@ -33,6 +33,7 @@ binaryOperatorKeyword
 	/ "/"
 	/ "*"
 	/ "+"
+	/ "^"
 
 binaryOperatorBlockInitialValue
 = number
