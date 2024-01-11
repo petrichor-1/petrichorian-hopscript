@@ -14,7 +14,7 @@ file
 	= line* lineContents? whitespace*
 
 line
-	= nonNewlineWhitespace* lineContents endOfLine+
+	= lineContents endOfLine+
 lineContents
 	= indentationWhitespace:nonNewlineWhitespace* block:block
 	{
