@@ -14,7 +14,8 @@ file
 	= line* lineContents? whitespace*
 
 line
-	= lineContents endOfLine+
+	= contents:lineContents endOfLine+
+	{ return contents }
 lineContents
 	= indentationWhitespace:nonNewlineWhitespace* block:block
 	{
