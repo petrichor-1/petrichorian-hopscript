@@ -9,6 +9,7 @@
 		line: "line",
 		comment: "comment",
 		squareBracketsBlock: "squareBracketsBlock",
+		customAbilityReference: "customAbilityReference",
 	}
 }
 
@@ -125,7 +126,13 @@ blockName
 	/ identifier
 
 customAbilityReferenceName
-	= "custom_ability" whitespace+ identifier
+	= "custom_ability" whitespace+ name:identifier
+	{
+		return {
+			type: Types.customAbilityReference,
+			value: name
+		}
+	}
 
 whenBlockName
 	= "When" whitespace+ identifier
