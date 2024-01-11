@@ -5,6 +5,7 @@
 		parameterValue: "parameterValue",
 		identifier: "identifier",
 		binaryOperatorBlock: "binaryOperatorBlock",
+		string: "string",
 	}
 }
 
@@ -143,10 +144,17 @@ number
 	}
 
 string
-	= "\"" stringContentsCharacter* "\""
+	= "\"" characters:stringContentsCharacter* "\""
+	{
+		return {
+			type: Types.string,
+			value: characters.join('')
+		}
+	}
 stringContentsCharacter
 	= "\\\""
-	/ !"\"" .
+	/ !"\"" c:.
+	{ return c }
 
 regex
 	= "/" regexContentsCharacter* "/"
