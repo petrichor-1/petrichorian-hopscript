@@ -28,6 +28,7 @@ lineContents
 	{
 		return {
 			type: Types.line,
+			location: location(),
 			indentationWhitespace: indentationWhitespace,
 			value: block
 		}
@@ -60,6 +61,7 @@ binaryOperatorBlock
 	{
 		return {
 			type: Types.binaryOperatorBlock,
+			location: location(),
 			leftSide: leftSide,
 			rightSide: [parameters.map(e=>e[0]),finalParameter].flatMap(e=>e)
 		}
@@ -87,6 +89,7 @@ parenthesisBlock
 	{
 		return {
 			type: Types.parenthesisBlock,
+			location: location(),
 			name: name,
 			// `.map(e=>e[0])` is a hack to get just the parameter value
 			parameters: [firstFewValues.map(e=>e[0]), finalValue].flatMap(e=>e)
@@ -98,6 +101,7 @@ parameterValue
 	{
 		return {
 			type: Types.parameterValue,
+			location: location(),
 			value: val
 		}
 	}
@@ -107,6 +111,7 @@ comment
 	{
 		return {
 			type: Types.comment,
+			location: location(),
 			value: characters.map(e=>e[1]).join('')
 		}
 	}
@@ -116,6 +121,7 @@ squareBracketsBlock
 	{
 		return {
 			type: Types.squareBracketsBlock,
+			location: location(),
 			name: name,
 			parameters: [parameters.map(e=>e[0]),[finalParameter]].flatMap(e=>e)
 		}
@@ -131,6 +137,7 @@ customAbilityReferenceName
 	{
 		return {
 			type: Types.customAbilityReference,
+			location: location(),
 			value: name
 		}
 	}
@@ -140,6 +147,7 @@ whenBlockName
 	{
 		return {
 			type: Types.whenBlock,
+			location: location(),
 			value: name
 		}
 	}
@@ -149,6 +157,7 @@ identifier
 	{
 		return {
 			type: Types.identifier,
+			location: location(),
 			value: first + rest.join('')
 		}
 	}
@@ -178,6 +187,7 @@ number
 	{
 		return {
 			type: Types.number,
+			location: location(),
 			// Magic hack to just get all extant characters to be in a single string
 			value: val.flatMap((e) => e).filter(e=>!!e).join('')
 		}
@@ -188,6 +198,7 @@ string
 	{
 		return {
 			type: Types.string,
+			location: location(),
 			value: characters.join('')
 		}
 	}
@@ -201,6 +212,7 @@ regex
 	{
 		return {
 			type: Types.string, // technically lying but there is no difference in hopscotch
+			location: location(),
 			value: characters.join('')
 		}
 	}
