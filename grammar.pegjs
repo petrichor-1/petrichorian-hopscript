@@ -157,10 +157,17 @@ stringContentsCharacter
 	{ return c }
 
 regex
-	= "/" regexContentsCharacter* "/"
+	= "/" characters:regexContentsCharacter* "/"
+	{
+		return {
+			type: Types.string, // technically lying but there is no difference in hopscotch
+			value: characters.join('')
+		}
+	}
 regexContentsCharacter
 	= "\\/"
-	/ !"/" .
+	/ !"/" c:.
+	{ return c }
 
 whitespace
 	= [ \t\n]
