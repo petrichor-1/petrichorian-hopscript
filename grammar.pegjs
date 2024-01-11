@@ -4,6 +4,7 @@
 		parenthesisBlock: "parenthesisBlock",
 		parameterValue: "parameterValue",
 		identifier: "identifier",
+		binaryOperatorBlock: "binaryOperatorBlock",
 	}
 }
 
@@ -38,7 +39,15 @@ blockContainer
 	= whitespace* ":"
 
 binaryOperatorBlock
-	= binaryOperatorBlockInitialValue whitespace* binaryOperatorKeyword (parameterValue  whitespace* ",")* parameterValue
+	= leftSide:binaryOperatorBlockInitialValue whitespace* type:binaryOperatorKeyword parameters:(parameterValue  whitespace* ",")* finalParameter:parameterValue
+	{
+		console.log(leftSide,type,parameters,finalParameter)
+		return {
+			type: Types.binaryOperatorBlock,
+			leftSide: leftSide,
+			rightSide: [parameters.map(e=>e[0]),finalParameter].flatMap(e=>e)
+		}
+	}
 binaryOperatorKeyword
 	= "=="
 	/ "="
@@ -53,7 +62,8 @@ binaryOperatorBlockInitialValue
 = number
 	/ string
 	/ regex
-	/ "(" whitespace* binaryOperatorBlock whitespace* ")"
+	/ "(" whitespace* block:binaryOperatorBlock whitespace* ")"
+	{ return block }
 	/ nonBinaryOperatorBlock
 
 parenthesisBlock
