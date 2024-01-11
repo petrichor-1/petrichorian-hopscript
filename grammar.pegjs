@@ -10,6 +10,7 @@
 		comment: "comment",
 		squareBracketsBlock: "squareBracketsBlock",
 		customAbilityReference: "customAbilityReference",
+		whenBlock: "whenBlock",
 	}
 }
 
@@ -135,7 +136,13 @@ customAbilityReferenceName
 	}
 
 whenBlockName
-	= "When" whitespace+ identifier
+	= "When" whitespace+ name:identifier
+	{
+		return {
+			type: Types.whenBlock,
+			value: name
+		}
+	}
 
 identifier
 	= first:identifierAllowedFirstCharacter rest:identifierAllowedCharacter*
