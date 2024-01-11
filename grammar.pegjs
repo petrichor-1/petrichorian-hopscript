@@ -8,6 +8,7 @@
 		string: "string",
 		line: "line",
 		comment: "comment",
+		squareBracketsBlock: "squareBracketsBlock",
 	}
 }
 
@@ -109,7 +110,14 @@ comment
 	}
 
 squareBracketsBlock
-	= (blockName / string) whitespace* "[" (parameterValue  whitespace* ",")* parameterValue?  whitespace* "]"
+	= name:(blockName / string) whitespace* "[" parameters:(parameterValue  whitespace* ",")* finalParameter:parameterValue?  whitespace* "]"
+	{
+		return {
+			type: Types.squareBracketsBlock,
+			name: name,
+			parameters: [parameters.map(e=>e[0]),[finalParameter]].flatMap(e=>e)
+		}
+	}
 
 blockName
 	= customAbilityReferenceName
