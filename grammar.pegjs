@@ -18,8 +18,13 @@ endOfLine
 	= nonNewlineWhitespace* "\n"
 
 block
-	= actualBlock blockContainer?
-	/ "(" actualBlock ")"
+	= block:actualBlock container:blockContainer?
+	{
+		block.doesHaveContainer = !!container
+		return block
+	}
+	/ "(" block:actualBlock ")"
+	{ return block }
 actualBlock
 	= binaryOperatorBlock
 	/ nonBinaryOperatorBlock
