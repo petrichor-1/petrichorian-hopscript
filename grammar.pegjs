@@ -160,7 +160,7 @@ identifierAllowedFirstCharacter
 	}
 
 identifierAllowedCharacter
-	= !whitespace !"#" !"(" !")" !"=" !"\"" !"," !"/" !"[" !"]" v:.
+	= !whitespace !"#" !"(" !")" !"=" !"\"" !"," !"/" !"[" !"]" !":" v:.
 	{
 		return v
 	}
