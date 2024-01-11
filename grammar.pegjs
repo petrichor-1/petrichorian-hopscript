@@ -7,6 +7,7 @@
 		binaryOperatorBlock: "binaryOperatorBlock",
 		string: "string",
 		line: "line",
+		comment: "comment",
 	}
 }
 
@@ -100,7 +101,13 @@ parameterValue
 	}
 
 comment
-	= "#" (!"\n" .)+
+	= "#" characters:(!"\n" .)+
+	{
+		return {
+			type: Types.comment,
+			value: characters.map(e=>e[1]).join('')
+		}
+	}
 
 squareBracketsBlock
 	= (blockName / string) whitespace* "[" (parameterValue  whitespace* ",")* parameterValue?  whitespace* "]"
