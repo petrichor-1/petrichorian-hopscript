@@ -3,6 +3,7 @@
 		number: "Number",
 		parenthesisBlock: "parenthesisBlock",
 		parameterValue: "parameterValue",
+		identifier: "identifier",
 	}
 }
 
@@ -87,13 +88,25 @@ whenBlockName
 	= "When" whitespace+ identifier
 
 identifier
-	= identifierAllowedFirstCharacter identifierAllowedCharacter*
+	= first:identifierAllowedFirstCharacter rest:identifierAllowedCharacter*
+	{
+		return {
+			type: Types.identifier,
+			value: first + rest.join('')
+		}
+	}
 
 identifierAllowedFirstCharacter
-	= ![0-9] identifierAllowedCharacter
+	= ![0-9] v:identifierAllowedCharacter
+	{
+		return v
+	}
 
 identifierAllowedCharacter
-	= !whitespace !"#" !"(" !")" !"=" !"\"" !"," !"/" !"[" !"]".
+	= !whitespace !"#" !"(" !")" !"=" !"\"" !"," !"/" !"[" !"]" v:.
+	{
+		return v
+	}
 
 value
 	= block
