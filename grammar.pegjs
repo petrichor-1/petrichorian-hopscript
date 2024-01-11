@@ -55,7 +55,6 @@ blockContainer
 binaryOperatorBlock
 	= leftSide:binaryOperatorBlockInitialValue whitespace* type:binaryOperatorKeyword parameters:(parameterValue  whitespace* ",")* finalParameter:parameterValue
 	{
-		console.log(leftSide,type,parameters,finalParameter)
 		return {
 			type: Types.binaryOperatorBlock,
 			leftSide: leftSide,
