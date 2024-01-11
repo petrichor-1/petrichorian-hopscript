@@ -6,6 +6,7 @@
 		identifier: "identifier",
 		binaryOperatorBlock: "binaryOperatorBlock",
 		string: "string",
+		line: "line",
 	}
 }
 
@@ -15,7 +16,14 @@ file
 line
 	= nonNewlineWhitespace* lineContents endOfLine+
 lineContents
-	= nonNewlineWhitespace* block
+	= indentationWhitespace:nonNewlineWhitespace* block:block
+	{
+		return {
+			type: Types.line,
+			indentationWhitespace: indentationWhitespace,
+			value: block
+		}
+	}
 endOfLine
 	= nonNewlineWhitespace* "\n"
 
@@ -173,4 +181,5 @@ whitespace
 	= [ \t\n]
 
 nonNewlineWhitespace
-	= !"\n" whitespace
+	= !"\n" c:whitespace
+	{ return c }
