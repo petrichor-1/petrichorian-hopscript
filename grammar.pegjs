@@ -11,7 +11,10 @@
 }
 
 file
-	= line* lineContents? whitespace*
+	= mainLines:line* lastLine:lineContents? whitespace*
+	{
+		return [mainLines,[lastLine]].flatMap(e=>e)
+	}
 
 line
 	= contents:lineContents endOfLine+
