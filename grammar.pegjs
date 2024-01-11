@@ -52,12 +52,13 @@ binaryOperatorBlockInitialValue
 	/ nonBinaryOperatorBlock
 
 parenthesisBlock
-	= name:blockName whitespace* "(" firstFewValues:(value:parameterValue  whitespace* ",")* finalValue:parameterValue?  whitespace* ")"
+	= name:blockName whitespace* "(" firstFewValues:(parameterValue  whitespace* ",")* finalValue:parameterValue?  whitespace* ")"
 	{
 		return {
 			type: Types.parenthesisBlock,
 			name: name,
-			parameters: [firstFewValues, finalValue].flatMap(e=>e)
+			// `.map(e=>e[0])` is a hack to get just the parameter value
+			parameters: [firstFewValues.map(e=>e[0]), finalValue].flatMap(e=>e)
 		}
 	}
 
