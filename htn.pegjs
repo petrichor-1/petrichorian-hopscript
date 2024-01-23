@@ -13,19 +13,24 @@
 		whenBlock: "whenBlock",
 		object: "object",
 	}
+	let objectTypes = {}
 }
 
 file
 	= mainLines:line* lastLine:lineContents? whitespace*
 	{
-		return [mainLines,[lastLine]].flatMap(e=>e)
+		return {
+			tokenTypes: Types,
+			lines: [mainLines,[lastLine]].flatMap(e=>e),
+			objectTypes: objectTypes,
+		}
 	}
 
 line
 	= contents:lineContents endOfLine+
 	{ return contents }
 lineContents
-	= indentationWhitespace:nonNewlineWhitespace* block:(object / block)
+	= indentationWhitespace:nonNewlineWhitespace* block:(object / block / objectTypeDefinition)
 	{
 		return {
 			type: Types.line,
@@ -164,7 +169,7 @@ identifier
 	}
 
 identifierAllowedFirstCharacter
-	= ![0-9] v:identifierAllowedCharacter
+	= ![0-9] !"_" v:identifierAllowedCharacter
 	{
 		return v
 	}
@@ -240,4 +245,14 @@ object
 	}
 
 objectTypeName
+// BE SURE TO CHANGE objectTypeDefinition IF THIS CHANGES, IT ASSUMES THIS IS ALWAYS IDENTIFIER
 	= identifier
+
+objectTypeDefinition
+	= "_defineObjectType " name:objectTypeName " " typeId:number " " filename:string
+	{
+		objectTypes[name.value] = {
+			type: typeId.value,
+			filename: filename.value
+		}
+	}
