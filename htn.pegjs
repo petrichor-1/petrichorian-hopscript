@@ -11,6 +11,7 @@
 		squareBracketsBlock: "squareBracketsBlock",
 		customAbilityReference: "customAbilityReference",
 		whenBlock: "whenBlock",
+		object: "object",
 	}
 }
 
@@ -24,7 +25,7 @@ line
 	= contents:lineContents endOfLine+
 	{ return contents }
 lineContents
-	= indentationWhitespace:nonNewlineWhitespace* block:block
+	= indentationWhitespace:nonNewlineWhitespace* block:(object / block)
 	{
 		return {
 			type: Types.line,
@@ -227,3 +228,16 @@ whitespace
 nonNewlineWhitespace
 	= !"\n" c:whitespace
 	{ return c }
+
+object
+	= type:objectTypeName whitespace+ name:string whitespace* ":"
+	{
+		return {
+			type: Types.object,
+			objectType: type,
+			name: name
+		}
+	}
+
+objectTypeName
+	= identifier
