@@ -1,7 +1,7 @@
 const parser = require("./htn.js")
 const { randomUUID } = require('crypto')
 
-module.exports.hopscotchify = (htnCode) => {
+module.exports.hopscotchify = (htnCode, options) => {
 	const parsed = parser.parse(htnCode)
 	const lines = parsed.lines
 	const Types = parsed.tokenTypes
@@ -112,7 +112,7 @@ module.exports.hopscotchify = (htnCode) => {
 				const whenBlock = line.value
 				if (!whenBlock.doesHaveContainer)
 					throw "Empty rule"
-				const hsBlock = createOperatorBlockFrom(whenBlock.value, Types, parsed.blockTypes)
+				const hsBlock = createOperatorBlockFrom(whenBlock.value, Types, parsed.blockTypes, options)
 				const rule = createRuleWith(hsBlock)
 				currentObject.rules.push(rule.id)
 				project.rules.push(rule)
@@ -127,7 +127,7 @@ module.exports.hopscotchify = (htnCode) => {
 			}
 			break
 		case States.inAbility:
-			const hsBlock = createMethodBlockFrom(line.value, Types, parsed.blockTypes)
+			const hsBlock = createMethodBlockFrom(line.value, Types, parsed.blockTypes, options)
 			abilityStack[abilityStack.length-1].blocks.push(hsBlock)
 			if (hsBlock.block_class == "control") {
 				if (!line.value.doesHaveContainer)
@@ -150,7 +150,9 @@ function deepCopy(object) {
 	return JSON.parse(JSON.stringify(object))
 }
 
-function createOperatorBlockFrom(block, Types, BlockTypes) {
+function createOperatorBlockFrom(block, Types, BlockTypes, options) {
+	const {checkParameterLabels} = options
+
 	let result = {
 		block_class: "operator", // Not necessarily correct, but HS doesn't complain
 		params: []
@@ -175,7 +177,9 @@ function createOperatorBlockFrom(block, Types, BlockTypes) {
 	}
 }
 
-function createMethodBlockFrom(block, Types, BlockTypes) {
+function createMethodBlockFrom(block, Types, BlockTypes, options) {
+	const {checkParameterLabels} = options
+
 	let result = {
 		parameters: []
 	}
@@ -208,6 +212,17 @@ function createMethodBlockFrom(block, Types, BlockTypes) {
 		if (blockParameters.length <= i)
 			throw "Not enough parameters"
 		const parameterValue = blockParameters[i]
+		if (checkParameterLabels) {
+			if (parameterSchema.name && !parameterValue.label)
+				throw "Missing parameter label"
+			const parameterLabel = parameterValue.label
+			if (!parameterSchema.name && parameterLabel)
+				throw "Extra parameter label"
+			if (parameterLabel.type != Types.identifier)
+				throw "Unknown parameter label type"
+			if (parameterLabel.value != parameterSchema.name)
+				throw "Incorrect parameter label"
+		}
 		const hsParameter = {
 			defaultValue: parameterSchema.defaultValue,
 			key: parameterSchema.key,
