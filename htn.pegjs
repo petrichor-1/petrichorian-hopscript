@@ -22,7 +22,7 @@ file
 	{
 		return {
 			tokenTypes: Types,
-			lines: [mainLines,[lastLine]].flatMap(e=>e),
+			lines: [mainLines,[lastLine]].flatMap(e=>e).filter(e=>e),
 			objectTypes: objectTypes,
 			blockTypes: blockTypes,
 		}
@@ -30,10 +30,16 @@ file
 
 line
 	= contents:lineContents endOfLine+
-	{ return contents }
+	{
+		if (!contents)
+			return null
+		return contents
+	}
 lineContents
 	= indentationWhitespace:nonNewlineWhitespace* block:(object / block / objectTypeDefinition / blockTypeDefinition)
 	{
+		if (!block)
+			return null
 		return {
 			type: Types.line,
 			location: location(),
