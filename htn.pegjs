@@ -111,12 +111,13 @@ parenthesisBlock
 	}
 
 parameterValue
-	= whitespace* val:value
+	= whitespace* label:(identifier ":")? whitespace* val:value
 	{
 		return {
 			type: Types.parameterValue,
 			location: location(),
-			value: val
+			value: val,
+			label:label ? label[0] : null,
 		}
 	}
 
