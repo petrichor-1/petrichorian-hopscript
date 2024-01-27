@@ -14,6 +14,7 @@
 		object: "object",
 	}
 	let objectTypes = {}
+	let blockTypes = {}
 }
 
 file
@@ -23,6 +24,7 @@ file
 			tokenTypes: Types,
 			lines: [mainLines,[lastLine]].flatMap(e=>e),
 			objectTypes: objectTypes,
+			blockTypes: blockTypes,
 		}
 	}
 
@@ -30,7 +32,7 @@ line
 	= contents:lineContents endOfLine+
 	{ return contents }
 lineContents
-	= indentationWhitespace:nonNewlineWhitespace* block:(object / block / objectTypeDefinition)
+	= indentationWhitespace:nonNewlineWhitespace* block:(object / block / objectTypeDefinition / blockTypeDefinition)
 	{
 		return {
 			type: Types.line,
@@ -258,3 +260,19 @@ objectTypeDefinition
 			height: height.value
 		}
 	}
+
+blockTypeDefinition
+	= "_defineBlockType " blockClass:blockClass " " name:blockName " " typeId:number " " description:string " "? parameters:(number " " identifier " " string " " string ", ")*
+	{
+		blockTypes[name.value] = {
+			class: blockClass,
+			type: parseFloat(typeId.value),
+			description: description.value,
+			parameters: parameters?.map(e=>{return {name:e[2].value,key:e[4].value,defaultValue:e[6].value, type: parseFloat(e[0].value)}}),
+		}
+	}
+
+blockClass
+	= "operator"
+	/ "method"
+	/ "control"
