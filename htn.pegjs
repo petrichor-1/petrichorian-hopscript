@@ -260,7 +260,7 @@ objectTypeDefinition
 	= "_defineObjectType " name:objectTypeName " " typeId:number " " filename:string " " width:number " " height:number
 	{
 		objectTypes[name.value] = {
-			type: typeId.value,
+			type: parseFloat(typeId.value),
 			filename: filename.value,
 			width: width.value,
 			height: height.value
