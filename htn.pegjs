@@ -249,10 +249,12 @@ objectTypeName
 	= identifier
 
 objectTypeDefinition
-	= "_defineObjectType " name:objectTypeName " " typeId:number " " filename:string
+	= "_defineObjectType " name:objectTypeName " " typeId:number " " filename:string " " width:number " " height:number
 	{
 		objectTypes[name.value] = {
 			type: typeId.value,
-			filename: filename.value
+			filename: filename.value,
+			width: width.value,
+			height: height.value
 		}
 	}
