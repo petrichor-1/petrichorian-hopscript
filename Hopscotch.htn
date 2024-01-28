@@ -27,6 +27,34 @@ _defineObjectType space_pod 10 "spacepod.png" 150 150
 _defineObjectType raccoon 31 "raccoon.png" 172.5 172.5
 _defineObjectType bird 32 "bird.png" 150 150
 _defineObjectType crocodile 3001 "crocodileJaws.png" 288 164
+#Shapes
+_defineObjectType heart 153 "heartV3.png" 150 127
+_defineObjectType arch 155 "fullSizeArch.png" 150 75
+_defineObjectType squiggle 156 "squiggleV3.png" 150 70
+_defineObjectType star 154 "starV3.png" 150 143
+_defineObjectType parallelogram 163 "fullSizeParallelogramWide.png" 150 75
+_defineObjectType donut 112 "fullSizeDonut.png" 150 150
+_defineObjectType fan_blade 160 "fanbladeV3.png" 150 137
+_defineObjectType circle 102 "fullSizeCircle.png" 150 150
+_defineObjectType square 101 "fullSizeSquare.png" 150 150
+_defineObjectType hexagon 150 "hexagonV3.png" 150 130
+_defineObjectType triangle 151 "triangleV3.png" 150 130
+_defineObjectType right_triangle 105 "fullSizeRightTriangle.png" 150 150
+_defineObjectType rectangle 152 "rectangleV3.png" 150 100
+_defineObjectType z 157 "fullSizeTetrisZ.png" 150 100
+_defineObjectType t_2 158 "fullSizeTetrisT.png" 150 101
+_defineObjectType l 159 "fullSizeTetrisL.png" 150 100
+_defineObjectType corner 116 "fullSizeCorner.png" 150 150
+_defineObjectType flower 117 "fullSizeFlower.png" 150 150
+_defineObjectType squished_box 119 "fullSizeSquishedBox.png" 150 150
+_defineObjectType bead 162 "beadV3.png" 150 77
+_defineObjectType chevron 164 "chevronV3.png" 150 130
+_defineObjectType x 125 "fullSizeX.png" 150 150
+_defineObjectType tetris_line 126 "fullSizeTetrisLine.png" 200 50
+_defineObjectType rounded_right_triangle 120 "fullSizeRoundedRightTriangle.png" 150 150
+_defineObjectType rounded_arrow 161 "arrowRoundedV3.png" 106 150
+_defineObjectType rounded_square 100 "fullSizeRoundedSquare.png" 150 150
+_defineObjectType tilted_rectangle 110 "fullSizeParallelogramTall.png" 150 150
 
 
 
