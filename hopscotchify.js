@@ -115,7 +115,7 @@ module.exports.hopscotchify = (htnCode, options) => {
 				const whenBlock = line.value
 				if (!whenBlock.doesHaveContainer)
 					throw "Empty rule"
-				const hsBlock = createOperatorBlockFrom(whenBlock.value, Types, parsed.blockTypes, options)
+				const hsBlock = createOperatorBlockFrom(whenBlock.value, Types, parsed.blockTypes, parsed.traitTypes, options)
 				const rule = createRuleWith(hsBlock)
 				currentObject.rules.push(rule.id)
 				project.rules.push(rule)
@@ -130,7 +130,7 @@ module.exports.hopscotchify = (htnCode, options) => {
 			}
 			break
 		case States.inAbility:
-			const hsBlock = createMethodBlockFrom(line.value, Types, parsed.blockTypes, options)
+			const hsBlock = createMethodBlockFrom(line.value, Types, parsed.blockTypes, parsed.traitTypes, options)
 			abilityStack[abilityStack.length-1].blocks.push(hsBlock)
 			if (hsBlock.block_class == "control") {
 				if (!line.value.doesHaveContainer)
@@ -153,15 +153,25 @@ function deepCopy(object) {
 	return JSON.parse(JSON.stringify(object))
 }
 
-function createOperatorBlockFrom(block, Types, BlockTypes, options) {
-	return createBlockOfClasses(["operator","conditionalOperator"], "params", block, Types, BlockTypes, options)
+function arrayStartsWith(big, small) {
+	if (big.length < small.length)
+		return false
+	for (let i = 0; i < small.length; i++) {
+		if (big[i] != small[i])
+			return false
+	}
+	return true
 }
 
-function createMethodBlockFrom(block, Types, BlockTypes, options) {
-	return createBlockOfClasses(["method", "control", "conditionalControl"], "parameters", block, Types, BlockTypes, options)
+function createOperatorBlockFrom(block, Types, BlockTypes, TraitTypes, options) {
+	return createBlockOfClasses(["operator","conditionalOperator"], "params", block, Types, BlockTypes, TraitTypes, options)
 }
 
-function createBlockOfClasses(allowedBlockClasses, parametersKey, block, Types, BlockTypes, options) {
+function createMethodBlockFrom(block, Types, BlockTypes, TraitTypes, options) {
+	return createBlockOfClasses(["method", "control", "conditionalControl"], "parameters", block, Types, BlockTypes, TraitTypes, options)
+}
+
+function createBlockOfClasses(allowedBlockClasses, parametersKey, block, Types, BlockTypes, TraitTypes, options) {
 	const {checkParameterLabels} = options
 
 	let result = {}
@@ -186,7 +196,7 @@ function createBlockOfClasses(allowedBlockClasses, parametersKey, block, Types, 
 	}
 	const blockType = BlockTypes[blockName]
 	if (!blockType)
-		throw "Undefined block type"
+		return createBlockFromUndefinedTypeOfClasses(allowedBlockClasses, parametersKey, block, Types, BlockTypes, TraitTypes, options)
 	if (!allowedBlockClasses.includes(blockType.class))
 		throw "Invalid block class"
 	result.type = blockType.type
@@ -220,12 +230,60 @@ function createBlockOfClasses(allowedBlockClasses, parametersKey, block, Types, 
 		case Types.string:
 			hsParameter.value = parameterValue.value.value
 			break
+		case Types.identifier:
+			hsParameter.datum = createOperatorBlockFrom(parameterValue.value, Types, BlockTypes, TraitTypes, options)
+			break
 		default:
-			throw new parser.SyntaxError("Should be impossible: Unknown parameter value type", [Types.number, Types.string], parameterValue.value.type, parameterValue.location)
+			throw new parser.SyntaxError("Should be impossible: Unknown parameter value type", [Types.number, Types.string, Types.identifier], parameterValue.value.type, parameterValue.location)
 		}
 		result[parametersKey].push(hsParameter)
 	}
 	return result
+}
+
+function createBlockFromUndefinedTypeOfClasses(allowedBlockClasses, parametersKey, block, Types, BlockTypes, TraitTypes, options) {
+	switch (block.type) {
+	case Types.identifier:
+		const variableDescription = getVariableDescriptionFromPath(block.value)
+		if (!variableDescription)
+			throw new parser.SyntaxError("Undefined symbol", ["Block", "Variable"], JSON.stringify(block), block.location)
+		const maybeTrait = TraitTypes[variableDescription.name]
+		switch (variableDescription.scope) {
+		case "original_object":
+			if (maybeTrait)
+				return createOriginalObjectTrait(maybeTrait)
+			throw new parser.SyntaxError("Should be impossible: Unhandled original object scope", [], "", block.location)
+		default:
+			throw new parser.SyntaxError("Should be impossible: Unknown variable scope", ["original_object"], variableDescription.scope, block.location)
+		}
+		break
+	default:
+		throw new parser.SyntaxError("Should be impossible: Unknown block form", [Types.identifier],block.type,block.location)
+	}
+}
+
+function getVariableDescriptionFromPath(variablePath) {
+	const fullVariablePath = variablePath.split('.')
+	if (fullVariablePath.length == 1)
+		return {scope: "local", name:fullVariablePath[0]}
+	// Determine which scope this refers to
+	// TODO: Pass this in from elsewhere and get a list of objects that are defined in the htn
+	const validObjects = [{path: "self", scope: "self"}, {path: "original_object", scope: "original_object"}, {path: "game", scope: "game"}, {path: "user", scope: "user"}, {path: "local", scope: "local"}]
+	for (let i = 0; i < validObjects.length; i++) {
+		const objectPath = validObjects[i].path.split('.')
+		if (arrayStartsWith(fullVariablePath, objectPath))
+			return {scope: validObjects[i].scope, name: fullVariablePath.slice(objectPath.length).join('.')}
+	}
+	return null
+}
+
+function createOriginalObjectTrait(trait) {
+	return {
+		HSTraitObjectParameterTypeKey: 8005, //HSBlockType.OriginalObject
+		HSTraitTypeKey: trait.type,
+		description: trait.description,
+		HSTraitIDKey: randomUUID(),
+	}
 }
 
 function createRuleWith(hsBlock) {

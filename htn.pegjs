@@ -15,6 +15,7 @@
 	}
 	let objectTypes = {}
 	let blockTypes = {}
+	let traitTypes = {}
 }
 
 file
@@ -25,6 +26,7 @@ file
 			lines: [mainLines,[lastLine]].flatMap(e=>e).filter(e=>e),
 			objectTypes: objectTypes,
 			blockTypes: blockTypes,
+			traitTypes: traitTypes,
 		}
 	}
 
@@ -36,7 +38,7 @@ line
 		return contents
 	}
 lineContents
-	= indentationWhitespace:nonNewlineWhitespace* block:(object / block / objectTypeDefinition / blockTypeDefinition)
+	= indentationWhitespace:nonNewlineWhitespace* block:(object / block / objectTypeDefinition / blockTypeDefinition / traitTypeDefinition)
 	{
 		if (!block)
 			return null
@@ -265,6 +267,15 @@ objectTypeDefinition
 			filename: filename.value,
 			width: width.value,
 			height: height.value
+		}
+	}
+
+traitTypeDefinition
+	= "_defineTraitType " name:identifier " " typeId:number " " description:string
+	{
+		traitTypes[name.value] = {
+			type: parseFloat(typeId.value),
+			description: description.value,
 		}
 	}
 
