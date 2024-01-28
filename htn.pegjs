@@ -15,6 +15,7 @@
 	}
 	let objectTypes = {}
 	let blockTypes = {}
+	let binaryOperatorBlockTypes = {}
 	let traitTypes = {}
 }
 
@@ -27,6 +28,7 @@ file
 			objectTypes: objectTypes,
 			blockTypes: blockTypes,
 			traitTypes: traitTypes,
+			binaryOperatorBlockTypes: binaryOperatorBlockTypes,
 		}
 	}
 
@@ -38,7 +40,7 @@ line
 		return contents
 	}
 lineContents
-	= indentationWhitespace:nonNewlineWhitespace* block:(object / block / objectTypeDefinition / blockTypeDefinition / traitTypeDefinition)
+	= indentationWhitespace:nonNewlineWhitespace* block:(object / block / objectTypeDefinition / blockTypeDefinition / binaryOperatorBlockTypeDefinition / traitTypeDefinition)
 	{
 		if (!block)
 			return null
@@ -296,6 +298,12 @@ blockTypeDefinition
 				}
 			}),
 		}
+	}
+
+binaryOperatorBlockTypeDefinition
+	= "_defineBinaryOperator " keyword:binaryOperatorKeyword " " mapsTo:blockName
+	{
+		binaryOperatorBlockTypes[keyword] = mapsTo
 	}
 
 blockClass
