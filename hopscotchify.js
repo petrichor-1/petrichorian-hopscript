@@ -217,6 +217,8 @@ function createMethodBlockFrom(block, Types, BlockTypes, options) {
 		const parameterValue = blockParameters[i]
 		if (checkParameterLabels) {
 			const parameterLabel = parameterValue.label
+			if (!parameterSchema.name && !parameterLabel)
+				break
 			if (parameterSchema.name && !parameterLabel)
 				throw new parser.SyntaxError("Missing parameter label", parameterSchema.name, "", parameterValue.location)
 			if (!parameterSchema.name && parameterLabel)
