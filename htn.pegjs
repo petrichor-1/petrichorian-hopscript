@@ -75,13 +75,13 @@ blockContainer
 	= whitespace* ":"
 
 binaryOperatorBlock
-	= leftSide:binaryOperatorBlockInitialValue whitespace* type:binaryOperatorKeyword parameters:(parameterValue  whitespace* ",")* finalParameter:parameterValue
+	= leftSide:binaryOperatorBlockInitialValue whitespace* type:binaryOperatorKeyword /*parameters:(parameterValue  whitespace* ",")**/ finalParameter:parameterValue
 	{
 		return {
 			type: Types.binaryOperatorBlock,
 			location: location(),
 			leftSide: leftSide,
-			rightSide: [parameters.map(e=>e[0]),finalParameter].flatMap(e=>e),
+			rightSide: [finalParameter], //[parameters.map(e=>e[0]),finalParameter].flatMap(e=>e),
 			operatorKeyword: type
 		}
 	}
