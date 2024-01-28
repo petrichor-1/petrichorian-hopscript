@@ -290,3 +290,4 @@ blockClass
 	= "operator"
 	/ "method"
 	/ "control"
+	/ "conditionalControl"
