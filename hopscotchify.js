@@ -252,7 +252,7 @@ function parenthesisificateBinaryOperatorBlock(binaryOperatorBlock, Types, Block
 	if (!actualBlockName)
 		throw new parser.SyntaxError("Undefined binary operator", Object.getOwnPropertyNames(BinaryOperatorBlockTypes), binaryOperatorBlock.operatorKeyword, binaryOperatorBlock.location)
 
-	const leftSide = {
+	let leftSide = {
 		type: Types.parameterValue,
 		location: binaryOperatorBlock.leftSide.location,
 		value: binaryOperatorBlock.leftSide,
@@ -264,19 +264,58 @@ function parenthesisificateBinaryOperatorBlock(binaryOperatorBlock, Types, Block
 	let rightSide = binaryOperatorBlock.rightSide[0]
 	if (rightSide.type != Types.parameterValue)
 		throw "Should be impossible: Unknown parameter value type in binary operator block"
-	const secondValue = rightSide.value
-	if (secondValue.type != Types.binaryOperatorBlock) {
-		rightSide = deepCopy(rightSide)
-		rightSide.pretendLabelIsValidEvenIfItIsnt = true
-		return {type: Types.parenthesisBlock, location: binaryOperatorBlock.location, name: {type: Types.identifier, value:actualBlockName}, parameters: [leftSide,rightSide]}
+	let listOfOperandsAndOperators = [binaryOperatorBlock.leftSide,{type: "TEMPOPERATOR", value:binaryOperatorBlock.operatorKeyword, priority: binaryOperatorPriority(binaryOperatorBlock.operatorKeyword)}]
+	let currentRightSide = binaryOperatorBlock.rightSide[0].value
+	while (currentRightSide.type == Types.binaryOperatorBlock) {
+		listOfOperandsAndOperators.push(currentRightSide.leftSide,{type: "TEMPOPERATOR", value:currentRightSide.operatorKeyword, priority: binaryOperatorPriority(currentRightSide.operatorKeyword)})
+		if (currentRightSide.rightSide.length != 1)
+			throw "TODO: Multiple parameters for binary operator blocks (2)"
+		currentRightSide = currentRightSide.rightSide[0].value
 	}
-	if (binaryOperatorPriority(secondValue.operatorKeyword) > leftSideOperationPriority) {
-		rightSide = deepCopy(rightSide)
-		rightSide.value = parenthesisificateBinaryOperatorBlock(secondValue, Types, BlockTypes, BinaryOperatorBlockTypes)
+	listOfOperandsAndOperators.push(currentRightSide)
+	let maxPriority = listOfOperandsAndOperators.reduce((c,i)=>Math.max(c,i.priority !== undefined ? i.priority : c),-1)
+	while (maxPriority > -1) {
+		for (let i = 0; i < listOfOperandsAndOperators.length; i++) {
+			const item = listOfOperandsAndOperators[i]
+			if (item.type != "TEMPOPERATOR")
+				continue
+			if (item.priority < maxPriority)
+				continue
+			const actualName = BinaryOperatorBlockTypes[item.value]
+			if (!actualName)
+				throw new parser.SyntaxError("Undefined binary operator block", Object.getOwnPropertyNames(BinaryOperatorBlockTypes),item.value, listOfOperandsAndOperators[i-1].location) // Location is approximate
+			const newItem = {
+				type: Types.parenthesisBlock,
+				location: listOfOperandsAndOperators[i-1].location, // Approximation
+				name: {type: Types.identifier, value:actualName},
+				parameters: [wrapInInfallibleParameterValue(listOfOperandsAndOperators[i-1], Types), wrapInInfallibleParameterValue(listOfOperandsAndOperators[i+1], Types)]
+			}
+			listOfOperandsAndOperators.splice(i-1,2)
+			listOfOperandsAndOperators.fill(newItem,i-1,i)
+			i--
+		}
+		maxPriority = listOfOperandsAndOperators.reduce((c,i)=>Math.max(c,i.priority !== undefined ? i.priority : c),-1)
 	}
-	rightSide = deepCopy(rightSide)
-	rightSide.pretendLabelIsValidEvenIfItIsnt = true
-	return {type: Types.parenthesisBlock, location: binaryOperatorBlock.location, name: {type: Types.identifier, value:actualBlockName}, parameters: [leftSide,rightSide]}
+	if (listOfOperandsAndOperators.length != 1)
+		throw "Something ent wrong lol"
+	return listOfOperandsAndOperators[0]
+}
+
+function wrapInInfallibleParameterValue(e, Types) {
+	return {
+		type: Types.parameterValue,
+		value: e,
+		pretendLabelIsValidEvenIfItIsnt: true
+	}
+}
+
+function findIndicesInArray(array, predicate) {
+	let result = []
+	for (let i = 0; i < array.length; i++) {
+		if (predicate(array[i]))
+			result.push(i)
+	}
+	return result
 }
 
 function binaryOperatorPriority(operator) {
