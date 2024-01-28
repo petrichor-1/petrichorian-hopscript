@@ -79,7 +79,8 @@ binaryOperatorBlock
 			type: Types.binaryOperatorBlock,
 			location: location(),
 			leftSide: leftSide,
-			rightSide: [parameters.map(e=>e[0]),finalParameter].flatMap(e=>e)
+			rightSide: [parameters.map(e=>e[0]),finalParameter].flatMap(e=>e),
+			operatorKeyword: type
 		}
 	}
 binaryOperatorKeyword
