@@ -156,3 +156,24 @@ _defineBinaryOperator / divide
 _defineBinaryOperator * multiply
 _defineBinaryOperator + add
 _defineBinaryOperator ^ power
+
+
+
+#===============
+# Define traits
+#===============
+# Basic object traits
+_defineTraitType rotation 2000 "Rotation"
+_defineTraitType x_position 2001 "X Position"
+_defineTraitType y_position 2002 "Y Position"
+_defineTraitType insibility_as_a_percent 2003 "Invisibility as a %"
+_defineTraitType size_as_a_percent 2004 "Size as a %"
+_defineTraitType speed 2005 "Speed"
+_defineTraitType clone_index 2006 "Clone Index"
+_defineTraitType total_clones 2007 "Total Clones"
+_defineTraitType width 2008 "Width"
+_defineTraitType height 2009 "Height"
+_defineTraitType z_index 2010 "Z Index"
+_defineTraitType origin_x 2011 "Origin X"
+_defineTraitType origin_y 2012 "Origin Y"
+_defineTraitType name 2018 "Name"
