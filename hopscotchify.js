@@ -239,7 +239,7 @@ function createMethodBlockFrom(block, Types, BlockTypes, options) {
 			hsParameter.value = parameterValue.value.value
 			break
 		default:
-			throw "Unknown parameter value type"
+			throw new parser.SyntaxError("Should be impossible: Unknown parameter value type", [Types.number, Types.string], parameterValue.value.type, parameterValue.location)
 		}
 		result.parameters.push(hsParameter)
 	}
