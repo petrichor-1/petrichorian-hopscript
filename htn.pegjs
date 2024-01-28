@@ -303,7 +303,7 @@ blockTypeDefinition
 binaryOperatorBlockTypeDefinition
 	= "_defineBinaryOperator " keyword:binaryOperatorKeyword " " mapsTo:blockName
 	{
-		binaryOperatorBlockTypes[keyword] = mapsTo
+		binaryOperatorBlockTypes[keyword] = mapsTo.value
 	}
 
 blockClass
