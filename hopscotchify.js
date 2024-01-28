@@ -115,7 +115,7 @@ module.exports.hopscotchify = (htnCode, options) => {
 				const whenBlock = line.value
 				if (!whenBlock.doesHaveContainer)
 					throw "Empty rule"
-				const hsBlock = createOperatorBlockFrom(whenBlock.value, Types, parsed.blockTypes, parsed.traitTypes, options)
+				const hsBlock = createOperatorBlockFrom(whenBlock.value, Types, parsed.blockTypes, parsed.binaryOperatorBlockTypes, parsed.traitTypes, options)
 				const rule = createRuleWith(hsBlock)
 				currentObject.rules.push(rule.id)
 				project.rules.push(rule)
@@ -130,7 +130,7 @@ module.exports.hopscotchify = (htnCode, options) => {
 			}
 			break
 		case States.inAbility:
-			const hsBlock = createMethodBlockFrom(line.value, Types, parsed.blockTypes, parsed.traitTypes, options)
+			const hsBlock = createMethodBlockFrom(line.value, Types, parsed.blockTypes, parsed.binaryOperatorBlockTypes, parsed.traitTypes, options)
 			abilityStack[abilityStack.length-1].blocks.push(hsBlock)
 			if (hsBlock.block_class == "control") {
 				if (!line.value.doesHaveContainer)
@@ -163,16 +163,18 @@ function arrayStartsWith(big, small) {
 	return true
 }
 
-function createOperatorBlockFrom(block, Types, BlockTypes, TraitTypes, options) {
-	return createBlockOfClasses(["operator","conditionalOperator"], "params", block, Types, BlockTypes, TraitTypes, options)
+function createOperatorBlockFrom(block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, options) {
+	return createBlockOfClasses(["operator","conditionalOperator"], "params", block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, options)
 }
 
-function createMethodBlockFrom(block, Types, BlockTypes, TraitTypes, options) {
-	return createBlockOfClasses(["method", "control", "conditionalControl"], "parameters", block, Types, BlockTypes, TraitTypes, options)
+function createMethodBlockFrom(block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, options) {
+	return createBlockOfClasses(["method", "control", "conditionalControl"], "parameters", block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, options)
 }
 
-function createBlockOfClasses(allowedBlockClasses, parametersKey, block, Types, BlockTypes, TraitTypes, options) {
+function createBlockOfClasses(allowedBlockClasses, parametersKey, block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, options) {
 	const {checkParameterLabels} = options
+	if (block.type == Types.binaryOperatorBlock)
+		block = parenthesisificateBinaryOperatorBlock(block, Types, BlockTypes, BinaryOperatorBlockTypes)
 
 	let result = {}
 	result[parametersKey] = []
@@ -185,18 +187,20 @@ function createBlockOfClasses(allowedBlockClasses, parametersKey, block, Types, 
 		break
 	case Types.parenthesisBlock:
 		if (block.name.type != Types.identifier)
-			throw "Unknown block name type"
+			throw "Unknown block name type " + block.name.type
 		blockName = block.name.value
 		blockParameters = block.parameters
 		break
 	case Types.comment:
 		return createHsCommentFrom(block)
+	case Types.binaryOperatorBlock:
+		throw new parser.SyntaxError("Should be impossible: Unconverted binary operator block", [], "", block.location)
 	default:
 		throw "Unknown block form"
 	}
 	const blockType = BlockTypes[blockName]
 	if (!blockType)
-		return createBlockFromUndefinedTypeOfClasses(allowedBlockClasses, parametersKey, block, Types, BlockTypes, TraitTypes, options)
+		return createBlockFromUndefinedTypeOfClasses(allowedBlockClasses, parametersKey, block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, options)
 	if (!allowedBlockClasses.includes(blockType.class))
 		throw "Invalid block class"
 	result.type = blockType.type
@@ -207,12 +211,12 @@ function createBlockOfClasses(allowedBlockClasses, parametersKey, block, Types, 
 		if (blockParameters.length <= i)
 			throw "Not enough parameters"
 		const parameterValue = blockParameters[i]
-		if (checkParameterLabels && !(!parameterSchema.name && !parameterValue.label)) {
+		if (!parameterValue.pretendLabelIsValidEvenIfItIsnt && checkParameterLabels && !(!parameterSchema.name && !parameterValue.label)) {
 			const parameterLabel = parameterValue.label
 			if (parameterSchema.name && !parameterLabel)
 				throw new parser.SyntaxError("Missing parameter label", parameterSchema.name, "", parameterValue.location)
 			if (!parameterSchema.name && parameterLabel)
-				throw "Extra parameter label"
+				throw new parser.SyntaxError("Extra parameter label", "", parameterLabel.value, parameterLabel.location)
 			if (parameterLabel.type != Types.identifier)
 				throw "Unknown parameter label type"
 			if (parameterLabel.value != parameterSchema.name)
@@ -224,24 +228,77 @@ function createBlockOfClasses(allowedBlockClasses, parametersKey, block, Types, 
 			type: parameterSchema.type
 		}
 		if (parameterValue.type != Types.parameterValue)
-			throw "Invalid parameter value type"
+			throw "Invalid parameter value type" + parameterValue.type
 		switch (parameterValue.value.type) {
 		case Types.number:
 		case Types.string:
 			hsParameter.value = parameterValue.value.value
 			break
 		case Types.identifier:
-			hsParameter.datum = createOperatorBlockFrom(parameterValue.value, Types, BlockTypes, TraitTypes, options)
+		case Types.binaryOperatorBlock:
+		case Types.parenthesisBlock:
+			hsParameter.datum = createOperatorBlockFrom(parameterValue.value, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, options)
 			break
 		default:
-			throw new parser.SyntaxError("Should be impossible: Unknown parameter value type", [Types.number, Types.string, Types.identifier], parameterValue.value.type, parameterValue.location)
+			throw new parser.SyntaxError("Should be impossible: Unknown parameter value type", [Types.number, Types.string, Types.identifier, Types.binaryOperatorBlock, Types.parenthesisBlock], parameterValue.value.type, parameterValue.location)
 		}
 		result[parametersKey].push(hsParameter)
 	}
 	return result
 }
 
-function createBlockFromUndefinedTypeOfClasses(allowedBlockClasses, parametersKey, block, Types, BlockTypes, TraitTypes, options) {
+function parenthesisificateBinaryOperatorBlock(binaryOperatorBlock, Types, BlockTypes, BinaryOperatorBlockTypes) {
+	const actualBlockName = BinaryOperatorBlockTypes[binaryOperatorBlock.operatorKeyword]
+	if (!actualBlockName)
+		throw new parser.SyntaxError("Undefined binary operator", Object.getOwnPropertyNames(BinaryOperatorBlockTypes), binaryOperatorBlock.operatorKeyword, binaryOperatorBlock.location)
+
+	const leftSide = {
+		type: Types.parameterValue,
+		location: binaryOperatorBlock.leftSide.location,
+		value: binaryOperatorBlock.leftSide,
+		pretendLabelIsValidEvenIfItIsnt: true
+	}
+	const leftSideOperationPriority = binaryOperatorPriority(binaryOperatorBlock.operatorKeyword)
+	if (binaryOperatorBlock.rightSide.length != 1)
+		throw "TODO: Multiple parameters for binary operator blocks"
+	let rightSide = binaryOperatorBlock.rightSide[0]
+	if (rightSide.type != Types.parameterValue)
+		throw "Should be impossible: Unknown parameter value type in binary operator block"
+	const secondValue = rightSide.value
+	if (secondValue.type != Types.binaryOperatorBlock) {
+		rightSide = deepCopy(rightSide)
+		rightSide.pretendLabelIsValidEvenIfItIsnt = true
+		return {type: Types.parenthesisBlock, location: binaryOperatorBlock.location, name: {type: Types.identifier, value:actualBlockName}, parameters: [leftSide,rightSide]}
+	}
+	if (binaryOperatorPriority(secondValue.operatorKeyword) > leftSideOperationPriority) {
+		rightSide = deepCopy(rightSide)
+		rightSide.value = parenthesisificateBinaryOperatorBlock(secondValue, Types, BlockTypes, BinaryOperatorBlockTypes)
+	}
+	rightSide = deepCopy(rightSide)
+	rightSide.pretendLabelIsValidEvenIfItIsnt = true
+	return {type: Types.parenthesisBlock, location: binaryOperatorBlock.location, name: {type: Types.identifier, value:actualBlockName}, parameters: [leftSide,rightSide]}
+}
+
+function binaryOperatorPriority(operator) {
+	switch (operator) {
+	case "-":
+	case "+":
+		return 0
+	case "/":
+	case "*":
+		return 1
+	case "^":
+		return 2
+	case "==":
+	case "=":
+	case "MATCHES":
+		return 3
+	default:
+		throw `Should be impossible: Unknown binary operator keyword '${operator}'`
+	}
+}
+
+function createBlockFromUndefinedTypeOfClasses(allowedBlockClasses, parametersKey, block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, options) {
 	switch (block.type) {
 	case Types.identifier:
 		const variableDescription = getVariableDescriptionFromPath(block.value)
@@ -253,8 +310,12 @@ function createBlockFromUndefinedTypeOfClasses(allowedBlockClasses, parametersKe
 			if (maybeTrait)
 				return createOriginalObjectTrait(maybeTrait)
 			throw new parser.SyntaxError("Should be impossible: Unhandled original object scope", [], "", block.location)
+		case "self":
+			if (maybeTrait)
+				return createSelfTrait(maybeTrait)
+			throw new parser.SyntaxError("Should be impossible: Unhandled self scope", [], "", block.location)
 		default:
-			throw new parser.SyntaxError("Should be impossible: Unknown variable scope", ["original_object"], variableDescription.scope, block.location)
+			throw new parser.SyntaxError("Should be impossible: Unknown variable scope", ["original_object", "self"], variableDescription.scope, block.location)
 		}
 		break
 	default:
@@ -280,6 +341,15 @@ function getVariableDescriptionFromPath(variablePath) {
 function createOriginalObjectTrait(trait) {
 	return {
 		HSTraitObjectParameterTypeKey: 8005, //HSBlockType.OriginalObject
+		HSTraitTypeKey: trait.type,
+		description: trait.description,
+		HSTraitIDKey: randomUUID(),
+	}
+}
+
+function createSelfTrait(trait) {
+	return {
+		HSTraitObjectParameterTypeKey: 8004, //HSBlockType.Self
 		HSTraitTypeKey: trait.type,
 		description: trait.description,
 		HSTraitIDKey: randomUUID(),
