@@ -119,3 +119,4 @@ _defineBlockType operator is_pressed 7003 "is Pressed" 50 _ "" "",
 _defineBlockType operator is_not_pressed 7020 "is Not Pressed" 50 _ "" "", 
 _defineBlockType operator i_get_a_message 7023 "I Get a Message" 53 _ "I get a message" "", 
 _defineBlockType operator message_matches 7024 "Message Matches" 52 _ "message matches" "", 
+_defineBlockType operator object_is_cloned 7015 "Object is Cloned"
