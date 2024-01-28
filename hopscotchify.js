@@ -353,8 +353,12 @@ function createBlockFromUndefinedTypeOfClasses(allowedBlockClasses, parametersKe
 			if (maybeTrait)
 				return createSelfTrait(maybeTrait)
 			throw new parser.SyntaxError("Should be impossible: Unhandled self scope", [], "", block.location)
+		case "Game":
+			if (maybeTrait)
+				return createGameTrait(maybeTrait)
+			throw new parser.SyntaxError("Should be impossible: Unhandled game scope", [], "", block.location)
 		default:
-			throw new parser.SyntaxError("Should be impossible: Unknown variable scope", ["Original_object", "Self"], variableDescription.scope, block.location)
+			throw new parser.SyntaxError("Should be impossible: Unknown variable scope", ["Original_object", "Self", "Game"], variableDescription.scope, block.location)
 		}
 		break
 	default:
@@ -389,6 +393,15 @@ function createOriginalObjectTrait(trait) {
 function createSelfTrait(trait) {
 	return {
 		HSTraitObjectParameterTypeKey: 8004, //HSBlockType.Self
+		HSTraitTypeKey: trait.type,
+		description: trait.description,
+		HSTraitIDKey: randomUUID(),
+	}
+}
+
+function createGameTrait(trait) {
+	return {
+		HSTraitObjectParameterTypeKey: 8003, //HSBlockType.Game
 		HSTraitTypeKey: trait.type,
 		description: trait.description,
 		HSTraitIDKey: randomUUID(),
