@@ -345,16 +345,16 @@ function createBlockFromUndefinedTypeOfClasses(allowedBlockClasses, parametersKe
 			throw new parser.SyntaxError("Undefined symbol", ["Block", "Variable"], JSON.stringify(block), block.location)
 		const maybeTrait = TraitTypes[variableDescription.name]
 		switch (variableDescription.scope) {
-		case "original_object":
+		case "Original_object":
 			if (maybeTrait)
 				return createOriginalObjectTrait(maybeTrait)
 			throw new parser.SyntaxError("Should be impossible: Unhandled original object scope", [], "", block.location)
-		case "self":
+		case "Self":
 			if (maybeTrait)
 				return createSelfTrait(maybeTrait)
 			throw new parser.SyntaxError("Should be impossible: Unhandled self scope", [], "", block.location)
 		default:
-			throw new parser.SyntaxError("Should be impossible: Unknown variable scope", ["original_object", "self"], variableDescription.scope, block.location)
+			throw new parser.SyntaxError("Should be impossible: Unknown variable scope", ["Original_object", "Self"], variableDescription.scope, block.location)
 		}
 		break
 	default:
@@ -365,10 +365,10 @@ function createBlockFromUndefinedTypeOfClasses(allowedBlockClasses, parametersKe
 function getVariableDescriptionFromPath(variablePath) {
 	const fullVariablePath = variablePath.split('.')
 	if (fullVariablePath.length == 1)
-		return {scope: "local", name:fullVariablePath[0]}
+		return {scope: "Local", name:fullVariablePath[0]}
 	// Determine which scope this refers to
 	// TODO: Pass this in from elsewhere and get a list of objects that are defined in the htn
-	const validObjects = [{path: "self", scope: "self"}, {path: "original_object", scope: "original_object"}, {path: "game", scope: "game"}, {path: "user", scope: "user"}, {path: "local", scope: "local"}]
+	const validObjects = [{path: "Self", scope: "Self"}, {path: "Original_object", scope: "Original_object"}, {path: "Game", scope: "Game"}, {path: "User", scope: "User"}, {path: "Local", scope: "Local"}]
 	for (let i = 0; i < validObjects.length; i++) {
 		const objectPath = validObjects[i].path.split('.')
 		if (arrayStartsWith(fullVariablePath, objectPath))
