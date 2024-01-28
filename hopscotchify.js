@@ -235,6 +235,7 @@ function createMethodBlockFrom(block, Types, BlockTypes, options) {
 			throw "Invalid parameter value type"
 		switch (parameterValue.value.type) {
 		case Types.number:
+		case Types.string:
 			hsParameter.value = parameterValue.value.value
 			break
 		default:
