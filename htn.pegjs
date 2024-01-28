@@ -269,13 +269,20 @@ objectTypeDefinition
 	}
 
 blockTypeDefinition
-	= "_defineBlockType " blockClass:blockClass " " name:blockName " " typeId:number " " description:string " "? parameters:(number " " identifier " " string " " string ", ")*
+	= "_defineBlockType " blockClass:blockClass " " name:blockName " " typeId:number " " description:string " "? parameters:(number " " (identifier / "_") " " string " " string ", ")*
 	{
 		blockTypes[name.value] = {
 			class: blockClass,
 			type: parseFloat(typeId.value),
 			description: description.value,
-			parameters: parameters?.map(e=>{return {name:e[2].value,key:e[4].value,defaultValue:e[6].value, type: parseFloat(e[0].value)}}),
+			parameters: parameters?.map(e=>{
+				return {
+					name:e[2] != "_" ? e[2].value : null,
+					key:e[4].value,
+					defaultValue:e[6].value,
+					type: parseFloat(e[0].value)
+				}
+			}),
 		}
 	}
 
