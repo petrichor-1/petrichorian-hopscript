@@ -154,30 +154,7 @@ function deepCopy(object) {
 }
 
 function createOperatorBlockFrom(block, Types, BlockTypes, options) {
-	const {checkParameterLabels} = options
-
-	let result = {
-		block_class: "operator", // Not necessarily correct, but HS doesn't complain
-		params: []
-	}
-	switch (block.type) {
-	case Types.identifier:
-		const blockName = block.value
-		const blockType = BlockTypes[blockName]
-		if (!blockType)
-			throw "Undefined block type"
-		if (blockType.class != "operator")
-			throw "Invalid block class"
-		result.type = blockType.type
-		result.description = blockType.description
-		if (blockType.parameters.length > 0)
-			throw "Idk how to handle operators with params"
-		if (result.params.length <= 0)
-			result.params = undefined
-		return result
-	default:
-		throw "Unknown block form"
-	}
+	return createBlockOfClasses(["operator","conditionalOperator"], "params", block, Types, BlockTypes, options)
 }
 
 function createMethodBlockFrom(block, Types, BlockTypes, options) {
