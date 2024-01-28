@@ -82,3 +82,12 @@ _defineBlockType method destroy 55 "Destroy"
 _defineBlockType method open_project 68 "Open Project" 62 _ "" "", 
 _defineBlockType method change_scene 125 "Change Scene" 56 to "to" "0", 
 _defineBlockType method broadcast_message 126 "Broadcast Message" 53 named "named" "", 
+
+#Game rules
+_defineBlockType operator game_starts 7000 "Game Starts"
+_defineBlockType operator game_is_playing 7021 "Game is Playing"
+_defineBlockType operator is_tapped 7001 "is Tapped" 50 _ "" "", 
+_defineBlockType operator is_pressed 7003 "is Pressed" 50 _ "" "", 
+_defineBlockType operator is_not_pressed 7020 "is Not Pressed" 50 _ "" "", 
+_defineBlockType operator i_get_a_message 7023 "I Get a Message" 53 _ "I get a message" "", 
+_defineBlockType operator message_matches 7024 "Message Matches" 52 _ "message matches" "", 
