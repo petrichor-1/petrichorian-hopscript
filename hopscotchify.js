@@ -199,6 +199,8 @@ function createMethodBlockFrom(block, Types, BlockTypes, options) {
 		blockName = block.name.value
 		blockParameters = block.parameters
 		break
+	case Types.comment:
+		return createHsCommentFrom(block)
 	default:
 		throw "Unknown block form"
 	}
@@ -272,5 +274,21 @@ function createEmptyAbility() {
 		blocks: [],
 		abilityID: randomUUID(),
 		createdAt: (Date.now() - timeBetween1970And2001) / 1000,
+	}
+}
+
+function createHsCommentFrom(comment) {
+	return {
+		"parameters":[
+			{
+				"defaultValue":"",
+				"value":comment.value,
+				"key":"",
+				"type":55
+			}
+		],
+		"type":69,
+		"description":"#",
+		"block_class":"method"
 	}
 }
