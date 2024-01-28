@@ -181,11 +181,14 @@ function createOperatorBlockFrom(block, Types, BlockTypes, options) {
 }
 
 function createMethodBlockFrom(block, Types, BlockTypes, options) {
+	return createBlockOfClasses(["method", "control", "conditionalControl"], "parameters", block, Types, BlockTypes, options)
+}
+
+function createBlockOfClasses(allowedBlockClasses, parametersKey, block, Types, BlockTypes, options) {
 	const {checkParameterLabels} = options
 
-	let result = {
-		parameters: []
-	}
+	let result = {}
+	result[parametersKey] = []
 	let blockName
 	let blockParameters
 	switch (block.type) {
@@ -207,7 +210,7 @@ function createMethodBlockFrom(block, Types, BlockTypes, options) {
 	const blockType = BlockTypes[blockName]
 	if (!blockType)
 		throw "Undefined block type"
-	if (blockType.class != "method" && blockType.class != "control")
+	if (!allowedBlockClasses.includes(blockType.class))
 		throw "Invalid block class"
 	result.type = blockType.type
 	result.description = blockType.description
@@ -243,7 +246,7 @@ function createMethodBlockFrom(block, Types, BlockTypes, options) {
 		default:
 			throw new parser.SyntaxError("Should be impossible: Unknown parameter value type", [Types.number, Types.string], parameterValue.value.type, parameterValue.location)
 		}
-		result.parameters.push(hsParameter)
+		result[parametersKey].push(hsParameter)
 	}
 	return result
 }
