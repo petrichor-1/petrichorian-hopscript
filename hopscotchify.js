@@ -102,6 +102,9 @@ module.exports.hopscotchify = (htnCode, options) => {
 				currentState = States.inObject
 				currentObject = hsObject
 				break
+			case Types.comment:
+				// This branch intentionally left blank
+				break
 			default:
 				throw "Bad top level type"
 			}
