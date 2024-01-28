@@ -120,3 +120,28 @@ _defineBlockType operator is_not_pressed 7020 "is Not Pressed" 50 _ "" "",
 _defineBlockType operator i_get_a_message 7023 "I Get a Message" 53 _ "I get a message" "", 
 _defineBlockType operator message_matches 7024 "Message Matches" 52 _ "message matches" "", 
 _defineBlockType operator object_is_cloned 7015 "Object is Cloned"
+
+#Math
+_defineBlockType operator add 4000 "+" 57 _ "" "2", 57 + "+" "3", 
+_defineBlockType operator subtract 4001 "-" 42 _ "" "5", 42 - "-" "2", 
+_defineBlockType operator multiply 4002 "×" 42 _ "" "2", 42 * "×" "3", 
+#TODO: Why can't i use `/`? Is it thinking its the start of a regex literal?
+#      If those are actually causing trouble now its probably fine to break
+#      compatability with tri's htn
+_defineBlockType operator divide 4003 "÷" 42 _ "" "5", 42 by "÷" "2", 
+_defineBlockType operator random 4004 "Random" 45 _ "" "1", 46 to "to" "100", 
+_defineBlockType operator power 4005 "^" 42 _ "" "2", 42 ^ "^" "3", 
+_defineBlockType operator square_root 4006 "√" 42 _ "" "25", 
+_defineBlockType operator sin 4007 "Sin" 42 _ "" "45", 
+_defineBlockType operator cos 4008 "Cos" 42 _ "" "45", 
+_defineBlockType operator tan 4012 "Tan" 42 _ "" "45", 
+_defineBlockType operator arcsin 4013 "Arcsin" 57 _ "" "0.5", 
+_defineBlockType operator arccos 4014 "Arccos" 57 _ "" "0.5", 
+_defineBlockType operator arctan 4015 "Arctan" 57 _ "" "0.5", 
+_defineBlockType operator max 4016 "Maximum" 42 _ "" "100", 42 _ "" "200", 
+_defineBlockType operator min 4017 "Minimum" 42 _ "" "0", 42 _ "" "10", 
+_defineBlockType operator round 4009 "Round" 57 _ "" "2.5", 
+_defineBlockType operator floor 4018 "Floor" 57 _ "" "2.5", 
+_defineBlockType operator ceiling 4019 "Ceiling" 57 _ "" "2.5", 
+_defineBlockType operator absolute_value 4010 "Absolute Value" 42 _ "" "-10", 
+_defineBlockType operator modulo 4011 "%" 42 _ "" "5", 42 % "%" "2", 
