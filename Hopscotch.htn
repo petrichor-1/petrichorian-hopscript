@@ -145,3 +145,14 @@ _defineBlockType operator floor 4018 "Floor" 57 _ "" "2.5",
 _defineBlockType operator ceiling 4019 "Ceiling" 57 _ "" "2.5", 
 _defineBlockType operator absolute_value 4010 "Absolute Value" 42 _ "" "-10", 
 _defineBlockType operator modulo 4011 "%" 42 _ "" "5", 42 % "%" "2", 
+
+
+
+#==================
+# Define binary ops
+#==================
+_defineBinaryOperator - subtract
+_defineBinaryOperator / divide
+_defineBinaryOperator * multiply
+_defineBinaryOperator + add
+_defineBinaryOperator ^ power
