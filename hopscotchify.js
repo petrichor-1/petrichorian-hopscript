@@ -137,6 +137,9 @@ module.exports.hopscotchify = (htnCode, options) => {
 				abilityStack.push(ability)
 				currentState = States.inAbility
 				break
+			case Types.comment:
+				// This branch intentionally left blank
+				break
 			default:
 				throw new parser.SyntaxError("Bad object-level type", [Types.whenBlock, Types.parenthesisBlock], line.value.type, line.value.location)
 			}
