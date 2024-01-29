@@ -174,7 +174,7 @@ function createMethodBlockFrom(block, Types, BlockTypes, BinaryOperatorBlockType
 function createBlockOfClasses(allowedBlockClasses, parametersKey, block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, options) {
 	const {checkParameterLabels} = options
 	if (block.type == Types.binaryOperatorBlock)
-		block = parenthesisificateBinaryOperatorBlock(block, Types, BlockTypes, BinaryOperatorBlockTypes)
+		block = parenthesisificateBinaryOperatorBlock(block, Types, allowedBlockClasses, BinaryOperatorBlockTypes)
 
 	let result = {}
 	result[parametersKey] = []
@@ -247,10 +247,24 @@ function createBlockOfClasses(allowedBlockClasses, parametersKey, block, Types, 
 	return result
 }
 
-function parenthesisificateBinaryOperatorBlock(binaryOperatorBlock, Types, BlockTypes, BinaryOperatorBlockTypes) {
+function parenthesisificateBinaryOperatorBlock(binaryOperatorBlock, Types, allowedBlockClasses, BinaryOperatorBlockTypes) {
 	const actualBlockName = BinaryOperatorBlockTypes[binaryOperatorBlock.operatorKeyword]
-	if (!actualBlockName)
+	if (!actualBlockName) {
+		if (binaryOperatorBlock.operatorKeyword == "=") {
+			if (allowedBlockClasses.includes("method")) {
+				const rightSide = deepCopy(binaryOperatorBlock.rightSide[0])
+				rightSide.pretendLabelIsValidEvenIfItIsnt = true
+				// TODO: Allow tri-angle style assignment syntax for *shudders* non-set/equals blocks
+				return {
+					type: Types.parenthesisBlock,
+					location: binaryOperatorBlock.location,
+					name: {type: Types.identifier, value:"set"},
+					parameters: [wrapInInfallibleParameterValue(binaryOperatorBlock.leftSide, Types), rightSide]
+				}
+			}
+		}
 		throw new parser.SyntaxError("Undefined binary operator", Object.getOwnPropertyNames(BinaryOperatorBlockTypes), binaryOperatorBlock.operatorKeyword, binaryOperatorBlock.location)
+	}
 
 	let leftSide = {
 		type: Types.parameterValue,
