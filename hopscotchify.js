@@ -140,8 +140,14 @@ module.exports.hopscotchify = (htnCode, options) => {
 					break // Not in the initial before-game-starts ability
 				currentState().beforeGameStartsAbility.blocks.push(createHsCommentFrom(line.value))
 				break
+			case Types.binaryOperatorBlock:
+				if (currentState().object.rules.length != 0)
+					throw new parser.SyntaxError("Cannot include blocks after the first rule", [Types.whenBlock, Types.parenthesisBlock, Types.comment], line.type, line.location)
+				const hsMethodBlock = createMethodBlockFrom(line.value, Types, parsed.blockTypes, parsed.binaryOperatorBlockTypes, parsed.traitTypes, options)
+				currentState().beforeGameStartsAbility.blocks.push(hsMethodBlock)
+				break
 			default:
-				throw new parser.SyntaxError("Bad object-level type", [Types.whenBlock, Types.parenthesisBlock], line.value.type, line.value.location)
+				throw new parser.SyntaxError("Bad object-level type", [Types.whenBlock, Types.parenthesisBlock, Types.comment, Types.binaryOperatorBlock], line.value.type, line.value.location)
 			}
 			break
 		case StateLevels.inAbility:
