@@ -366,8 +366,10 @@ function createBlockFromUndefinedTypeOfClasses(allowedBlockClasses, parametersKe
 					return createGameTrait(trait)
 			}
 			throw new parser.SyntaxError("Should be impossible: Unhandled game scope", [], "", block.location)
+		case "Local":
+			return createLocalVariableFrom(block)
 		default:
-			throw new parser.SyntaxError("Should be impossible: Unknown variable scope", ["Original_object", "Self", "Game"], variableDescription.scope, block.location)
+			throw new parser.SyntaxError("Should be impossible: Unknown variable scope", ["Original_object", "Self", "Game", "Local"], variableDescription.scope, block.location)
 		}
 		break
 	default:
@@ -414,6 +416,14 @@ function createGameTrait(trait) {
 		HSTraitTypeKey: trait.type,
 		description: trait.description,
 		HSTraitIDKey: randomUUID(),
+	}
+}
+
+function createLocalVariableFrom(block) {
+	return {
+		name: block.value,
+		type: 8009, //HSBlockType.Local
+		description: "Local Variable" //Constant
 	}
 }
 
