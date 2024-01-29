@@ -80,8 +80,8 @@ module.exports.hopscotchify = (htnCode, options) => {
 				if (!objectType)
 					throw "Undefined object type " + objectTypeName
 				const hsObject = deepCopy(objectType)
-				if (object.name.type != "string")
-					throw "Invalid object name type"
+				if (object.name.type != Types.identifier)
+					throw "Should be impossible: Invalid object name type"
 				hsObject.name = object.name.value
 				hsObject.rules = []
 				hsObject.objectID = randomUUID()

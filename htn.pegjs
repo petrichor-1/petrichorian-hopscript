@@ -256,7 +256,7 @@ nonNewlineWhitespace
 	{ return c }
 
 object
-	= type:objectTypeName whitespace+ name:string whitespace* ":"
+	= type:objectTypeName whitespace+ name:identifier whitespace* ":"
 	{
 		return {
 			type: Types.object,
@@ -267,7 +267,8 @@ object
 
 objectTypeName
 // BE SURE TO CHANGE objectTypeDefinition IF THIS CHANGES, IT ASSUMES THIS IS ALWAYS IDENTIFIER
-	= identifier
+	= !"When " value:identifier
+	{ return value }
 
 objectTypeDefinition
 	= "_defineObjectType " name:objectTypeName " " typeId:number " " filename:string " " width:number " " height:number
