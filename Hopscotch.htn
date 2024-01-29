@@ -172,6 +172,15 @@ _defineBinaryOperator / divide
 _defineBinaryOperator * multiply
 _defineBinaryOperator + add
 _defineBinaryOperator ^ power
+_defineBinaryOperator == equals
+_defineBinaryOperator != not_equals
+_defineBinaryOperator < less_than
+_defineBinaryOperator > greater_than
+_defineBinaryOperator <= less_than_or_equal_to
+_defineBinaryOperator >= greater_than
+_defineBinaryOperator and and
+_defineBinaryOperator or or
+_defineBinaryOperator MATCHES matches
 
 
 
