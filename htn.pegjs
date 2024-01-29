@@ -274,13 +274,21 @@ objectTypeDefinition
 	}
 
 traitTypeDefinition
-	= "_defineTraitType " name:identifier " " typeId:number " " description:string
+	= "_defineTraitType " name:identifier " " typeId:number " " description:string " [" allowedScopes:(traitScope ", ")* "]"
 	{
-		traitTypes[name.value] = {
-			type: parseFloat(typeId.value),
-			description: description.value,
-		}
+		const trait = traitTypes[name.value] = traitTypes[name.value] ?? {}
+		allowedScopes.forEach(e=>{
+			trait[e[0]] = {
+				type: parseFloat(typeId.value),
+				description: description.value,
+			}
+		})
 	}
+traitScope
+	= "Game"
+	/ "Local"
+	/ "Object"
+	/ "User"
 
 blockTypeDefinition
 	= "_defineBlockType " blockClass:blockClass " " name:blockName " " typeId:number " " description:string " "? parameters:(number " " (identifier / "_") " " string " " string ", ")*

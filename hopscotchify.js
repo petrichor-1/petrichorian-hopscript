@@ -343,19 +343,28 @@ function createBlockFromUndefinedTypeOfClasses(allowedBlockClasses, parametersKe
 		const variableDescription = getVariableDescriptionFromPath(block.value)
 		if (!variableDescription)
 			throw new parser.SyntaxError("Undefined symbol", ["Block", "Variable"], JSON.stringify(block), block.location)
-		const maybeTrait = TraitTypes[variableDescription.name]
+		const maybeTraits = TraitTypes[variableDescription.name]
 		switch (variableDescription.scope) {
 		case "Original_object":
-			if (maybeTrait)
-				return createOriginalObjectTrait(maybeTrait)
+			if (maybeTraits) {
+				const trait = maybeTraits["Object"]
+				if (trait)
+					return createOriginalObjectTrait(trait)
+			}
 			throw new parser.SyntaxError("Should be impossible: Unhandled original object scope", [], "", block.location)
 		case "Self":
-			if (maybeTrait)
-				return createSelfTrait(maybeTrait)
+			if (maybeTraits) {
+				const trait = maybeTraits["Object"]
+				if (trait)
+					return createSelfTrait(trait)
+			}
 			throw new parser.SyntaxError("Should be impossible: Unhandled self scope", [], "", block.location)
 		case "Game":
-			if (maybeTrait)
-				return createGameTrait(maybeTrait)
+			if (maybeTraits) {
+				const trait = maybeTraits["Game"]
+				if (trait)
+					return createGameTrait(trait)
+			}
 			throw new parser.SyntaxError("Should be impossible: Unhandled game scope", [], "", block.location)
 		default:
 			throw new parser.SyntaxError("Should be impossible: Unknown variable scope", ["Original_object", "Self", "Game"], variableDescription.scope, block.location)
