@@ -87,12 +87,15 @@ module.exports.hopscotchify = (htnCode, options) => {
 				hsObject.objectID = randomUUID()
 				hsObject.xPosition = "150"
 				hsObject.yPosition = "150"
-				hsObject.abilityID = ""
+				const ability = createEmptyAbility()
+				project.abilities.push(ability)
+				hsObject.abilityID = ability.abilityID
 				project.objects.push(hsObject)
 				project.scenes[0].objects.push(hsObject.objectID)
 				stateStack.push({
 					level: StateLevels.inObject,
-					object: hsObject
+					object: hsObject,
+					beforeGameStartsAbility: ability
 				})
 				break
 			case Types.comment:
@@ -133,7 +136,9 @@ module.exports.hopscotchify = (htnCode, options) => {
 				})
 				break
 			case Types.comment:
-				// This branch intentionally left blank
+				if (currentState().object.rules.length != 0)
+					break // Not in the initial before-game-starts ability
+				currentState().beforeGameStartsAbility.blocks.push(createHsCommentFrom(line.value))
 				break
 			default:
 				throw new parser.SyntaxError("Bad object-level type", [Types.whenBlock, Types.parenthesisBlock], line.value.type, line.value.location)
