@@ -189,6 +189,12 @@ function arrayStartsWith(big, small) {
 	return true
 }
 
+function unSnakeCase(snakeCaseString) {
+	const words = snakeCaseString.split("_")
+		.map(e=>e[0].toUpperCase()+e.substring(1,e.length))
+	return words.join(" ")
+}
+
 function createOperatorBlockFrom(block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, options) {
 	return createBlockOfClasses(["operator","conditionalOperator"], "params", block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, options)
 }
@@ -460,8 +466,9 @@ function createGameTrait(trait) {
 }
 
 function createLocalVariableFrom(block) {
+	const name = unSnakeCase(block.value)
 	return {
-		name: block.value,
+		name: name,
 		type: 8009, //HSBlockType.Local
 		description: "Local Variable" //Constant
 	}
