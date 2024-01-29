@@ -34,15 +34,17 @@ module.exports.hopscotchify = (htnCode, options) => {
 	let indentationLevelWhitespaceCount;
 	let currentIndendationLevel = 0
 
-	let currentObject
-	let abilityStack = []
-
-	const States = {
+	const StateLevels = {
 		topLevel: 0,
 		inObject: 1,
 		inAbility: 2,
 	}
-	let currentState = States.topLevel
+	let stateStack = [{
+		level: StateLevels.topLevel
+	}]
+	function currentState() {
+		return stateStack[stateStack.length-1]
+	}
 	for (let i = 0; i < lines.length; i++) {
 		const line = lines[i]
 		if (line.type != Types.line) {
@@ -63,21 +65,10 @@ module.exports.hopscotchify = (htnCode, options) => {
 			newIndentationLevel = indentationLevelOfLine
 		}
 		for (let i = newIndentationLevel; i < currentIndendationLevel; i++) {
-			switch (currentState) {
-			case States.inAbility:
-				abilityStack.pop()
-				if (abilityStack.length <= 0)
-					currentState = States.inObject //FIXME: Not necessarily true
-				break
-			case States.inObject:
-				currentState = States.topLevel
-				break
-			default:
-				throw "Unexitable state"
-			}
+			stateStack.pop()
 		}
-		switch (currentState) {
-		case States.topLevel:
+		switch (currentState().level) {
+		case StateLevels.topLevel:
 			switch (line.value.type) {
 			case Types.object:
 				const object = line.value
@@ -99,8 +90,10 @@ module.exports.hopscotchify = (htnCode, options) => {
 				hsObject.abilityID = ""
 				project.objects.push(hsObject)
 				project.scenes[0].objects.push(hsObject.objectID)
-				currentState = States.inObject
-				currentObject = hsObject
+				stateStack.push({
+					level: StateLevels.inObject,
+					object: hsObject
+				})
 				break
 			case Types.comment:
 				// This branch intentionally left blank
@@ -109,7 +102,7 @@ module.exports.hopscotchify = (htnCode, options) => {
 				throw "Bad top level type"
 			}
 			break
-		case States.inObject:
+		case StateLevels.inObject:
 			let whenBlock;
 			switch (line.value.type) {
 			case Types.parenthesisBlock:
@@ -129,13 +122,15 @@ module.exports.hopscotchify = (htnCode, options) => {
 					throw "Empty rule"
 				const hsBlock = createOperatorBlockFrom(whenBlock.value, Types, parsed.blockTypes, parsed.binaryOperatorBlockTypes, parsed.traitTypes, options)
 				const rule = createRuleWith(hsBlock)
-				currentObject.rules.push(rule.id)
+				currentState().object.rules.push(rule.id)
 				project.rules.push(rule)
 				const ability = createEmptyAbility()
 				rule.abilityID = ability.abilityID
 				project.abilities.push(ability)
-				abilityStack.push(ability)
-				currentState = States.inAbility
+				stateStack.push({
+					level: StateLevels.inAbility,
+					ability: ability
+				})
 				break
 			case Types.comment:
 				// This branch intentionally left blank
@@ -144,16 +139,19 @@ module.exports.hopscotchify = (htnCode, options) => {
 				throw new parser.SyntaxError("Bad object-level type", [Types.whenBlock, Types.parenthesisBlock], line.value.type, line.value.location)
 			}
 			break
-		case States.inAbility:
+		case StateLevels.inAbility:
 			const hsBlock = createMethodBlockFrom(line.value, Types, parsed.blockTypes, parsed.binaryOperatorBlockTypes, parsed.traitTypes, options)
-			abilityStack[abilityStack.length-1].blocks.push(hsBlock)
+			currentState().ability.blocks.push(hsBlock)
 			if (["control", "conditionalControl"].includes(hsBlock.block_class)) {
 				if (!line.value.doesHaveContainer)
 					throw "Empty control block"
 				const ability = createEmptyAbility()
 				hsBlock.controlScript = {abilityID: ability.abilityID}
 				project.abilities.push(ability)
-				abilityStack.push(ability)
+				stateStack.push({
+					level: StateLevels.inAbility,
+					ability: ability
+				})
 			} else if (line.value.doesHaveContainer) {
 				throw "Container on non-control block"
 			}
