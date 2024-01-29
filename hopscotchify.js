@@ -82,7 +82,7 @@ module.exports.hopscotchify = (htnCode, options) => {
 				const hsObject = deepCopy(objectType)
 				if (object.name.type != Types.identifier)
 					throw "Should be impossible: Invalid object name type"
-				hsObject.name = object.name.value
+				hsObject.name = unSnakeCase(object.name.value)
 				hsObject.rules = []
 				hsObject.objectID = randomUUID()
 				hsObject.xPosition = "150"
