@@ -17,6 +17,7 @@
 	let blockTypes = {}
 	let binaryOperatorBlockTypes = {}
 	let traitTypes = {}
+	let objectNames = []
 }
 
 file
@@ -29,6 +30,7 @@ file
 			blockTypes: blockTypes,
 			traitTypes: traitTypes,
 			binaryOperatorBlockTypes: binaryOperatorBlockTypes,
+			objectNames: objectNames,
 		}
 	}
 
@@ -258,6 +260,7 @@ nonNewlineWhitespace
 object
 	= type:objectTypeName whitespace+ name:identifier whitespace* ":"
 	{
+		objectNames.push(name)
 		return {
 			type: Types.object,
 			objectType: type,

@@ -7,6 +7,28 @@ module.exports.hopscotchify = (htnCode, options) => {
 	const Types = parsed.tokenTypes
 
 	const validScopes = [{path: "Self", scope: "Self"}, {path: "Original_object", scope: "Original_object"}, {path: "Game", scope: "Game"}, {path: "User", scope: "User"}, {path: "Local", scope: "Local"}]
+	for (let i = 0; i < parsed.objectNames.length; i++) {
+		const objectName = parsed.objectNames[i]
+		if (objectName.type != Types.identifier)
+			throw "Should be impossible: Non-identifier object name"
+		if (validScopes.map(e=>e.path).includes(objectName.value))
+			throw new parser.SyntaxError("Duplicate scope path", null, objectName.value, objectName.location)
+		const scope = {
+			path: objectName.value,
+			scope: "Object",
+			_callbacksForWhenDefined: [],
+			whenDefined: function(callback) {
+				if (this._object)
+					return callback(this._object)
+				this._callbacksForWhenDefined.push(callback)
+			},
+			hasBeenDefinedAs: function(object) {
+				this._callbacksForWhenDefined.forEach(c=>c(object))
+				this._object = object
+			}
+		}
+		validScopes.push(scope)
+	}
 
 	let project = {
 		stageSize: {
@@ -94,6 +116,7 @@ module.exports.hopscotchify = (htnCode, options) => {
 				hsObject.abilityID = ability.abilityID
 				project.objects.push(hsObject)
 				project.scenes[0].objects.push(hsObject.objectID)
+				validScopes.find(e=>e.path == object.name.value).hasBeenDefinedAs(hsObject)
 				stateStack.push({
 					level: StateLevels.inObject,
 					object: hsObject,
@@ -416,6 +439,18 @@ function createBlockFromUndefinedTypeOfClasses(allowedBlockClasses, parametersKe
 			throw new parser.SyntaxError("Should be impossible: Unhandled game scope", [], "", block.location)
 		case "Local":
 			return createLocalVariableFrom(block)
+		case "Object":
+			if (maybeTraits) {
+				const trait = maybeTraits["Object"]
+				if (trait) {
+					const hsTrait = createObjectTrait(trait)
+					variableDescription.fullScopeObject.whenDefined(hsObject => {
+						hsTrait.HSTraitObjectIDKey = hsObject.objectID
+					})
+					return hsTrait
+				}
+			}
+			throw new parser.SyntaxError("Should be impossible: Unhandled other object scope", [], "", block.location)
 		default:
 			throw new parser.SyntaxError("Should be impossible: Unknown variable scope", validScopes.map(e=>e.path), variableDescription.scope, block.location)
 		}
@@ -430,11 +465,10 @@ function getVariableDescriptionFromPath(variablePath, validScopes) {
 	if (fullVariablePath.length == 1)
 		return {scope: "Local", name:fullVariablePath[0]}
 	// Determine which scope this refers to
-	// TODO: Pass this in from elsewhere and get a list of objects that are defined in the htn
 	for (let i = 0; i < validScopes.length; i++) {
 		const objectPath = validScopes[i].path.split('.')
 		if (arrayStartsWith(fullVariablePath, objectPath))
-			return {scope: validScopes[i].scope, name: fullVariablePath.slice(objectPath.length).join('.')}
+			return {scope: validScopes[i].scope, name: fullVariablePath.slice(objectPath.length).join('.'), fullScopeObject: validScopes[i]}
 	}
 	return null
 }
@@ -460,6 +494,15 @@ function createSelfTrait(trait) {
 function createGameTrait(trait) {
 	return {
 		HSTraitObjectParameterTypeKey: 8003, //HSBlockType.Game
+		HSTraitTypeKey: trait.type,
+		description: trait.description,
+		HSTraitIDKey: randomUUID(),
+	}
+}
+
+function createObjectTrait(trait) {
+	return {
+		HSTraitObjectParameterTypeKey: 8000, //HSBlockType.Object
 		HSTraitTypeKey: trait.type,
 		description: trait.description,
 		HSTraitIDKey: randomUUID(),
