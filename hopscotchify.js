@@ -6,6 +6,8 @@ module.exports.hopscotchify = (htnCode, options) => {
 	const lines = parsed.lines
 	const Types = parsed.tokenTypes
 
+	const validScopes = [{path: "Self", scope: "Self"}, {path: "Original_object", scope: "Original_object"}, {path: "Game", scope: "Game"}, {path: "User", scope: "User"}, {path: "Local", scope: "Local"}]
+
 	let project = {
 		stageSize: {
 			width: 1024,
@@ -123,7 +125,7 @@ module.exports.hopscotchify = (htnCode, options) => {
 				whenBlock = whenBlock ?? line.value
 				if (!whenBlock.doesHaveContainer)
 					throw "Empty rule"
-				const hsBlock = createOperatorBlockFrom(whenBlock.value, Types, parsed.blockTypes, parsed.binaryOperatorBlockTypes, parsed.traitTypes, options)
+				const hsBlock = createOperatorBlockFrom(whenBlock.value, Types, parsed.blockTypes, parsed.binaryOperatorBlockTypes, parsed.traitTypes, validScopes, options)
 				const rule = createRuleWith(hsBlock)
 				currentState().object.rules.push(rule.id)
 				project.rules.push(rule)
@@ -143,7 +145,7 @@ module.exports.hopscotchify = (htnCode, options) => {
 			case Types.binaryOperatorBlock:
 				if (currentState().object.rules.length != 0)
 					throw new parser.SyntaxError("Cannot include blocks after the first rule", [Types.whenBlock, Types.parenthesisBlock, Types.comment], line.type, line.location)
-				const hsMethodBlock = createMethodBlockFrom(line.value, Types, parsed.blockTypes, parsed.binaryOperatorBlockTypes, parsed.traitTypes, options)
+				const hsMethodBlock = createMethodBlockFrom(line.value, Types, parsed.blockTypes, parsed.binaryOperatorBlockTypes, parsed.traitTypes, validScopes, options)
 				currentState().beforeGameStartsAbility.blocks.push(hsMethodBlock)
 				break
 			default:
@@ -151,7 +153,7 @@ module.exports.hopscotchify = (htnCode, options) => {
 			}
 			break
 		case StateLevels.inAbility:
-			const hsBlock = createMethodBlockFrom(line.value, Types, parsed.blockTypes, parsed.binaryOperatorBlockTypes, parsed.traitTypes, options)
+			const hsBlock = createMethodBlockFrom(line.value, Types, parsed.blockTypes, parsed.binaryOperatorBlockTypes, parsed.traitTypes, validScopes, options)
 			currentState().ability.blocks.push(hsBlock)
 			if (["control", "conditionalControl"].includes(hsBlock.block_class)) {
 				if (!line.value.doesHaveContainer)
@@ -195,15 +197,15 @@ function unSnakeCase(snakeCaseString) {
 	return words.join(" ")
 }
 
-function createOperatorBlockFrom(block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, options) {
-	return createBlockOfClasses(["operator","conditionalOperator"], "params", block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, options)
+function createOperatorBlockFrom(block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, options) {
+	return createBlockOfClasses(["operator","conditionalOperator"], "params", block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, options)
 }
 
-function createMethodBlockFrom(block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, options) {
-	return createBlockOfClasses(["method", "control", "conditionalControl"], "parameters", block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, options)
+function createMethodBlockFrom(block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, options) {
+	return createBlockOfClasses(["method", "control", "conditionalControl"], "parameters", block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, options)
 }
 
-function createBlockOfClasses(allowedBlockClasses, parametersKey, block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, options) {
+function createBlockOfClasses(allowedBlockClasses, parametersKey, block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, options) {
 	const {checkParameterLabels} = options
 	if (block.type == Types.binaryOperatorBlock)
 		block = parenthesisificateBinaryOperatorBlock(block, Types, allowedBlockClasses, BinaryOperatorBlockTypes)
@@ -232,7 +234,7 @@ function createBlockOfClasses(allowedBlockClasses, parametersKey, block, Types, 
 	}
 	const blockType = BlockTypes[blockName]
 	if (!blockType)
-		return createBlockFromUndefinedTypeOfClasses(allowedBlockClasses, parametersKey, block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, options)
+		return createBlockFromUndefinedTypeOfClasses(allowedBlockClasses, parametersKey, block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, options)
 	if (!allowedBlockClasses.includes(blockType.class))
 		throw "Invalid block class"
 	result.type = blockType.type
@@ -269,7 +271,7 @@ function createBlockOfClasses(allowedBlockClasses, parametersKey, block, Types, 
 		case Types.identifier:
 		case Types.binaryOperatorBlock:
 		case Types.parenthesisBlock:
-			hsParameter.datum = createOperatorBlockFrom(parameterValue.value, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, options)
+			hsParameter.datum = createOperatorBlockFrom(parameterValue.value, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, options)
 			break
 		default:
 			throw new parser.SyntaxError("Should be impossible: Unknown parameter value type", [Types.number, Types.string, Types.identifier, Types.binaryOperatorBlock, Types.parenthesisBlock], parameterValue.value.type, parameterValue.location)
@@ -383,10 +385,10 @@ function binaryOperatorPriority(operator) {
 	}
 }
 
-function createBlockFromUndefinedTypeOfClasses(allowedBlockClasses, parametersKey, block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, options) {
+function createBlockFromUndefinedTypeOfClasses(allowedBlockClasses, parametersKey, block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, options) {
 	switch (block.type) {
 	case Types.identifier:
-		const variableDescription = getVariableDescriptionFromPath(block.value)
+		const variableDescription = getVariableDescriptionFromPath(block.value, validScopes)
 		if (!variableDescription)
 			throw new parser.SyntaxError("Undefined symbol", ["Block", "Variable"], JSON.stringify(block), block.location)
 		const maybeTraits = TraitTypes[variableDescription.name]
@@ -415,7 +417,7 @@ function createBlockFromUndefinedTypeOfClasses(allowedBlockClasses, parametersKe
 		case "Local":
 			return createLocalVariableFrom(block)
 		default:
-			throw new parser.SyntaxError("Should be impossible: Unknown variable scope", ["Original_object", "Self", "Game", "Local"], variableDescription.scope, block.location)
+			throw new parser.SyntaxError("Should be impossible: Unknown variable scope", validScopes.map(e=>e.path), variableDescription.scope, block.location)
 		}
 		break
 	default:
@@ -423,17 +425,16 @@ function createBlockFromUndefinedTypeOfClasses(allowedBlockClasses, parametersKe
 	}
 }
 
-function getVariableDescriptionFromPath(variablePath) {
+function getVariableDescriptionFromPath(variablePath, validScopes) {
 	const fullVariablePath = variablePath.split('.')
 	if (fullVariablePath.length == 1)
 		return {scope: "Local", name:fullVariablePath[0]}
 	// Determine which scope this refers to
 	// TODO: Pass this in from elsewhere and get a list of objects that are defined in the htn
-	const validObjects = [{path: "Self", scope: "Self"}, {path: "Original_object", scope: "Original_object"}, {path: "Game", scope: "Game"}, {path: "User", scope: "User"}, {path: "Local", scope: "Local"}]
-	for (let i = 0; i < validObjects.length; i++) {
-		const objectPath = validObjects[i].path.split('.')
+	for (let i = 0; i < validScopes.length; i++) {
+		const objectPath = validScopes[i].path.split('.')
 		if (arrayStartsWith(fullVariablePath, objectPath))
-			return {scope: validObjects[i].scope, name: fullVariablePath.slice(objectPath.length).join('.')}
+			return {scope: validScopes[i].scope, name: fullVariablePath.slice(objectPath.length).join('.')}
 	}
 	return null
 }
