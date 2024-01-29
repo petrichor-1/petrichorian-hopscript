@@ -144,13 +144,15 @@ module.exports.hopscotchify = (htnCode, options) => {
 		case States.inAbility:
 			const hsBlock = createMethodBlockFrom(line.value, Types, parsed.blockTypes, parsed.binaryOperatorBlockTypes, parsed.traitTypes, options)
 			abilityStack[abilityStack.length-1].blocks.push(hsBlock)
-			if (hsBlock.block_class == "control") {
+			if (["control", "conditionalControl"].includes(hsBlock.block_class)) {
 				if (!line.value.doesHaveContainer)
 					throw "Empty control block"
 				const ability = createEmptyAbility()
 				hsBlock.controlScript = {abilityID: ability.abilityID}
 				project.abilities.push(ability)
 				abilityStack.push(ability)
+			} else if (line.value.doesHaveContainer) {
+				throw "Container on non-control block"
 			}
 			break
 		default:
