@@ -110,9 +110,21 @@ module.exports.hopscotchify = (htnCode, options) => {
 			}
 			break
 		case States.inObject:
+			let whenBlock;
 			switch (line.value.type) {
+			case Types.parenthesisBlock:
+				if (line.value.name.type != Types.whenBlock)
+					throw new parser.SyntaxError("Bad object-level parenthesis block", [Types.whenBlock], line.value.name.type, line.value.name.location)
+				const modifiedBlock = deepCopy(line.value)
+				modifiedBlock.name = line.value.name.value
+				whenBlock = {
+					type: Types.whenBlock,
+					value: modifiedBlock,
+					doesHaveContainer: modifiedBlock.doesHaveContainer
+				}
+				//Intentionally fall through
 			case Types.whenBlock:
-				const whenBlock = line.value
+				whenBlock = whenBlock ?? line.value
 				if (!whenBlock.doesHaveContainer)
 					throw "Empty rule"
 				const hsBlock = createOperatorBlockFrom(whenBlock.value, Types, parsed.blockTypes, parsed.binaryOperatorBlockTypes, parsed.traitTypes, options)
@@ -126,7 +138,7 @@ module.exports.hopscotchify = (htnCode, options) => {
 				currentState = States.inAbility
 				break
 			default:
-				throw "Bad object level type"
+				throw new parser.SyntaxError("Bad object-level type", [Types.whenBlock, Types.parenthesisBlock], line.value.type, line.value.location)
 			}
 			break
 		case States.inAbility:
