@@ -148,6 +148,21 @@ _defineBlockType operator absolute_value 4010 "Absolute Value" 42 _ "" "-10",
 _defineBlockType operator modulo 4011 "%" 42 _ "" "5", 42 % "%" "2", 
 
 
+#====================
+# Define conditionals
+#====================
+_defineBlockType conditionalOperator equals 1000 "=" 57 _ "" "7", 57 _ "=" "7", 
+_defineBlockType conditionalOperator not_equals 1001 "≠" 57 _ "" "6", 57 _ "≠" "7", 
+_defineBlockType conditionalOperator less_than 1002 "＜" 57 _ "" "6", 57 _ "＜" "7", 
+_defineBlockType conditionalOperator greater_than 1003 "＞" 57 _ "" "8", 57 _ "＞" "7", 
+_defineBlockType conditionalOperator less_than_or_equal_to 1007 "＜=" 57 _ "" "5", 57 _ "＜=" "7", 
+_defineBlockType conditionalOperator greater_than_or_equal_to 1006 "＞=" 57 _ "" "8", 57 _ "＞=" "7", 
+_defineBlockType conditionalOperator and 1004 "and" 49 _ "" "", 49 and "and" "", 
+_defineBlockType conditionalOperator or 1005 "or" 49 _ "" "", 49 or "or" "", 
+_defineBlockType conditionalOperator not 1009 "not" 49 _ "not" "", 
+_defineBlockType conditionalOperator flipped 1010 "flipped"
+_defineBlockType conditionalControl matches 1008 "matches" 53 _ "" "", 53 matches "matches" "", 
+
 
 #==================
 # Define binary ops

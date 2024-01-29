@@ -316,6 +316,7 @@ binaryOperatorBlockTypeDefinition
 
 blockClass
 	= "operator"
+	/ "conditionalOperator"
 	/ "method"
 	/ "control"
 	/ "conditionalControl"
