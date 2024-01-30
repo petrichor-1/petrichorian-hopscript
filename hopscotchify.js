@@ -592,8 +592,12 @@ function createBlockFromUndefinedTypeOfClasses(allowedBlockClasses, parametersKe
 			throw new parser.SyntaxError("Should be impossible: Unknown variable scope", validScopes.map(e=>e.path), variableDescription.scope, block.location)
 		}
 		break
+	case Types.parenthesisBlock:
+		let blockName = block.name.value
+		//Intentionally fall through
 	default:
-		throw new parser.SyntaxError("Should be impossible: Unknown block form", [Types.identifier],block.type,block.location)
+		blockName = blockName ?? JSON.stringify(block)
+		throw new parser.SyntaxError("Undefined block", Object.getOwnPropertyNames(BlockTypes), blockName, block.location)
 	}
 }
 
