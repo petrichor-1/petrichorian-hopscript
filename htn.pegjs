@@ -12,6 +12,7 @@
 		customAbilityReference: "customAbilityReference",
 		whenBlock: "whenBlock",
 		object: "object",
+		customRule: "custom_rule",
 	}
 	let objectTypes = {}
 	let blockTypes = {}
@@ -159,6 +160,7 @@ squareBracketsBlock
 blockName
 	= customAbilityReferenceName
 	/ whenBlockName
+	/ customRuleName
 	/ identifier
 
 customAbilityReferenceName
@@ -176,6 +178,16 @@ whenBlockName
 	{
 		return {
 			type: Types.whenBlock,
+			location: location(),
+			value: name
+		}
+	}
+
+customRuleName
+	= "custom_rule" whitespace+ name:identifier
+	{
+		return {
+			type: Types.customRule,
 			location: location(),
 			value: name
 		}
@@ -270,7 +282,7 @@ object
 
 objectTypeName
 // BE SURE TO CHANGE objectTypeDefinition IF THIS CHANGES, IT ASSUMES THIS IS ALWAYS IDENTIFIER
-	= !"When " value:identifier
+	= !"When " !"custom_rule" value:identifier
 	{ return value }
 
 objectTypeDefinition

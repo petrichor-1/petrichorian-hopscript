@@ -56,13 +56,22 @@ module.exports.hopscotchify = (htnCode, options) => {
 		],
 	}
 
+	let customRules = {}
+	let customRuleDefinitionCallbacks = {}
+	function onDefinitionOfCustomRuleNamed(name, callback) {
+		if (customRules[name])
+			return callback(customRules[name])
+		customRuleDefinitionCallbacks[name] = customRuleDefinitionCallbacks[name] || []
+		customRuleDefinitionCallbacks[name].push(callback)
+	}
+
 	let indentationType;
 	let indentationLevelWhitespaceCount;
 	let currentIndendationLevel = 0
 
 	const StateLevels = {
 		topLevel: 0,
-		inObject: 1,
+		inObjectOrCustomRule: 1,
 		inAbility: 2,
 	}
 	let stateStack = [{
@@ -120,7 +129,7 @@ module.exports.hopscotchify = (htnCode, options) => {
 				project.scenes[0].objects.push(hsObject.objectID)
 				validScopes.find(e=>e.path == object.name.value).hasBeenDefinedAs(hsObject)
 				stateStack.push({
-					level: StateLevels.inObject,
+					level: StateLevels.inObjectOrCustomRule,
 					object: hsObject,
 					beforeGameStartsAbility: ability
 				})
@@ -132,7 +141,7 @@ module.exports.hopscotchify = (htnCode, options) => {
 				throw "Bad top level type"
 			}
 			break
-		case StateLevels.inObject:
+		case StateLevels.inObjectOrCustomRule:
 			let whenBlock;
 			switch (line.value.type) {
 			case Types.parenthesisBlock:
@@ -173,6 +182,44 @@ module.exports.hopscotchify = (htnCode, options) => {
 				const hsMethodBlock = createMethodBlockFrom(line.value, Types, parsed.blockTypes, parsed.binaryOperatorBlockTypes, parsed.traitTypes, validScopes, project, options)
 				currentState().beforeGameStartsAbility.blocks.push(hsMethodBlock)
 				break
+			case Types.customRule:
+				if (line.value.value.type != Types.identifier)
+					throw "Should be impossible: Non-identifier custom rules name"
+				const nameAsString = line.value.value.value
+				const rulesList = currentState().object.rules
+				const tempid = "TEMP" + randomUUID()
+				rulesList.push(tempid)
+				onDefinitionOfCustomRuleNamed(nameAsString, hsCustomRule => {
+					const hsCustomRuleInstance = createCustomRuleInstanceFor(hsCustomRule, project)
+					project.customRuleInstances.push(hsCustomRuleInstance)
+					const index = rulesList.findIndex(e=>e==tempid)
+					if (index < 0)
+						throw "Should be imposssible: Placeholder rule removed"
+					rulesList[index] = hsCustomRuleInstance.id
+				})
+				if (!line.value.doesHaveContainer)
+					break
+				if (customRules[nameAsString])
+					throw new parser.SyntaxError("Duplicate custom rule definition", "", nameAsString, line.location)
+				const beforeGameStartsAbility = createEmptyAbility()
+				project.abilities.push(beforeGameStartsAbility)
+				const hsCustomRule = {
+					id: randomUUID(),
+					abilityID: beforeGameStartsAbility.abilityID,
+					name: unSnakeCase(nameAsString),
+					parameters: [], //TODO
+					rules: []
+				}
+				project.customRules.push(hsCustomRule)
+				customRuleDefinitionCallbacks[nameAsString].forEach(callback => callback(hsCustomRule))
+				customRuleDefinitionCallbacks[nameAsString] = null
+				customRules[nameAsString] = hsCustomRule
+				stateStack.push({
+					level: StateLevels.inObjectOrCustomRule,
+					object: hsCustomRule,
+					beforeGameStartsAbility: beforeGameStartsAbility
+				})
+				break
 			default:
 				throw new parser.SyntaxError("Bad object-level type", [Types.whenBlock, Types.parenthesisBlock, Types.comment, Types.binaryOperatorBlock], line.value.type, line.value.location)
 			}
@@ -199,6 +246,9 @@ module.exports.hopscotchify = (htnCode, options) => {
 		}
 		currentIndendationLevel = newIndentationLevel
 	}
+	const undefinedCustomRuleNames = Object.getOwnPropertyNames(customRuleDefinitionCallbacks).filter(e=>!!customRuleDefinitionCallbacks[e])
+	if (undefinedCustomRuleNames.length > 0)
+		throw new parser.SyntaxError("Undefined custom rule", undefinedCustomRuleNames, "")
 	return project
 }
 
@@ -220,6 +270,14 @@ function unSnakeCase(snakeCaseString) {
 	const words = snakeCaseString.split("_")
 		.map(e=>e[0].toUpperCase()+e.substring(1,e.length))
 	return words.join(" ")
+}
+
+function createCustomRuleInstanceFor(hsCustomRule) {
+	return {
+		id: randomUUID(),
+		customRuleID: hsCustomRule.id,
+		parameters: []
+	}
 }
 
 function createOperatorBlockFrom(block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, project, options) {
