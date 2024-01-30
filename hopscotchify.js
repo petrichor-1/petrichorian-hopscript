@@ -372,7 +372,7 @@ function createBlockOfClasses(allowedBlockClasses, parametersKey, block, Types, 
 			if (parameterLabel.type != Types.identifier)
 				throw "Unknown parameter label type"
 			if (parameterLabel.value != parameterSchema.name)
-				throw "Incorrect parameter label"
+				throw new parser.SyntaxError("Incorrect parameter label", parameterSchema.name, parameterLabel.value, parameterLabel.location)
 		}
 		const hsParameter = {
 			defaultValue: parameterSchema.defaultValue,
