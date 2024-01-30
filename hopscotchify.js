@@ -177,8 +177,19 @@ module.exports.hopscotchify = (htnCode, options) => {
 					handleWhenBlock(whenBlock, Types, parsed, validScopes, project, options, currentState, stateStack, StateLevels)
 					break
 				}
+				if (leftSide && leftSide.type == Types.whenBlock) {
+					const whenBlock = {
+						type: Types.whenBlock,
+						value: deepCopy(line.value),
+						location: line.location,
+						doesHaveContainer: line.value.doesHaveContainer
+					}
+					whenBlock.value.leftSide = leftSide.value
+					handleWhenBlock(whenBlock, Types, parsed, validScopes, project, options, currentState, stateStack, StateLevels)
+					break
+				}
 				if (currentState().object.rules.length != 0)
-					throw new parser.SyntaxError("Cannot include blocks after the first rule", [Types.whenBlock, Types.parenthesisBlock, Types.comment], line.type, line.location)
+					throw new parser.SyntaxError("Cannot include blocks after the first rule", [Types.whenBlock, Types.parenthesisBlock, Types.comment], line.value.type, line.location)
 				const hsMethodBlock = createMethodBlockFrom(line.value, Types, parsed.blockTypes, parsed.binaryOperatorBlockTypes, parsed.traitTypes, validScopes, project, options)
 				currentState().beforeGameStartsAbility.blocks.push(hsMethodBlock)
 				break

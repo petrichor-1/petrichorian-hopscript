@@ -78,7 +78,7 @@ blockContainer
 	= whitespace* ":"
 
 binaryOperatorBlock
-	= leftSide:binaryOperatorBlockInitialValue whitespace* type:binaryOperatorKeyword /*parameters:(parameterValue  whitespace* ",")**/ finalParameter:parameterValue
+	= leftSide:binaryOperatorBlockInitialValue whitespace* type:binaryOperatorKeyword /*parameters:(unlabeledParameterValue  whitespace* ",")**/ finalParameter:unlabeledParameterValue
 	{
 		const result = {
 			type: Types.binaryOperatorBlock,
@@ -136,6 +136,16 @@ parameterValue
 			location: location(),
 			value: val,
 			label:label ? label[0] : null,
+		}
+	}
+unlabeledParameterValue
+	= whitespace*  whitespace* val:value
+	{
+		return {
+			type: Types.parameterValue,
+			location: location(),
+			value: val,
+			label:null,
 		}
 	}
 
