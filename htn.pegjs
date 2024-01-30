@@ -60,7 +60,7 @@ endOfLine
 block
 	= block:actualBlock container:blockContainer?
 	{
-		block.doesHaveContainer = !!container
+		block.doesHaveContainer = block.doesHaveContainer || !!container
 		return block
 	}
 	/ "(" block:actualBlock ")"
@@ -80,13 +80,16 @@ blockContainer
 binaryOperatorBlock
 	= leftSide:binaryOperatorBlockInitialValue whitespace* type:binaryOperatorKeyword /*parameters:(parameterValue  whitespace* ",")**/ finalParameter:parameterValue
 	{
-		return {
+		const result = {
 			type: Types.binaryOperatorBlock,
 			location: location(),
 			leftSide: leftSide,
 			rightSide: [finalParameter], //[parameters.map(e=>e[0]),finalParameter].flatMap(e=>e),
 			operatorKeyword: type
 		}
+		if (finalParameter.value.doesHaveContainer)
+			result.doesHaveContainer = true // Propagate doesHaveContainer to myself
+		return result
 	}
 binaryOperatorKeyword
 	= "=="

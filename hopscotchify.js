@@ -142,34 +142,21 @@ module.exports.hopscotchify = (htnCode, options) => {
 			}
 			break
 		case StateLevels.inObjectOrCustomRule:
-			let whenBlock;
 			switch (line.value.type) {
 			case Types.parenthesisBlock:
 				if (line.value.name.type != Types.whenBlock)
 					throw new parser.SyntaxError("Bad object-level parenthesis block", [Types.whenBlock], line.value.name.type, line.value.name.location)
 				const modifiedBlock = deepCopy(line.value)
 				modifiedBlock.name = line.value.name.value
-				whenBlock = {
+				const whenBlock = {
 					type: Types.whenBlock,
 					value: modifiedBlock,
 					doesHaveContainer: modifiedBlock.doesHaveContainer
 				}
-				//Intentionally fall through
+				handleWhenBlock(whenBlock, Types, parsed, validScopes, project, options, currentState, stateStack, StateLevels)
+				break
 			case Types.whenBlock:
-				whenBlock = whenBlock ?? line.value
-				if (!whenBlock.doesHaveContainer)
-					throw "Empty rule"
-				const hsBlock = createOperatorBlockFrom(whenBlock.value, Types, parsed.blockTypes, parsed.binaryOperatorBlockTypes, parsed.traitTypes, validScopes, project, options)
-				const rule = createRuleWith(hsBlock)
-				currentState().object.rules.push(rule.id)
-				project.rules.push(rule)
-				const ability = createEmptyAbility()
-				rule.abilityID = ability.abilityID
-				project.abilities.push(ability)
-				stateStack.push({
-					level: StateLevels.inAbility,
-					ability: ability
-				})
+				handleWhenBlock(line.value, Types, parsed, validScopes, project, options, currentState, stateStack, StateLevels)
 				break
 			case Types.comment:
 				if (currentState().object.rules.length != 0)
@@ -177,6 +164,18 @@ module.exports.hopscotchify = (htnCode, options) => {
 				currentState().beforeGameStartsAbility.blocks.push(createHsCommentFrom(line.value))
 				break
 			case Types.binaryOperatorBlock:
+				const leftSide = line.value.leftSide
+				if (leftSide && leftSide.name?.type == Types.whenBlock) {
+					const whenBlock = {
+						type: Types.whenBlock,
+						value: deepCopy(line.value),
+						location: line.location,
+						doesHaveContainer: line.value.doesHaveContainer
+					}
+					whenBlock.value.leftSide.name = leftSide.name.value
+					handleWhenBlock(whenBlock, Types, parsed, validScopes, project, options, currentState, stateStack, StateLevels)
+					break
+				}
 				if (currentState().object.rules.length != 0)
 					throw new parser.SyntaxError("Cannot include blocks after the first rule", [Types.whenBlock, Types.parenthesisBlock, Types.comment], line.type, line.location)
 				const hsMethodBlock = createMethodBlockFrom(line.value, Types, parsed.blockTypes, parsed.binaryOperatorBlockTypes, parsed.traitTypes, validScopes, project, options)
@@ -250,6 +249,22 @@ module.exports.hopscotchify = (htnCode, options) => {
 	if (undefinedCustomRuleNames.length > 0)
 		throw new parser.SyntaxError("Undefined custom rule", undefinedCustomRuleNames, "")
 	return project
+}
+
+function handleWhenBlock(whenBlock, Types, parsed, validScopes, project, options, currentState, stateStack, StateLevels) {
+	if (!whenBlock.doesHaveContainer)
+		throw new parser.SyntaxError("Empty rule", ":", "", whenBlock.location)
+	const hsBlock = createOperatorBlockFrom(whenBlock.value, Types, parsed.blockTypes, parsed.binaryOperatorBlockTypes, parsed.traitTypes, validScopes, project, options)
+	const rule = createRuleWith(hsBlock)
+	currentState().object.rules.push(rule.id)
+	project.rules.push(rule)
+	const ability = createEmptyAbility()
+	rule.abilityID = ability.abilityID
+	project.abilities.push(ability)
+	stateStack.push({
+		level: StateLevels.inAbility,
+		ability: ability
+	})
 }
 
 function deepCopy(object) {
@@ -479,18 +494,27 @@ function findIndicesInArray(array, predicate) {
 
 function binaryOperatorPriority(operator) {
 	switch (operator) {
-	case "-":
-	case "+":
+	case "and":
+	case "or":
+	case "not":
 		return 0
-	case "/":
-	case "*":
-		return 1
-	case "^":
-		return 2
+	case "<":
+	case "<=":
+	case ">":
+	case ">=":
+	case "!-":
 	case "==":
 	case "=":
 	case "MATCHES":
+		return 1
+	case "-":
+	case "+":
+		return 2
+	case "/":
+	case "*":
 		return 3
+	case "^":
+		return 4
 	default:
 		throw `Should be impossible: Unknown binary operator keyword '${operator}'`
 	}
@@ -626,7 +650,7 @@ function getOrAddObjectVariableNamed(name, project) {
 }
 
 function createRuleWith(hsBlock) {
-	if (hsBlock.block_class != "operator")
+	if (!["operator", "conditionalOperator"].includes(hsBlock.block_class))
 		throw "Invalid block class for rules"
 	const result = {
 		id: randomUUID(),
