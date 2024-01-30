@@ -259,7 +259,7 @@ function createBlockOfClasses(allowedBlockClasses, parametersKey, block, Types, 
 	}
 	const blockType = BlockTypes[blockName]
 	if (!blockType)
-		return createBlockFromUndefinedTypeOfClasses(allowedBlockClasses, parametersKey, block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, project, options)
+		return createBlockFromUndefinedTypeOfClasses(allowedBlockClasses, parametersKey, block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, project, validScopes, options)
 	if (!allowedBlockClasses.includes(blockType.class))
 		throw "Invalid block class"
 	result.type = blockType.type
@@ -438,7 +438,7 @@ function binaryOperatorPriority(operator) {
 	}
 }
 
-function createBlockFromUndefinedTypeOfClasses(allowedBlockClasses, parametersKey, block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, options) {
+function createBlockFromUndefinedTypeOfClasses(allowedBlockClasses, parametersKey, block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, project, validScopes, options) {
 	switch (block.type) {
 	case Types.identifier:
 		const variableDescription = getVariableDescriptionFromPath(block.value, validScopes)
@@ -459,7 +459,12 @@ function createBlockFromUndefinedTypeOfClasses(allowedBlockClasses, parametersKe
 				if (trait)
 					return createSelfTrait(trait)
 			}
-			throw new parser.SyntaxError("Should be impossible: Unhandled self scope", [], "", block.location)
+			const hsVariable = getOrAddObjectVariableNamed(variableDescription.name, project)
+			return {
+				type: 8004, //HSBlockType.Self
+				variable: hsVariable.objectIdString,
+				description: "Variable" // Correct
+			}
 		case "Game":
 			if (maybeTraits) {
 				const trait = maybeTraits["Game"]
@@ -546,6 +551,20 @@ function createLocalVariableFrom(block) {
 		type: 8009, //HSBlockType.Local
 		description: "Local Variable" //Constant
 	}
+}
+
+function getOrAddObjectVariableNamed(name, project) {
+	const hsName = unSnakeCase(name)
+	const maybeExistingVariable = project.variables.find(variable=>variable.name == hsName)
+	if (maybeExistingVariable)
+		return maybeExistingVariable
+	const hsVariable = {
+		name: hsName,
+		type: 8000, //HSBlockType.Object
+		objectIdString: randomUUID()
+	}
+	project.variables.push(hsVariable)
+	return hsVariable
 }
 
 function createRuleWith(hsBlock) {
