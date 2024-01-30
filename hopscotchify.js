@@ -80,6 +80,7 @@ module.exports.hopscotchify = (htnCode, options) => {
 	function currentState() {
 		return stateStack[stateStack.length-1]
 	}
+	let latestDiscardedState;
 	for (let i = 0; i < lines.length; i++) {
 		const line = lines[i]
 		if (line.type != Types.line) {
@@ -100,7 +101,7 @@ module.exports.hopscotchify = (htnCode, options) => {
 			newIndentationLevel = indentationLevelOfLine
 		}
 		for (let i = newIndentationLevel; i < currentIndendationLevel; i++) {
-			stateStack.pop()
+			latestDiscardedState = stateStack.pop()
 		}
 		switch (currentState().level) {
 		case StateLevels.topLevel:
@@ -224,6 +225,23 @@ module.exports.hopscotchify = (htnCode, options) => {
 			}
 			break
 		case StateLevels.inAbility:
+			if (line.value.type == Types.identifier && line.value.value == "else") {
+				if (!latestDiscardedState)
+					throw new parser.SyntaxError("Should be impossible: Else in a weird place", "", line.value.value, line,value.location)
+				const checkIfElseBlock = latestDiscardedState.checkIfElseBlock
+				if (!checkIfElseBlock)
+					throw new parser.SyntaxError("Else for non-check_if_else block", "", line.value.value, line.value.location)
+				if (checkIfElseBlock.controlFalseScript)
+					throw new parser.SyntaxError("Multiple else in check if else block", "", line.value.value, line.value.location)
+				const elseAbility = createEmptyAbility()
+				project.abilities.push(elseAbility)
+				checkIfElseBlock.controlFalseScript = {abilityID: elseAbility.abilityID}
+				stateStack.push({
+					level: StateLevels.inAbility,
+					ability: elseAbility
+				})
+				break
+			}
 			const hsBlock = createMethodBlockFrom(line.value, Types, parsed.blockTypes, parsed.binaryOperatorBlockTypes, parsed.traitTypes, validScopes, project, options)
 			currentState().ability.blocks.push(hsBlock)
 			if (["control", "conditionalControl"].includes(hsBlock.block_class)) {
@@ -234,7 +252,9 @@ module.exports.hopscotchify = (htnCode, options) => {
 				project.abilities.push(ability)
 				stateStack.push({
 					level: StateLevels.inAbility,
-					ability: ability
+					ability: ability,
+					checkIfElseBlock: hsBlock.type == 124 ? //HSBlockType.CheckIfElse
+						hsBlock : null
 				})
 			} else if (line.value.doesHaveContainer) {
 				throw "Container on non-control block"
