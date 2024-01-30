@@ -146,6 +146,11 @@ _defineBlockType operator floor 4018 "Floor" 57 _ "" "2.5",
 _defineBlockType operator ceiling 4019 "Ceiling" 57 _ "" "2.5", 
 _defineBlockType operator absolute_value 4010 "Absolute Value" 42 _ "" "-10", 
 _defineBlockType operator modulo 4011 "%" 42 _ "" "5", 42 % "%" "2", 
+#Text
+_defineBlockType operator character_at_index 9000 "Character at Index" 57 in "in" "", 42 at "at" "0", 
+_defineBlockType operator characters_between 9001 "Characters between" 57 in "in" "", 42 between "between" "0", 42 and "and" "1", 
+_defineBlockType operator length 9002 "Length" 57 _ "" "", 
+_defineBlockType operator join 9003 "Join" 57 _ "" "", 57 with "with" "", 
 #Color
 #TODO: should be `random` but there is no way to differentiate that and random(_, to:) yet
 _defineBlockType operator random_color 5000 "Random"
