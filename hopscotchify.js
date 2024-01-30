@@ -584,7 +584,12 @@ function createBlockFromUndefinedTypeOfClasses(allowedBlockClasses, parametersKe
 				if (trait)
 					return createGameTrait(trait)
 			}
-			throw new parser.SyntaxError("Should be impossible: Unhandled game scope", [], "", block.location)
+			const gameHsVariable = getOrAddObjectVariableNamed(variableDescription.name, project)
+			return {
+				type: 8003, //HSBlockType.Game
+				variable: gameHsVariable.objectIdString,
+				description: "Variable", // Correct
+			}
 		case "Local":
 			return createLocalVariableFrom(block)
 		case "Object":
