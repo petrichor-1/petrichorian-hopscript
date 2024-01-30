@@ -192,7 +192,7 @@ identifier
 	}
 
 identifierAllowedFirstCharacter
-	= ![0-9] !"_" v:identifierAllowedCharacter
+	= ![0-9] !"_" !"-" v:identifierAllowedCharacter
 	{
 		return v
 	}
