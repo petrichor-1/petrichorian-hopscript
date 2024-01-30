@@ -1,5 +1,6 @@
 const parser = require("./htn.js")
 const { randomUUID } = require('crypto')
+const { HSParameterType } = require('./HSParameterType.js')
 
 module.exports.hopscotchify = (htnCode, options) => {
 	const parsed = parser.parse(htnCode)
@@ -46,6 +47,7 @@ module.exports.hopscotchify = (htnCode, options) => {
 		variables: [],
 		customRuleInstances: [],
 		rules: [],
+		eventParameters: [],
 		scenes: [
 			{
 				name: "Scene 1",
@@ -148,7 +150,7 @@ module.exports.hopscotchify = (htnCode, options) => {
 				whenBlock = whenBlock ?? line.value
 				if (!whenBlock.doesHaveContainer)
 					throw "Empty rule"
-				const hsBlock = createOperatorBlockFrom(whenBlock.value, Types, parsed.blockTypes, parsed.binaryOperatorBlockTypes, parsed.traitTypes, validScopes, options)
+				const hsBlock = createOperatorBlockFrom(whenBlock.value, Types, parsed.blockTypes, parsed.binaryOperatorBlockTypes, parsed.traitTypes, validScopes, project, options)
 				const rule = createRuleWith(hsBlock)
 				currentState().object.rules.push(rule.id)
 				project.rules.push(rule)
@@ -168,7 +170,7 @@ module.exports.hopscotchify = (htnCode, options) => {
 			case Types.binaryOperatorBlock:
 				if (currentState().object.rules.length != 0)
 					throw new parser.SyntaxError("Cannot include blocks after the first rule", [Types.whenBlock, Types.parenthesisBlock, Types.comment], line.type, line.location)
-				const hsMethodBlock = createMethodBlockFrom(line.value, Types, parsed.blockTypes, parsed.binaryOperatorBlockTypes, parsed.traitTypes, validScopes, options)
+				const hsMethodBlock = createMethodBlockFrom(line.value, Types, parsed.blockTypes, parsed.binaryOperatorBlockTypes, parsed.traitTypes, validScopes, project, options)
 				currentState().beforeGameStartsAbility.blocks.push(hsMethodBlock)
 				break
 			default:
@@ -176,7 +178,7 @@ module.exports.hopscotchify = (htnCode, options) => {
 			}
 			break
 		case StateLevels.inAbility:
-			const hsBlock = createMethodBlockFrom(line.value, Types, parsed.blockTypes, parsed.binaryOperatorBlockTypes, parsed.traitTypes, validScopes, options)
+			const hsBlock = createMethodBlockFrom(line.value, Types, parsed.blockTypes, parsed.binaryOperatorBlockTypes, parsed.traitTypes, validScopes, project, options)
 			currentState().ability.blocks.push(hsBlock)
 			if (["control", "conditionalControl"].includes(hsBlock.block_class)) {
 				if (!line.value.doesHaveContainer)
@@ -220,15 +222,15 @@ function unSnakeCase(snakeCaseString) {
 	return words.join(" ")
 }
 
-function createOperatorBlockFrom(block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, options) {
-	return createBlockOfClasses(["operator","conditionalOperator"], "params", block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, options)
+function createOperatorBlockFrom(block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, project, options) {
+	return createBlockOfClasses(["operator","conditionalOperator"], "params", block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, project, options)
 }
 
-function createMethodBlockFrom(block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, options) {
-	return createBlockOfClasses(["method", "control", "conditionalControl"], "parameters", block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, options)
+function createMethodBlockFrom(block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, project, options) {
+	return createBlockOfClasses(["method", "control", "conditionalControl"], "parameters", block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, project, options)
 }
 
-function createBlockOfClasses(allowedBlockClasses, parametersKey, block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, options) {
+function createBlockOfClasses(allowedBlockClasses, parametersKey, block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, project, options) {
 	const {checkParameterLabels} = options
 	if (block.type == Types.binaryOperatorBlock)
 		block = parenthesisificateBinaryOperatorBlock(block, Types, allowedBlockClasses, BinaryOperatorBlockTypes)
@@ -257,7 +259,7 @@ function createBlockOfClasses(allowedBlockClasses, parametersKey, block, Types, 
 	}
 	const blockType = BlockTypes[blockName]
 	if (!blockType)
-		return createBlockFromUndefinedTypeOfClasses(allowedBlockClasses, parametersKey, block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, options)
+		return createBlockFromUndefinedTypeOfClasses(allowedBlockClasses, parametersKey, block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, project, options)
 	if (!allowedBlockClasses.includes(blockType.class))
 		throw "Invalid block class"
 	result.type = blockType.type
@@ -292,9 +294,18 @@ function createBlockOfClasses(allowedBlockClasses, parametersKey, block, Types, 
 			hsParameter.value = parameterValue.value.value
 			break
 		case Types.identifier:
+			if (hsParameter.type == HSParameterType.HSObject) {
+				const eventParameterPrototype = eventParameterPrototypeForIdentifier(parameterValue.value)
+				if (!eventParameterPrototype)
+					throw new parser.SyntaxError("Cannot make eventParameter from this", ["Screen"], parameterValue.value.value, parameterValue.location)
+				const hsEventParameter = createEventParameterUsing(eventParameterPrototype)
+				hsParameter.variable = hsEventParameter.id
+				project.eventParameters.push(hsEventParameter)
+				break
+			}
 		case Types.binaryOperatorBlock:
 		case Types.parenthesisBlock:
-			hsParameter.datum = createOperatorBlockFrom(parameterValue.value, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, options)
+			hsParameter.datum = createOperatorBlockFrom(parameterValue.value, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, project, options)
 			break
 		default:
 			throw new parser.SyntaxError("Should be impossible: Unknown parameter value type", [Types.number, Types.string, Types.identifier, Types.binaryOperatorBlock, Types.parenthesisBlock], parameterValue.value.type, parameterValue.location)
@@ -302,6 +313,25 @@ function createBlockOfClasses(allowedBlockClasses, parametersKey, block, Types, 
 		result[parametersKey].push(hsParameter)
 	}
 	return result
+}
+
+function eventParameterPrototypeForIdentifier(identifier) {
+	// THis gets mutated so return a fresh one
+	switch (identifier.value) {
+	case "Screen":
+		return {
+			blockType: 8003,
+			description: "📱 My iPad"
+		}
+	default:
+		return null
+	}
+}
+
+function createEventParameterUsing(prototype) {
+	// MUTATES PROTOTYPE
+	prototype.id = randomUUID()
+	return prototype
 }
 
 function parenthesisificateBinaryOperatorBlock(binaryOperatorBlock, Types, allowedBlockClasses, BinaryOperatorBlockTypes) {
