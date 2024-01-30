@@ -146,6 +146,13 @@ _defineBlockType operator floor 4018 "Floor" 57 _ "" "2.5",
 _defineBlockType operator ceiling 4019 "Ceiling" 57 _ "" "2.5", 
 _defineBlockType operator absolute_value 4010 "Absolute Value" 42 _ "" "-10", 
 _defineBlockType operator modulo 4011 "%" 42 _ "" "5", 42 % "%" "2", 
+#Color
+#TODO: should be `random` but there is no way to differentiate that and random(_, to:) yet
+_defineBlockType operator random_color 5000 "Random"
+#TODO: Alias
+_defineBlockType operator h 5002 "HSB" 42 _ "H" "172", 42 s "S" "86", 42 b "B" "96", 
+#TODO: Alias
+_defineBlockType operator r 5001 "RGB" 42 _ "R" "34", 42 g "G" "246", 42 b "B" "217", 
 
 
 #====================
