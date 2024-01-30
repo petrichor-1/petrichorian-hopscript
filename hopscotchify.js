@@ -584,7 +584,7 @@ function createBlockFromUndefinedTypeOfClasses(allowedBlockClasses, parametersKe
 				if (trait)
 					return createGameTrait(trait)
 			}
-			const gameHsVariable = getOrAddObjectVariableNamed(variableDescription.name, project)
+			const gameHsVariable = getOrAddGameVariableNamed(variableDescription.name, project)
 			return {
 				type: 8003, //HSBlockType.Game
 				variable: gameHsVariable.objectIdString,
@@ -691,6 +691,20 @@ function getOrAddObjectVariableNamed(name, project) {
 	const hsVariable = {
 		name: hsName,
 		type: 8000, //HSBlockType.Object
+		objectIdString: randomUUID()
+	}
+	project.variables.push(hsVariable)
+	return hsVariable
+}
+
+function getOrAddGameVariableNamed(name, project) {
+	const hsName = unSnakeCase(name)
+	const maybeExistingVariable = project.variables.find(variable=>variable.name == hsName)
+	if (maybeExistingVariable)
+		return maybeExistingVariable
+	const hsVariable = {
+		name: hsName,
+		type: 8003, //HSBlockType.Game
 		objectIdString: randomUUID()
 	}
 	project.variables.push(hsVariable)
