@@ -598,7 +598,15 @@ function createBlockFromUndefinedTypeOfClasses(allowedBlockClasses, parametersKe
 					return hsTrait
 				}
 			}
-			throw new parser.SyntaxError("Should be impossible: Unhandled other object scope", [], "", block.location)
+			const objectHsVariable = getOrAddObjectVariableNamed(variableDescription.name, project)
+			const hsDatum = {
+				type: 8000, //HSBlockType.Object
+				variable: objectHsVariable.objectIdString,
+				description: "Variable", // Correct
+				object: "PETRICHOR__TEMPOBJECTIDFOR" + variableDescription.path
+			}
+			variableDescription.fullScopeObject.whenDefined(hsObject => {hsDatum.object = hsObject.objectID})
+			return hsDatum
 		default:
 			throw new parser.SyntaxError("Should be impossible: Unknown variable scope", validScopes.map(e=>e.path), variableDescription.scope, block.location)
 		}
