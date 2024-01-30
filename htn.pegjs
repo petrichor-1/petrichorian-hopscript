@@ -218,7 +218,7 @@ number
 			type: Types.number,
 			location: location(),
 			// Magic hack to just get all extant characters to be in a single string
-			value: val.flatMap((e) => e).filter(e=>!!e).join('')
+			value: val.flatMap((e) => e).filter(e=>!!e).map(e=>e.join?e.join(''):e).join('')
 		}
 	}
 
