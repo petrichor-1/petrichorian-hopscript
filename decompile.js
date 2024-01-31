@@ -44,6 +44,8 @@ function newLine() {
 		finalResult += "\t"
 }
 project.customRules.forEach(customRule => {
+	if (customRule.rules.length <= 0 && project.abilities.find(e=>e.abilityID==customRule.abilityID)?.blocks?.length <= 0)
+		return
 	finalResult += "custom_rule "
 	finalResult += snakeCaseify(customRule.name)
 	finalResult += ":"
@@ -56,6 +58,8 @@ project.scenes[0].objects.forEach(objectID => {
 	const hsObject = project.objects.find(o=>o.objectID==objectID)
 	if (!hsObject)
 		throw `Could not find object with id ${objectID}`
+	if (hsObject.rules.length <= 0 && (project.abilities.find(e=>e.abilityID==hsObject.abilityID)?.blocks?.length || 0) <= 0)
+		return
 	const htnObjectType = objectNamesByHSType[hsObject.type]
 	if (!htnObjectType)
 		throw `Undefined object type ${hsObject.type} (used by ${hsObject.name})`
