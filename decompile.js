@@ -222,7 +222,20 @@ function addDatum(datum) {
 		return addBlock(datum, "params")
 	if (datum.type == 8009) //HSBlockType.Local
 		return addLocalVariable(datum)
+	if (datum.blockType >= 10001 && datum.blockType < 10003) //HSBlockType.PreviousSceneParameter and HSBlockType.HS_END_OF_SCENE_REFERENCE_BLOCKS
+		return addSceneReferenceBlock(datum)
 	throw "Unknown datum type" + JSON.stringify(datum)
+}
+
+function addSceneReferenceBlock(datum) {
+	switch (datum.blockType) {
+	case 10002: //HSBlockType.NextSceneParameter
+		finalResult += "Next_scene"
+		break
+	default:
+		console.log(datum)
+		throw "TODO"
+	}
 }
 
 function addVariableFromDatum(datum) {
