@@ -103,6 +103,7 @@ project.scenes[0].objects.forEach(objectID => {
 	currentIndentationLevel--
 	newLine()
 })
+finalResult = finalResult.replace(/\n(\t+\n)+/gm,"\n")
 console.log(finalResult)
 
 
@@ -305,7 +306,6 @@ function addAbility(hsAbility) {
 		if (block.type == 123) { //HSBlockType.ability
 			return newLine()
 		}
-		let stillNeedsNewline = true
 		if (block.controlScript) {
 			finalResult += ":"
 			currentIndentationLevel++
@@ -315,7 +315,6 @@ function addAbility(hsAbility) {
 				throw `Missing ability with id ${block.controlScript.abilityID} as child of ability with id ${hsAbility.abilityID}`
 			addAbility(childAbility)
 			currentIndentationLevel--
-			stillNeedsNewline = false
 		}
 		if (block.controlFalseScript) {
 			const childAbility = project.abilities.find(e=>e.abilityID == block.controlFalseScript.abilityID)
@@ -326,11 +325,9 @@ function addAbility(hsAbility) {
 				newLine()
 				addAbility(childAbility)
 				currentIndentationLevel--
-				stillNeedsNewline = false
 			}
 		}
-		if (stillNeedsNewline)
-			newLine()
+		newLine()
 	})
 }
 
