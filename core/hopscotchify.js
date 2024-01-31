@@ -154,8 +154,28 @@ module.exports.hopscotchify = (htnCode, options) => {
 					throw new parser.SyntaxError("Should be impossible: Unknown custom rule name type", Types.identifier, line.value.value.type, line.value.value.location)
 				addCustomRuleDefinition(customRules, line.value.value.value, line, project, customRuleDefinitionCallbacks, stateStack, StateLevels)
 				break
+			case Types.customAbilityReference:
+				if (!line.value.doesHaveContainer)
+					throw new parser.SyntaxError("Top level custom blocks must be definitions", ":", "", line.value.location)
+				if (!line.value.value.type == Types.identifier)
+					throw new parser.SyntaxError("Should be impossible: Unknown custom block name type", Types.identifier, line.value.value.type, line.value.value.location)
+				const name = unSnakeCase(line.value.value.value)
+				const customBlockAbility = createEmptyAbility()
+				project.abilities.push(customBlockAbility)
+				customBlockDefinitionCallbacks[name]?.forEach(callback => {
+					callback(customBlockAbility)
+				})
+				customBlockDefinitionCallbacks[name] = null
+				customBlocks[name] = customBlockAbility
+				customBlockAbility.name = name
+				stateStack.push({
+					level: StateLevels.inAbility,
+					ability: customBlockAbility,
+					checkIfElseBlock: null
+				})
+				break
 			default:
-				throw new parser.SyntaxError("Bad top level type", [Types.comment, Types.object, Types.customRule], line.value.type, line.value.location)
+				throw new parser.SyntaxError("Bad top level type", [Types.comment, Types.object, Types.customRule, Types.customAbilityReference], line.value.type, line.value.location)
 			}
 			break
 		case StateLevels.inObjectOrCustomRule:

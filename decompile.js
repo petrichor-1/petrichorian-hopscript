@@ -43,6 +43,20 @@ function newLine() {
 	for (let i = 0; i < currentIndentationLevel; i++)
 		finalResult += "\t"
 }
+project.abilities.forEach(ability => {
+	if (!ability.name || ability.name == "")
+		return
+	if (ability.blocks.length <= 0)
+		return
+	finalResult += "custom_block "
+	finalResult += snakeCaseify(ability.name)
+	finalResult += ":"
+	currentIndentationLevel++
+	newLine()
+	addAbility(ability)
+	currentIndentationLevel--
+	newLine()
+})
 project.customRules.forEach(customRule => {
 	if (customRule.rules.length <= 0 && project.abilities.find(e=>e.abilityID==customRule.abilityID)?.blocks?.length <= 0)
 		return
