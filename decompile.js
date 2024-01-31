@@ -320,14 +320,7 @@ function addAbility(hsAbility) {
 		if (block.controlFalseScript) {
 			const childAbility = project.abilities.find(e=>e.abilityID == block.controlFalseScript.abilityID)
 			if (childAbility && childAbility.blocks.length > 0) {
-				if (stillNeedsNewline)
-					newLine()
-				//Unindent 1
-				if (!/\t$/.test(finalResult)) {
-					newLine()
-				} else {
-					finalResult = finalResult.substring(0,finalResult.length-1)
-				}
+				newLine()
 				finalResult += "else:"
 				currentIndentationLevel++
 				newLine()

@@ -202,7 +202,7 @@ module.exports.hopscotchify = (htnCode, options) => {
 					throw new parser.SyntaxError("Top level custom rules must be definitions", ":", "", line.value.location)
 				if (!line.value.value.type == Types.identifier)
 					throw new parser.SyntaxError("Should be impossible: Unknown custom rule name type", Types.identifier, line.value.value.type, line.value.value.location)
-				addCustomRuleDefinition(customRules, line.value.value.value, line, project, customRuleDefinitionCallbacks, stateStack, StateLevels)
+				addCustomRuleDefinition(customRules, line.value.value.value, line, project, customRuleDefinitionCallbacks, stateStack, StateLevels, Types, null)
 				break
 			case Types.customAbilityReference:
 				const definition = line.value
@@ -216,6 +216,17 @@ module.exports.hopscotchify = (htnCode, options) => {
 					parenthesisBlock.value = line.value.name.value
 					parenthesisBlock.type = Types.customAbilityReference
 					handleCustomBlockDefinition(parenthesisBlock)
+					break
+				}
+				if (line.value.name.type == Types.customRule) {
+					const parenthesisBlock = deepCopy(line.value)
+					if (line.value.name.value.type != Types.identifier)
+						throw new parser.SyntaxError("Should be impossible: Unknown custom block name type", Types.identifier, line.value.name.value.type, line.value.name.value.location)
+					if (!parenthesisBlock.doesHaveContainer)
+						throw new parser.SyntaxError("Top level custom rules must be definitions", ":", "", line.value.location)
+					parenthesisBlock.value = line.value.name.value
+					parenthesisBlock.type = Types.customRule
+					addCustomRuleDefinition(customRules, parenthesisBlock.value.value, line, project, customBlockDefinitionCallbacks, stateStack, StateLevels, Types, parenthesisBlock.parameters)
 					break
 				}
 				// Intentionally fall through
@@ -307,7 +318,7 @@ module.exports.hopscotchify = (htnCode, options) => {
 				})
 				if (!line.value.doesHaveContainer)
 					break
-				addCustomRuleDefinition(customRules, nameAsString, line, project, customRuleDefinitionCallbacks, stateStack, StateLevels)
+				addCustomRuleDefinition(customRules, nameAsString, line, project, customRuleDefinitionCallbacks, stateStack, StateLevels, Types, null)
 				break
 			default:
 				throw new parser.SyntaxError("Bad object-level type", [Types.whenBlock, Types.parenthesisBlock, Types.comment, Types.binaryOperatorBlock], line.value.type, line.value.location)
@@ -423,7 +434,7 @@ module.exports.hopscotchify = (htnCode, options) => {
 	}
 }
 
-function addCustomRuleDefinition(customRules, nameAsString, line, project, customRuleDefinitionCallbacks, stateStack, StateLevels) {
+function addCustomRuleDefinition(customRules, nameAsString, line, project, customRuleDefinitionCallbacks, stateStack, StateLevels, Types, maybeParameters) {
 	if (customRules[nameAsString])
 		throw new parser.SyntaxError("Duplicate custom rule definition", "", nameAsString, line.location)
 	const beforeGameStartsAbility = createEmptyAbility()
@@ -435,6 +446,24 @@ function addCustomRuleDefinition(customRules, nameAsString, line, project, custo
 		parameters: [], //TODO
 		rules: []
 	}
+	maybeParameters?.forEach(parameterValue => {
+		const parameter = {}
+		if (parameterValue.type != Types.parameterValue)
+			throw new parser.SyntaxError("Should be impossible: Unknow parameter value type", Types.parameterValue, parameterValue.type, parameterValue.location)
+		if (parameterValue.label.type != Types.identifier)
+			throw new parser.SyntaxError("Should be impossible: Unknown parameter label type", Types.identifier, parameterValue.label.type, parameterValue.label.location)
+		parameter.key = unSnakeCase(parameterValue.label.value)
+		switch (parameterValue.value.type) {
+		case Types.string:
+		case Types.number:
+			parameter.defaultValue = parameterValue.value.value
+			parameter.value = parameterValue.value.value
+			break
+		default:
+			throw new parser.SyntaxError("Should be impossible: Unknown parameer value value type", [Types.string, Types.number], parameterValue.value.type, parameterValue.value.location)
+		}
+		hsCustomRule.parameters.push(parameter)
+	})
 	project.customRules.push(hsCustomRule)
 	customRuleDefinitionCallbacks[nameAsString]?.forEach(callback => callback(hsCustomRule))
 	customRuleDefinitionCallbacks[nameAsString] = null
@@ -526,7 +555,7 @@ function createBlockOfClasses(allowedBlockClasses, parametersKey, block, Types, 
 			newBlock.value = blockName
 			return createCustomBlockReferenceFrom(newBlock, Types)
 		default:
-			throw "Unknown block name type " + block.name.type
+			throw new parser.SyntaxError("Unknown block name type " + block.name.type, [Types.identifier, Types.customAbilityReference], block.name.type, block.name.location)
 		}
 		break
 	case Types.comment:
