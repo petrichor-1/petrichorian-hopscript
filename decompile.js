@@ -50,8 +50,8 @@ project.customRules.forEach(customRule => {
 	currentIndentationLevel++
 	addCustomRuleOrObject(customRule)
 	currentIndentationLevel--
+	newLine()
 })
-newLine()
 project.scenes[0].objects.forEach(objectID => {
 	const hsObject = project.objects.find(o=>o.objectID==objectID)
 	if (!hsObject)
