@@ -275,7 +275,7 @@ module.exports.hopscotchify = (htnCode, options) => {
 			}
 			if (["control", "conditionalControl"].includes(hsBlock.block_class)) {
 				if (!line.value.doesHaveContainer) {
-					if (line.value.type == Types.customAbilityReference)
+					if (line.value.type == Types.customAbilityReference || line.value.name?.type == Types.customAbilityReference)
 						break
 					throw new parser.SyntaxError("Empty control block", ":", "", line.value.location)
 				}
@@ -401,28 +401,28 @@ function createBlockOfClasses(allowedBlockClasses, parametersKey, block, Types, 
 		blockParameters = []
 		break
 	case Types.parenthesisBlock:
-		if (block.name.type != Types.identifier)
+		switch (block.name.type) {
+		case Types.identifier:
+			blockName = block.name.value
+			blockParameters = block.parameters
+			break
+		case Types.customAbilityReference:
+			blockName = block.name.value
+			if (blockName.type != Types.identifier)
+				throw new parser.SyntaxError("Unknown block name type", Types.identifier, blockName.type, blockName.location)
+			const newBlock = deepCopy(block)
+			newBlock.value = blockName
+			return createCustomBlockReferenceFrom(newBlock, Types)
+		default:
 			throw "Unknown block name type " + block.name.type
-		blockName = block.name.value
-		blockParameters = block.parameters
+		}
 		break
 	case Types.comment:
 		return createHsCommentFrom(block)
 	case Types.binaryOperatorBlock:
 		throw new parser.SyntaxError("Should be impossible: Unconverted binary operator block", [], "", block.location)
 	case Types.customAbilityReference:
-		if (block.value.type != Types.identifier)
-			throw new parser.SyntaxError("Should be impossible: Unknown custom block name form", Types.identifier, block.value.type, block.value.location)
-		const name = unSnakeCase(block.value.value)
-		const hsBlock = {
-			block_class: "control",
-			type: 123, //HSBlockType.Ability
-			description: name,
-			controlScript: {
-				abilityID: "PETRICHOR__TEMP"
-			}
-		}
-		return hsBlock
+		return createCustomBlockReferenceFrom(block, Types)
 	default:
 		throw new parser.SyntaxError("Should be impossible: Unknown block form", [Types.comment, Types.identifier, Types.comment], block.type, block.location)
 	}
@@ -466,7 +466,7 @@ function createBlockOfClasses(allowedBlockClasses, parametersKey, block, Types, 
 			if (hsParameter.type == HSParameterType.HSObject) {
 				const eventParameterPrototype = eventParameterPrototypeForIdentifier(parameterValue.value)
 				if (!eventParameterPrototype)
-					throw new parser.SyntaxError("Cannot make eventParameter from this", ["Screen"], parameterValue.value.value, parameterValue.location)
+					throw new parser.SyntaxError("Cannot make eventParameter from this", ["Screen", "Self"], parameterValue.value.value, parameterValue.location)
 				const hsEventParameter = createEventParameterUsing(eventParameterPrototype)
 				hsParameter.variable = hsEventParameter.id
 				project.eventParameters.push(hsEventParameter)
@@ -484,6 +484,21 @@ function createBlockOfClasses(allowedBlockClasses, parametersKey, block, Types, 
 	return result
 }
 
+function createCustomBlockReferenceFrom(block, Types) {
+	if (block.value.type != Types.identifier)
+		throw new parser.SyntaxError("Should be impossible: Unknown custom block name form", Types.identifier, block.value.type, block.value.location)
+	const name = unSnakeCase(block.value.value)
+	const hsBlock = {
+		block_class: "control",
+		type: 123, //HSBlockType.Ability
+		description: name,
+		controlScript: {
+			abilityID: "PETRICHOR__TEMP"
+		}
+	}
+	return hsBlock
+}
+
 function eventParameterPrototypeForIdentifier(identifier) {
 	// THis gets mutated so return a fresh one
 	switch (identifier.value) {
@@ -491,6 +506,11 @@ function eventParameterPrototypeForIdentifier(identifier) {
 		return {
 			blockType: 8003,
 			description: "📱 My iPad"
+		}
+	case "Self":
+		return {
+			blockType: 8004,
+			description: "Self"
 		}
 	default:
 		return null
