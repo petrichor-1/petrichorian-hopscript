@@ -94,7 +94,10 @@ project.scenes[0].objects.forEach(objectID => {
 		throw `Undefined object type ${hsObject.type} (used by ${hsObject.name})`
 	finalResult += htnObjectType.name + " "
 	finalResult += snakeCaseify(hsObject.name)
-	finalResult += ":"
+	finalResult += `(x_position: ${parseFloat(hsObject.xPosition)}, y_position: ${parseFloat(hsObject.yPosition)}, resize_scale: ${parseFloat(hsObject.resizeScale)}, rotation: ${parseFloat(hsObject.rotation)}`
+	if (hsObject.type == 1 && (hsObject.text?.length || 0) > 0) //HSObjectType.Text
+		finalResult += `, text: "${hsObject.text.replace(/"/g,"\"")}"`
+	finalResult += "):"
 	currentIndentationLevel++
 	addCustomRuleOrObject(hsObject)
 	currentIndentationLevel--
