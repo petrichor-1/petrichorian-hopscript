@@ -1,0 +1,7 @@
+text text(text: "Hello there!", x_position: 512, y_position: 384):
+	When game_starts:
+		#This is  a test of putting an object in the center of the screen, and setting the text!
+
+monkey default_monkey:
+	When game_starts:
+		#This monkey is totally default, with no attributes manually set!
