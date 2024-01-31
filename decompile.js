@@ -77,6 +77,21 @@ project.customRules.forEach(customRule => {
 		return
 	finalResult += "custom_rule "
 	finalResult += snakeCaseify(customRule.name)
+	if ((customRule.parameters?.length ?? 0) > 0) {
+		finalResult += "("
+		finalResult += snakeCaseify(customRule.parameters[0].key)
+		finalResult += ": \""
+		finalResult += customRule.parameters[0].defaultValue.replace(/"/g,'\\"')
+		finalResult += '"'
+		for (let i = 1; i < customRule.parameters.length; i++) {
+			finalResult += ", "
+			finalResult += snakeCaseify(customRule.parameters[i].key)
+			finalResult += ": \""
+			finalResult += customRule.parameters[i].defaultValue.replace(/"/g,'\\"')
+			finalResult += '"'
+		}
+		finalResult += ")"
+	}
 	finalResult += ":"
 	currentIndentationLevel++
 	addCustomRuleOrObject(customRule)
