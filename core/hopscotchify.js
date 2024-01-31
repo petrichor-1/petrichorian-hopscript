@@ -124,14 +124,52 @@ module.exports.hopscotchify = (htnCode, options) => {
 				const objectType = parsed.objectTypes[objectTypeName]
 				if (!objectType)
 					throw "Undefined object type " + objectTypeName
+				const objectAttributes = function(){
+					if (!object.attributes)
+						return {
+							xPosition: Math.random() * project.stageSize.width,
+							yPosition: Math.random() * project.stageSize.height
+						}
+					const result = {}
+					object.attributes.forEach(attribute => {
+						if (attribute.name.type != Types.identifier)
+							throw new parser.SyntaxError("Should be impossible: Unknown sttribute name type", Types.identifier, attribute.name.type, attribute.name.location)
+						const attributeName = attribute.name.value
+						switch (attributeName) {
+						case "text":
+							if (attribute.value.type != Types.string)
+								throw new parser.SyntaxError("Object text must be a string", Types.string, attribute.value.type, attribute.value.location)
+							result.text = attribute.value.value
+							break
+						case "x_position":
+							if (attribute.value.type != Types.number)
+								throw new parser.SyntaxError("Object positions must be numbers", Types.number, attribute.value.type, attribute.value.location)
+							result.xPosition = attribute.value.value
+							break
+						case "y_position":
+							if (attribute.value.type != Types.number)
+								throw new parser.SyntaxError("Object positions must be numbers", Types.number, attribute.value.type, attribute.value.location)
+							result.yPosition = attribute.value.value
+							break
+						default:
+							throw new parser.SyntaxError(`Unknown object attribute '${attributeName}'`, ["x_position", "y_position", "text"], attributeName, attribute.name.location)
+						}
+					})
+					return result
+				}()
 				const hsObject = deepCopy(objectType)
 				if (object.name.type != Types.identifier)
 					throw "Should be impossible: Invalid object name type"
 				hsObject.name = unSnakeCase(object.name.value)
 				hsObject.rules = []
 				hsObject.objectID = randomUUID()
-				hsObject.xPosition = "150"
-				hsObject.yPosition = "150"
+				hsObject.xPosition = objectAttributes.xPosition.toString()
+				hsObject.yPosition = objectAttributes.yPosition.toString()
+				if (objectAttributes.text) {
+					if (hsObject.type != 1) //HSObjectType.Text
+						throw new parser.SyntaxError("Only text objects can have text", "", "text:", block.attributes[0].location) // location is approximate
+					hsObject.text = objectAttributes.text
+				}
 				const ability = createEmptyAbility()
 				project.abilities.push(ability)
 				hsObject.abilityID = ability.abilityID

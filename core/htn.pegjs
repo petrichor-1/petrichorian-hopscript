@@ -297,7 +297,7 @@ object
 objectAttributes
 	= "(" whitespace* attributes:(objectAttribute "," whitespace*)* finalAttribute:objectAttribute whitespace* ")"
 	{
-		const result = attributes || []
+		const result = attributes.map(e=>e[0]) || []
 		result.push(finalAttribute)
 		return result
 	}
