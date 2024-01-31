@@ -177,7 +177,7 @@ blockName
 	/ identifier
 
 customAbilityReferenceName
-	= "custom_ability" whitespace+ name:identifier
+	= "custom_block" whitespace+ name:identifier
 	{
 		return {
 			type: Types.customAbilityReference,
@@ -295,7 +295,7 @@ object
 
 objectTypeName
 // BE SURE TO CHANGE objectTypeDefinition IF THIS CHANGES, IT ASSUMES THIS IS ALWAYS IDENTIFIER
-	= !"When " !"custom_rule" value:identifier
+	= !"When " !"custom_rule" !"custom_block" value:identifier
 	{ return value }
 
 objectTypeDefinition

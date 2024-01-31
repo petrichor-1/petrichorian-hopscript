@@ -107,7 +107,20 @@ function addRule(rule) {
 	currentIndentationLevel--
 }
 
+function addComment(hsBlock) {
+	finalResult += "#"
+	const lines = hsBlock.parameters[0].value.split("\n")
+	finalResult += lines[0]
+	for (let i = 1; i < lines.length; i++) {
+		finalResult += "#\t"
+		finalResult += lines[i]
+	}
+}
+
 function addBlock(hsBlock, parametersKey) {
+	if (hsBlock.type == 69) { //HSBlockTypes.Comment
+		return addComment(hsBlock)
+	}
 	const block = blockNamesByHSType[hsBlock.type]
 	if (!block)
 		throw "Undefined block type " + hsBlock.type

@@ -65,6 +65,15 @@ module.exports.hopscotchify = (htnCode, options) => {
 		customRuleDefinitionCallbacks[name].push(callback)
 	}
 
+	let customBlocks = {}
+	let customBlockDefinitionCallbacks = {}
+	function onDefinitionOfCustomBlockNamed(name, callback) {
+		if (customBlocks[name])
+			return callback(customBlocks[name])
+		customBlockDefinitionCallbacks[name] = customBlockDefinitionCallbacks[name] || []
+		customBlockDefinitionCallbacks[name].push(callback)
+	}
+
 	let indentationType;
 	let indentationLevelWhitespaceCount;
 	let currentIndendationLevel = 0
@@ -259,12 +268,28 @@ module.exports.hopscotchify = (htnCode, options) => {
 			}
 			const hsBlock = createMethodBlockFrom(line.value, Types, parsed.blockTypes, parsed.binaryOperatorBlockTypes, parsed.traitTypes, validScopes, project, options)
 			currentState().ability.blocks.push(hsBlock)
+			if (hsBlock.type == 123) { //HSBlockType.ability
+				onDefinitionOfCustomBlockNamed(hsBlock.description, hsAbility => {
+					hsBlock.controlScript.abilityID = hsAbility.abilityID
+				})
+			}
 			if (["control", "conditionalControl"].includes(hsBlock.block_class)) {
-				if (!line.value.doesHaveContainer)
-					throw "Empty control block"
+				if (!line.value.doesHaveContainer) {
+					if (line.value.type == Types.customAbilityReference)
+						break
+					throw new parser.SyntaxError("Empty control block", ":", "", line.value.location)
+				}
 				const ability = createEmptyAbility()
-				hsBlock.controlScript = {abilityID: ability.abilityID}
 				project.abilities.push(ability)
+				hsBlock.controlScript = {abilityID: ability.abilityID}
+				if (hsBlock.type == 123) { //HSBlockType.Ability
+					customBlockDefinitionCallbacks[hsBlock.description]?.forEach(callback => {
+						callback(ability)
+					})
+					customBlockDefinitionCallbacks[hsBlock.description] = null
+					customBlocks[hsBlock.description] = ability
+					ability.name = hsBlock.description
+				}
 				stateStack.push({
 					level: StateLevels.inAbility,
 					ability: ability,
@@ -385,6 +410,19 @@ function createBlockOfClasses(allowedBlockClasses, parametersKey, block, Types, 
 		return createHsCommentFrom(block)
 	case Types.binaryOperatorBlock:
 		throw new parser.SyntaxError("Should be impossible: Unconverted binary operator block", [], "", block.location)
+	case Types.customAbilityReference:
+		if (block.value.type != Types.identifier)
+			throw new parser.SyntaxError("Should be impossible: Unknown custom block name form", Types.identifier, block.value.type, block.value.location)
+		const name = unSnakeCase(block.value.value)
+		const hsBlock = {
+			block_class: "control",
+			type: 123, //HSBlockType.Ability
+			description: name,
+			controlScript: {
+				abilityID: "PETRICHOR__TEMP"
+			}
+		}
+		return hsBlock
 	default:
 		throw new parser.SyntaxError("Should be impossible: Unknown block form", [Types.comment, Types.identifier, Types.comment], block.type, block.location)
 	}
