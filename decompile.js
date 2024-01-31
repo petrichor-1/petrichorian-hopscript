@@ -53,15 +53,25 @@ project.abilities.forEach(ability => {
 	if ((ability.parameters?.length ?? 0) > 0) {
 		finalResult += "("
 		finalResult += snakeCaseify(ability.parameters[0].key)
-		finalResult += ": \""
-		finalResult += ability.parameters[0].defaultValue.replace(/"/g,'\\"')
-		finalResult += '"'
+		const value = ability.parameters[0].defaultValue.replace(/"/g,'\\"')
+		const needsQuotes = !/^\-?[0-9]+(e\+?[0-9]+)?(\.[0-9]+(e[\+\-]?[0-9]+)?)?$/.test(value)
+		finalResult += ": "
+		if (needsQuotes)
+			finalResult += '"'
+		finalResult += value
+		if (needsQuotes)
+			finalResult += '"'
 		for (let i = 1; i < ability.parameters.length; i++) {
 			finalResult += ", "
 			finalResult += snakeCaseify(ability.parameters[i].key)
-			finalResult += ": \""
-			finalResult += ability.parameters[i].defaultValue.replace(/"/g,'\\"')
-			finalResult += '"'
+			const value = ability.parameters[i].defaultValue.replace(/"/g,'\\"')
+			const needsQuotes = !/^\-?[0-9]+(e\+?[0-9]+)?(\.[0-9]+(e[\+\-]?[0-9]+)?)?$/.test(value)
+			finalResult += ": "
+			if (needsQuotes)
+				finalResult += '"'
+			finalResult += value
+			if (needsQuotes)
+				finalResult += '"'
 		}
 		finalResult += ")"
 	}
@@ -80,15 +90,25 @@ project.customRules.forEach(customRule => {
 	if ((customRule.parameters?.length ?? 0) > 0) {
 		finalResult += "("
 		finalResult += snakeCaseify(customRule.parameters[0].key)
-		finalResult += ": \""
-		finalResult += customRule.parameters[0].defaultValue.replace(/"/g,'\\"')
-		finalResult += '"'
+		const value = customRule.parameters[0].defaultValue.replace(/"/g,'\\"')
+		const needsQuotes = !/^\-?[0-9]+(e\+?[0-9]+)?(\.[0-9]+(e[\+\-]?[0-9]+)?)?$/.test(value)
+		finalResult += ": "
+		if (needsQuotes)
+			finalResult += '"'
+		finalResult += value
+		if (needsQuotes)
+			finalResult += '"'
 		for (let i = 1; i < customRule.parameters.length; i++) {
 			finalResult += ", "
 			finalResult += snakeCaseify(customRule.parameters[i].key)
-			finalResult += ": \""
-			finalResult += customRule.parameters[i].defaultValue.replace(/"/g,'\\"')
-			finalResult += '"'
+			const value = customRule.parameters[i].defaultValue.replace(/"/g,'\\"')
+			const needsQuotes = !/^\-?[0-9]+(e\+?[0-9]+)?(\.[0-9]+(e[\+\-]?[0-9]+)?)?$/.test(value)
+			finalResult += ": "
+			if (needsQuotes)
+				finalResult += '"'
+			finalResult += value
+			if (needsQuotes)
+				finalResult += '"'
 		}
 		finalResult += ")"
 	}
@@ -233,7 +253,13 @@ function addParameterValue(hsParameterValue) {
 		return addDatum(hsParameterValue.datum)
 	if (hsParameterValue.variable)
 		return addEventParameterReference(hsParameterValue.variable)
-	finalResult += `"${hsParameterValue.value.replace(/"/g,'\\"')}"`
+	const value = hsParameterValue.value.replace(/"/g,'\\"')
+	const needsQuotes = !/^\-?[0-9]+(e\+?[0-9]+)?(\.[0-9]+(e[\+\-]?[0-9]+)?)?$/.test(value)
+	if (needsQuotes)
+		finalResult += '"'
+	finalResult += value
+	if (needsQuotes)
+		finalResult += '"'
 }
 
 function addDatum(datum) {
