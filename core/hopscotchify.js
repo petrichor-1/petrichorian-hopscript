@@ -152,6 +152,22 @@ module.exports.hopscotchify = (htnCode, options) => {
 		case StateLevels.inObjectOrCustomRule:
 			switch (line.value.type) {
 			case Types.parenthesisBlock:
+				if (line.value.name.type == Types.identifier && line.value.name.value == "When") {
+					if (line.value.parameters.length > 1)
+						throw new parser.SyntaxError("Multiple parameters in parenthesised binary operator when block", "", JSON.stringify(line.value.parameters), line.value.location)
+					if (line.value.parameters[0].type != Types.parameterValue)
+						throw new parser.SyntaxError("Should be impossible: Unknown type for parameter value", Types.parameterValue, line.value.parameters[0].type, line.value.parameters[0].location)
+					const block = line.value.parameters[0].value
+					if (block.type != Types.binaryOperatorBlock)
+						throw new parser.SyntaxError("Bad object-level parenthesised binary operator block", [Types.binaryOperatorBlock], block.type, block.location)
+					const whenBlock = {
+						type: Types.whenBlock,
+						value: block,
+						doesHaveContainer: line.value.doesHaveContainer
+					}
+					handleWhenBlock(whenBlock, Types, parsed, validScopes, project, options, currentState, stateStack, StateLevels)
+					break
+				}
 				if (line.value.name.type != Types.whenBlock)
 					throw new parser.SyntaxError("Bad object-level parenthesis block", [Types.whenBlock], line.value.name.type, line.value.name.location)
 				const modifiedBlock = deepCopy(line.value)
