@@ -253,16 +253,29 @@ module.exports.hopscotchify = (htnCode, options) => {
 					handleWhenBlock(whenBlock, Types, parsed, validScopes, project, options, currentState, stateStack, StateLevels)
 					break
 				}
-				if (line.value.name.type != Types.whenBlock)
-					throw new parser.SyntaxError("Bad object-level parenthesis block", [Types.whenBlock], line.value.name.type, line.value.name.location)
-				const modifiedBlock = deepCopy(line.value)
-				modifiedBlock.name = line.value.name.value
-				const whenBlock = {
-					type: Types.whenBlock,
-					value: modifiedBlock,
-					doesHaveContainer: modifiedBlock.doesHaveContainer
+				switch (line.value.name.type) {
+				case Types.whenBlock:
+					const modifiedBlock = deepCopy(line.value)
+					modifiedBlock.name = line.value.name.value
+					const whenBlock = {
+						type: Types.whenBlock,
+						value: modifiedBlock,
+						doesHaveContainer: modifiedBlock.doesHaveContainer
+					}
+					handleWhenBlock(whenBlock, Types, parsed, validScopes, project, options, currentState, stateStack, StateLevels)
+					break
+				case Types.customRule:
+					const customRule = {
+						type: Types.customRule,
+						value: line.value.name.value,
+						doesHaveContainer: line.value.doesHaveContainer,
+						parameters: line.value.parameters
+					}
+					handleCustomRule(customRule, line, Types)
+					break
+				default:
+					throw new parser.SyntaxError("Bad object-level parenthesis block", [Types.whenBlock, Types.customRule], line.value.name.type, line.value.name.location)
 				}
-				handleWhenBlock(whenBlock, Types, parsed, validScopes, project, options, currentState, stateStack, StateLevels)
 				break
 			case Types.whenBlock:
 				handleWhenBlock(line.value, Types, parsed, validScopes, project, options, currentState, stateStack, StateLevels)
@@ -302,23 +315,8 @@ module.exports.hopscotchify = (htnCode, options) => {
 				currentState().beforeGameStartsAbility.blocks.push(hsMethodBlock)
 				break
 			case Types.customRule:
-				if (line.value.value.type != Types.identifier)
-					throw "Should be impossible: Non-identifier custom rules name"
-				const nameAsString = line.value.value.value
-				const rulesList = currentState().object.rules
-				const tempid = "TEMP" + randomUUID()
-				rulesList.push(tempid)
-				onDefinitionOfCustomRuleNamed(nameAsString, hsCustomRule => {
-					const hsCustomRuleInstance = createCustomRuleInstanceFor(hsCustomRule, project)
-					project.customRuleInstances.push(hsCustomRuleInstance)
-					const index = rulesList.findIndex(e=>e==tempid)
-					if (index < 0)
-						throw "Should be imposssible: Placeholder rule removed"
-					rulesList[index] = hsCustomRuleInstance.id
-				})
-				if (!line.value.doesHaveContainer)
-					break
-				addCustomRuleDefinition(customRules, nameAsString, line, project, customRuleDefinitionCallbacks, stateStack, StateLevels, Types, null)
+				const customRule = line.value
+				handleCustomRule(customRule, line, Types)
 				break
 			default:
 				throw new parser.SyntaxError("Bad object-level type", [Types.whenBlock, Types.parenthesisBlock, Types.comment, Types.binaryOperatorBlock], line.value.type, line.value.location)
@@ -388,6 +386,26 @@ module.exports.hopscotchify = (htnCode, options) => {
 	if (undefinedCustomBlockNames.length > 0)
 		throw new parser.SyntaxError("Undefined custom Block", undefinedCustomBlockNames, "")
 	return project
+
+	function handleCustomRule(customRule, line, Types) {
+		if (customRule.value.type != Types.identifier)
+			throw "Should be impossible: Non-identifier custom rules name"
+		const nameAsString = customRule.value.value
+		const rulesList = currentState().object.rules
+		const tempid = "TEMP" + randomUUID()
+		rulesList.push(tempid)
+		onDefinitionOfCustomRuleNamed(nameAsString, hsCustomRule => {
+			const hsCustomRuleInstance = createCustomRuleInstanceFor(hsCustomRule, customRule.parameters, customRule.location, Types, options)
+			project.customRuleInstances.push(hsCustomRuleInstance)
+			const index = rulesList.findIndex(e => e == tempid)
+			if (index < 0)
+				throw "Should be imposssible: Placeholder rule removed"
+			rulesList[index] = hsCustomRuleInstance.id
+		})
+		if (!customRule.doesHaveContainer)
+			return
+		addCustomRuleDefinition(customRules, nameAsString, line, project, customRuleDefinitionCallbacks, stateStack, StateLevels, Types, null)
+	}
 
 	function handleCustomBlockDefinition(definition) {
 		if (!definition.doesHaveContainer)
@@ -511,12 +529,41 @@ function unSnakeCase(snakeCaseString) {
 	return words.join(" ")
 }
 
-function createCustomRuleInstanceFor(hsCustomRule) {
-	return {
+function createCustomRuleInstanceFor(hsCustomRule, parameters, location, Types, options) {
+	const {checkParameterLabels} = options
+	const result = {
 		id: randomUUID(),
 		customRuleID: hsCustomRule.id,
 		parameters: []
 	}
+	if (hsCustomRule.parameters.length > 0) {
+		if (hsCustomRule.parameters.length != (parameters?.length || 0))
+			throw new parser.SyntaxError("Wrong amount of parameters", hsCustomRule.parameters.length, parameters?.length || 0, location)
+		for (let i = 0; i < hsCustomRule.parameters.length; i++) {
+			const hsParameter = hsCustomRule.parameters[i]
+			const parameter = parameters[i]
+			if (parameter.type != Types.parameterValue)
+				throw new parser.SyntaxError("Should be impossible: Unknown parameyer type", Types.parameterValue, parameter.type, parameter.location)
+			if (checkParameterLabels) {
+				const label = parameter.label
+				if (label.type != Types.identifier)
+					throw new parser.SyntaxError("Should be impossible: Non-identifier parameter label for custom rule instance", Types.identifier, label.type, label.location)
+				if (unSnakeCase(label.value) != hsParameter.key)
+					throw new parser.SyntaxError("Incorrect parameter label", hsParameter.key, unSnakeCase(label.value), label.location)
+			}
+			const newHsParameter = deepCopy(hsParameter)
+			switch (parameter.value.type) {
+			case Types.string:
+			case Types.number:
+				newHsParameter.value = parameter.value.value
+				break
+			default:
+				throw new parser.SyntaxError("Should be impossible; Unknown custom rule parameter value type", [Types.string, Types.number], parameter.value.type, parameter.value.location)
+			}
+			result.parameters.push(newHsParameter)
+		}
+	}
+	return result
 }
 
 function createOperatorBlockFrom(block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, project, options) {
