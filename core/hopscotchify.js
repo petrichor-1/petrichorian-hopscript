@@ -128,7 +128,8 @@ module.exports.hopscotchify = (htnCode, options) => {
 					const result = {
 						xPosition: Math.random() * project.stageSize.width,
 						yPosition: Math.random() * project.stageSize.height,
-						resizeScale: 1
+						resizeScale: 1,
+						rotation: 0
 					}
 					object.attributes?.forEach(attribute => {
 						if (attribute.name.type != Types.identifier)
@@ -143,17 +144,22 @@ module.exports.hopscotchify = (htnCode, options) => {
 						case "x_position":
 							if (attribute.value.type != Types.number)
 								throw new parser.SyntaxError("Object positions must be numbers", Types.number, attribute.value.type, attribute.value.location)
-							result.xPosition = attribute.value.value
+							result.xPosition = parseFloat(attribute.value.value)
 							break
 						case "y_position":
 							if (attribute.value.type != Types.number)
 								throw new parser.SyntaxError("Object positions must be numbers", Types.number, attribute.value.type, attribute.value.location)
-							result.yPosition = attribute.value.value
+							result.yPosition = parseFloat(attribute.value.value)
 							break
 						case "resize_scale":
 							if (attribute.value.type != Types.number)
 								throw new parser.SyntaxError("Object resize scale must be numbers", Types.number, attribute.value.type, attribute.value.location)
-							result.resizeScale = attribute.value.value
+							result.resizeScale = parseFloat(attribute.value.value)
+							break
+						case "rotation":
+							if (attribute.value.type != Types.number)
+								throw new parser.SyntaxError("Object rotation must be numbers", Types.number, attribute.value.type, attribute.value.location)
+							result.rotation = parseFloat(attribute.value.value)
 							break
 						default:
 							throw new parser.SyntaxError(`Unknown object attribute '${attributeName}'`, ["x_position", "y_position", "text"], attributeName, attribute.name.location)
@@ -170,6 +176,7 @@ module.exports.hopscotchify = (htnCode, options) => {
 				hsObject.xPosition = objectAttributes.xPosition.toString()
 				hsObject.yPosition = objectAttributes.yPosition.toString()
 				hsObject.resizeScale = objectAttributes.resizeScale.toString()
+				hsObject.rotation = objectAttributes.rotation.toString()
 				if (objectAttributes.text) {
 					if (hsObject.type != 1) //HSObjectType.Text
 						throw new parser.SyntaxError("Only text objects can have text", "", "text:", block.attributes[0].location) // location is approximate

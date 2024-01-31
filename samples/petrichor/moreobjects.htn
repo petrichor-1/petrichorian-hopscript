@@ -6,7 +6,7 @@ monkey default_monkey:
 	When game_starts:
 		#This monkey is totally default, with no attributes manually set!
 
-text rotated_fish(text: "🐠", x_position: 100, y_position: 300, resize_scale: 2):
+text rotated_fish(text: "🐠", x_position: 100, y_position: 300, resize_scale: 2, rotation: 45):
 	hue = 0
 	When game_is_playing:
 		increase(hue, by: 1)
