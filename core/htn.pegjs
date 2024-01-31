@@ -54,10 +54,10 @@ lineContents
 			value: block
 		}
 	}
-endOfLine
+endOfLine "End of line"
 	= nonNewlineWhitespace* "\n"
 
-block
+block "Block"
 	= block:actualBlock container:blockContainer?
 	{
 		block.doesHaveContainer = block.doesHaveContainer || !!container
@@ -69,7 +69,7 @@ actualBlock
 	= binaryOperatorBlock
 	/ nonBinaryOperatorBlock
 
-nonBinaryOperatorBlock
+nonBinaryOperatorBlock "Non-binary-operator block"
 	= parenthesisBlock
 	/ squareBracketsBlock
 	/ blockName
@@ -77,7 +77,7 @@ nonBinaryOperatorBlock
 blockContainer
 	= whitespace* ":"
 
-binaryOperatorBlock
+binaryOperatorBlock "Binary operator block"
 	= leftSide:binaryOperatorBlockInitialValue whitespace* type:binaryOperatorKeyword /*parameters:(unlabeledParameterValue  whitespace* ",")**/ finalParameter:unlabeledParameterValue
 	{
 		const result = {
@@ -116,7 +116,7 @@ binaryOperatorBlockInitialValue
 	{ return block }
 	/ nonBinaryOperatorBlock
 
-parenthesisBlock
+parenthesisBlock "Parenthesis block"
 	= name:blockName whitespace* "(" firstFewValues:(parameterValue  whitespace* ",")* finalValue:parameterValue?  whitespace* ")"
 	{
 		return {
@@ -128,7 +128,7 @@ parenthesisBlock
 		}
 	}
 
-parameterValue
+parameterValue "Parameter"
 	= whitespace* label:(identifier ":")? whitespace* val:value
 	{
 		return {
@@ -138,7 +138,7 @@ parameterValue
 			label:label ? label[0] : null,
 		}
 	}
-unlabeledParameterValue
+unlabeledParameterValue "Unlabeled parameter"
 	= whitespace*  whitespace* val:value
 	{
 		return {
@@ -149,7 +149,7 @@ unlabeledParameterValue
 		}
 	}
 
-comment
+comment "comment"
 	= "#" characters:(!"\n" .)+
 	{
 		return {
@@ -176,7 +176,7 @@ blockName
 	/ customRuleName
 	/ identifier
 
-customAbilityReferenceName
+customAbilityReferenceName "custom block"
 	= "custom_block" whitespace+ name:identifier
 	{
 		return {
@@ -186,7 +186,7 @@ customAbilityReferenceName
 		}
 	}
 
-whenBlockName
+whenBlockName "when block"
 	= "When" whitespace+ name:identifier
 	{
 		return {
@@ -196,7 +196,7 @@ whenBlockName
 		}
 	}
 
-customRuleName
+customRuleName "custom rule"
 	= "custom_rule" whitespace+ name:identifier
 	{
 		return {
@@ -206,7 +206,7 @@ customRuleName
 		}
 	}
 
-identifier
+identifier "identifier"
 	= first:identifierAllowedFirstCharacter rest:identifierAllowedCharacter*
 	{
 		return {
@@ -234,7 +234,7 @@ value
 	/ string
 	/ regex
 
-number
+number "number"
 	// Regex from webplayer: 
 	// /^\-?[0-9]+(e\+?[0-9]+)?(\.[0-9]+(e[\+\-]?[0-9]+)?)?$/
 	= val:("-"? [0-9]+("e""+"?[0-9]+)?("."[0-9]+("e"[+\-]?[0-9]+)?)?)
@@ -247,7 +247,7 @@ number
 		}
 	}
 
-string
+string "string"
 	= "\"" characters:stringContentsCharacter* "\""
 	{
 		return {
@@ -275,14 +275,14 @@ regexContentsCharacter
 	/ !"/" c:.
 	{ return c }
 
-whitespace
+whitespace "whitespace"
 	= [ \t\n]
 
-nonNewlineWhitespace
+nonNewlineWhitespace "non-newline whitespace"
 	= !"\n" c:whitespace
 	{ return c }
 
-object
+object "object"
 	= type:objectTypeName whitespace+ name:identifier whitespace* attributes:objectAttributes? whitespace* ":"
 	{
 		objectNames.push(name)
@@ -294,25 +294,25 @@ object
 		}
 	}
 
-objectAttributes
+objectAttributes "object attributes"
 	= "(" whitespace* attributes:(objectAttribute "," whitespace*)* finalAttribute:objectAttribute whitespace* ")"
 	{
 		const result = attributes.map(e=>e[0]) || []
 		result.push(finalAttribute)
 		return result
 	}
-objectAttribute
+objectAttribute "object attribute"
 	= name:identifier whitespace* ":" whitespace* value:(number / string)
 	{
 		return {name:name,value:value}
 	}
 
-objectTypeName
+objectTypeName "object type name"
 // BE SURE TO CHANGE objectTypeDefinition IF THIS CHANGES, IT ASSUMES THIS IS ALWAYS IDENTIFIER
 	= !"When " !"custom_rule" !"custom_block" value:identifier
 	{ return value }
 
-objectTypeDefinition
+objectTypeDefinition "[internal] object type definition"
 	= "_defineObjectType " name:objectTypeName " " typeId:number " " filename:string " " width:number " " height:number
 	{
 		objectTypes[name.value] = {
@@ -323,7 +323,7 @@ objectTypeDefinition
 		}
 	}
 
-traitTypeDefinition
+traitTypeDefinition "[internal] trait type definition"
 	= "_defineTraitType " name:identifier " " typeId:number " " description:string " [" allowedScopes:(traitScope ", ")* "]"
 	{
 		const trait = traitTypes[name.value] = traitTypes[name.value] ?? {}
@@ -340,7 +340,7 @@ traitScope
 	/ "Object"
 	/ "User"
 
-blockTypeDefinition
+blockTypeDefinition "[internal] block type definition"
 	= "_defineBlockType " blockClass:blockClass " " name:blockName " " typeId:number " " description:string " "? parameters:(number " " (identifier / "_") " " string " " string ", ")*
 	{
 		blockTypes[name.value] = {
@@ -358,7 +358,7 @@ blockTypeDefinition
 		}
 	}
 
-binaryOperatorBlockTypeDefinition
+binaryOperatorBlockTypeDefinition "[internal] binary operator definition"
 	= "_defineBinaryOperator " keyword:binaryOperatorKeyword " " mapsTo:blockName
 	{
 		binaryOperatorBlockTypes[keyword] = mapsTo.value
