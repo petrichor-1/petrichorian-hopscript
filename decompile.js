@@ -213,12 +213,19 @@ function addBlock(hsBlock, parametersKey) {
 	finalResult += ")"
 }
 
+function maybeBinaryOperatorFor(hsBlockType) {
+	return binaryOperatorsByBlockName[blockNamesByHSType[hsBlockType]?.name]
+}
 function addBinaryOperator(binaryOperator, hsBlock, parametersKey) {
-	finalResult += "("
+	const needsParentheses = (!!maybeBinaryOperatorFor(hsBlock[parametersKey][0]?.datum?.blockType || -1) || !!maybeBinaryOperatorFor(hsBlock[parametersKey][0]?.datum?.blockType || -1))
+		&& binaryOperator != "^"
+	if (needsParentheses)
+		finalResult += "("
 	addParameterValue(hsBlock[parametersKey][0])
 	finalResult += ` ${binaryOperator} `
 	addParameterValue(hsBlock[parametersKey][1])
-	finalResult += ")"
+	if (needsParentheses)
+		finalResult += ")"
 }
 
 function addParameterValue(hsParameterValue) {
