@@ -1,0 +1,226 @@
+#==========================#
+# Definitions of standard  #
+# characters, blocks, etc. #
+#==========================#
+
+#=============
+# Object types
+#=============
+#Characters
+_defineObjectType chillanna 29 "chillanna.png" 172.5 172.5
+_defineObjectType cosmic_cody 28 "astro.png" 187.5 187.5
+# TODO: Aliases (I.e Cody) defined in terms of canonical definition
+_defineObjectType star_girl 27 "stargirl.png" 172.5 172.5
+_defineObjectType robo 30 "robo.png" 172.5 172.5
+_defineObjectType monkey 0 "monkey.png" 150 150
+_defineObjectType octopus 2 "octopus.png" 150 150
+_defineObjectType gorilla 3 "gorilla.png" 150 150
+_defineObjectType cupcake 4 "cupcake.png" 150 150
+_defineObjectType bear 5 "bear.png" 150 150
+_defineObjectType dino 6 "dino.png" 150 150
+_defineObjectType frog 7 "frog.png" 150 150
+_defineObjectType jody 8 "greenman.png" 150 150
+_defineObjectType mr_moustache 9 "mustache.png" 150 150
+# TODO: Alias
+_defineObjectType space_pod 10 "spacepod.png" 150 150
+# TODO: Alias
+_defineObjectType raccoon 31 "raccoon.png" 172.5 172.5
+_defineObjectType bird 32 "bird.png" 150 150
+_defineObjectType crocodile 3001 "crocodileJaws.png" 288 164
+#Shapes
+_defineObjectType heart 153 "heartV3.png" 150 127
+_defineObjectType arch 155 "fullSizeArch.png" 150 75
+_defineObjectType squiggle 156 "squiggleV3.png" 150 70
+_defineObjectType star 154 "starV3.png" 150 143
+_defineObjectType parallelogram 163 "fullSizeParallelogramWide.png" 150 75
+_defineObjectType donut 112 "fullSizeDonut.png" 150 150
+_defineObjectType fan_blade 160 "fanbladeV3.png" 150 137
+_defineObjectType circle 102 "fullSizeCircle.png" 150 150
+_defineObjectType square 101 "fullSizeSquare.png" 150 150
+_defineObjectType hexagon 150 "hexagonV3.png" 150 130
+_defineObjectType triangle 151 "triangleV3.png" 150 130
+_defineObjectType right_triangle 105 "fullSizeRightTriangle.png" 150 150
+_defineObjectType rectangle 152 "rectangleV3.png" 150 100
+_defineObjectType z 157 "fullSizeTetrisZ.png" 150 100
+_defineObjectType t_2 158 "fullSizeTetrisT.png" 150 101
+_defineObjectType l 159 "fullSizeTetrisL.png" 150 100
+_defineObjectType corner 116 "fullSizeCorner.png" 150 150
+_defineObjectType flower 117 "fullSizeFlower.png" 150 150
+_defineObjectType squished_box 119 "fullSizeSquishedBox.png" 150 150
+_defineObjectType bead 162 "beadV3.png" 150 77
+_defineObjectType chevron 164 "chevronV3.png" 150 130
+_defineObjectType x 125 "fullSizeX.png" 150 150
+_defineObjectType tetris_line 126 "fullSizeTetrisLine.png" 200 50
+_defineObjectType rounded_right_triangle 120 "fullSizeRoundedRightTriangle.png" 150 150
+_defineObjectType rounded_arrow 161 "arrowRoundedV3.png" 106 150
+_defineObjectType rounded_square 100 "fullSizeRoundedSquare.png" 150 150
+_defineObjectType tilted_rectangle 110 "fullSizeParallelogramTall.png" 150 150
+
+
+
+#================
+# Standard Blocks
+#================
+#Movement
+_defineBlockType method move_forward 23 "Move Forward" 42 _ "" "100", 
+_defineBlockType method turn 24 "Turn" 42 degrees "degrees" "90", 
+_defineBlockType method set_position 41 "Set Position" 42 to_x "to x" "200", 42 y "y" "200", 
+_defineBlockType method flip 50 "Flip"
+_defineBlockType method change_x 27 "Change X by" 42 by "" "100", 
+_defineBlockType method change_y 28 "Change Y by" 42 by "" "100", 
+_defineBlockType method set_speed 34 "Set Speed" 42 to "to" "1000", 
+_defineBlockType method set_angle 39 "Set Angle" 42 _ "" "30", 
+_defineBlockType method set_origin 59 "Set Origin" 42 to_x "to x" "200", 42 y "y" "200", 
+#Looks and sounds
+_defineBlockType method set_background 70 "Set Background" 44 color "color" "HSB(288,57,43)", 
+_defineBlockType method set_color 54 "Set Color" 44 _ "" "HSB(288,57,43)", 
+_defineBlockType method set_image 56 "Set Image" 54 _ "" "", 
+_defineBlockType method set_text 40 "Set Text" 53 to "to" "", 44 color "color" "HSB(306,19,20)", 
+_defineBlockType method set_size 51 "Set Size" 42 percent "percent" "110", 
+#TODO: The direct translation from Hopscotch is ambiguous, decide if this is correct
+_defineBlockType method set_width 57 "Set" 42 _ "width" "200", 42 height "height" "200", 
+_defineBlockType method grow_by 48 "Grow by" 42 percent "percent" "50", 
+_defineBlockType method shrink_by 49 "Shrink by" 42 percent "percent" "50", 
+_defineBlockType method start_sound 62 "Start Sound" 51 _ "" "clickPlayable", 42 wait "wait" "0.5", 
+_defineBlockType method set_invisibility 47 "Set Invisibility" 42 percent "percent" "50", 
+_defineBlockType method bring_to_front 43 "Bring to Front"
+_defineBlockType method send_to_back 42 "Send to back"
+_defineBlockType method change_pose 33 "Change Pose"
+_defineBlockType method set_z_index 58 "Set Z Index" 42 _ "" "0", 
+_defineBlockType method show_popup 72 "Show Pop-up" 53 message "message" "The message to show", 
+_defineBlockType method set_text_to_input 64 "Set Text to Input" 44 _ "" "HSB(306,19,20)", 53 prompt "prompt" "Type here", 
+#Drawing
+_defineBlockType control draw_a_trail 26 "Draw a Trail" 44 color "color" "HSB(288,57,43)", 42 width "width" "10", 
+_defineBlockType method set_trail_color 32 "Set Trail Color" 44 to "to" "HSB(288,57,43)", 
+_defineBlockType method set_trail_width 31 "Set Trail Width" 42 to "to" "2", 
+_defineBlockType method clear 30 "Clear"
+#Variables
+_defineBlockType method set 45 "Set" 42 _ "" "", 48 to "to" "10", 
+_defineBlockType method increase 44 "Increase" 47 _ "" "", 48 by "by" "1", 
+_defineBlockType method save_input 63 "Save Input" 47 _ "" "", 53 prompt "prompt" "Type here", 
+#Control
+_defineBlockType conditionalControl check_once_if 122 "Check Once If" 49 _ "" "", 
+_defineBlockType control repeat 120 "Repeat" 42 times "times" "5", 
+_defineBlockType conditionalControl check_if_else 124 "Check If Else" 49 _ "" "", 
+_defineBlockType control repeat_forever 121 "Repeat Forever"
+_defineBlockType method wait 61 "Wait" 42 seconds "seconds" "0.5", 
+_defineBlockType method wait_milliseconds 35 "Wait Milliseconds" 42 _ "" "500", 
+_defineBlockType method create_a_clone_of_this_object 53 "Create a Clone of This Object"
+_defineBlockType method destroy 55 "Destroy"
+_defineBlockType method open_project 68 "Open Project" 62 _ "" "", 
+_defineBlockType method change_scene 125 "Change Scene" 56 to "to" "0", 
+_defineBlockType method broadcast_message 126 "Broadcast Message" 53 named "named" "", 
+
+#Game rules
+_defineBlockType operator game_starts 7000 "Game Starts"
+_defineBlockType operator game_is_playing 7021 "Game is Playing"
+_defineBlockType operator is_tapped 7001 "is Tapped" 50 _ "" "", 
+_defineBlockType operator is_pressed 7003 "is Pressed" 50 _ "" "", 
+_defineBlockType operator is_not_pressed 7020 "is Not Pressed" 50 _ "" "", 
+_defineBlockType operator i_get_a_message 7023 "I Get a Message" 53 _ "I get a message" "", 
+_defineBlockType operator message_matches 7024 "Message Matches" 52 _ "message matches" "", 
+_defineBlockType operator object_is_cloned 7015 "Object is Cloned"
+
+#Math
+_defineBlockType operator add 4000 "+" 57 _ "" "2", 57 + "+" "3", 
+#TODO: Use the correct character in the key for second parameter, it being empty is wrong and that is visible in the ios app editor. The web explorer probably doesn't display correctly either (untested)
+_defineBlockType operator subtract 4001 "-" 42 _ "" "5", 42 _ "" "2", 
+_defineBlockType operator multiply 4002 "×" 42 _ "" "2", 42 * "×" "3", 
+#TODO: Why can't i use `/`? Is it thinking its the start of a regex literal?
+#      If those are actually causing trouble now its probably fine to break
+#      compatability with tri's htn
+_defineBlockType operator divide 4003 "÷" 42 _ "" "5", 42 by "÷" "2", 
+_defineBlockType operator random 4004 "Random" 45 _ "" "1", 46 to "to" "100", 
+_defineBlockType operator power 4005 "^" 42 _ "" "2", 42 ^ "^" "3", 
+_defineBlockType operator square_root 4006 "√" 42 _ "" "25", 
+_defineBlockType operator sin 4007 "Sin" 42 _ "" "45", 
+_defineBlockType operator cos 4008 "Cos" 42 _ "" "45", 
+_defineBlockType operator tan 4012 "Tan" 42 _ "" "45", 
+_defineBlockType operator arcsin 4013 "Arcsin" 57 _ "" "0.5", 
+_defineBlockType operator arccos 4014 "Arccos" 57 _ "" "0.5", 
+_defineBlockType operator arctan 4015 "Arctan" 57 _ "" "0.5", 
+_defineBlockType operator max 4016 "Maximum" 42 _ "" "100", 42 _ "" "200", 
+_defineBlockType operator min 4017 "Minimum" 42 _ "" "0", 42 _ "" "10", 
+_defineBlockType operator round 4009 "Round" 57 _ "" "2.5", 
+_defineBlockType operator floor 4018 "Floor" 57 _ "" "2.5", 
+_defineBlockType operator ceiling 4019 "Ceiling" 57 _ "" "2.5", 
+_defineBlockType operator absolute_value 4010 "Absolute Value" 42 _ "" "-10", 
+_defineBlockType operator modulo 4011 "%" 42 _ "" "5", 42 % "%" "2", 
+#Text
+_defineBlockType operator character_at_index 9000 "Character at Index" 57 in "in" "", 42 at "at" "0", 
+_defineBlockType operator characters_between 9001 "Characters between" 57 in "in" "", 42 between "between" "0", 42 and "and" "1", 
+_defineBlockType operator length 9002 "Length" 57 _ "" "", 
+_defineBlockType operator join 9003 "Join" 57 _ "" "", 57 with "with" "", 
+#Color
+#TODO: should be `random` but there is no way to differentiate that and random(_, to:) yet
+_defineBlockType operator random_color 5000 "Random"
+#TODO: Alias
+_defineBlockType operator h 5002 "HSB" 42 _ "H" "172", 42 s "S" "86", 42 b "B" "96", 
+#TODO: Alias
+_defineBlockType operator r 5001 "RGB" 42 _ "R" "34", 42 g "G" "246", 42 b "B" "217", 
+
+
+#====================
+# Define conditionals
+#====================
+_defineBlockType conditionalOperator equals 1000 "=" 57 _ "" "7", 57 _ "=" "7", 
+_defineBlockType conditionalOperator not_equals 1001 "≠" 57 _ "" "6", 57 _ "≠" "7", 
+_defineBlockType conditionalOperator less_than 1002 "＜" 57 _ "" "6", 57 _ "＜" "7", 
+_defineBlockType conditionalOperator greater_than 1003 "＞" 57 _ "" "8", 57 _ "＞" "7", 
+_defineBlockType conditionalOperator less_than_or_equal_to 1007 "＜=" 57 _ "" "5", 57 _ "＜=" "7", 
+_defineBlockType conditionalOperator greater_than_or_equal_to 1006 "＞=" 57 _ "" "8", 57 _ "＞=" "7", 
+_defineBlockType conditionalOperator and 1004 "and" 49 _ "" "", 49 and "and" "", 
+_defineBlockType conditionalOperator or 1005 "or" 49 _ "" "", 49 or "or" "", 
+_defineBlockType conditionalOperator not 1009 "not" 49 _ "not" "", 
+_defineBlockType conditionalOperator flipped 1010 "flipped"
+_defineBlockType conditionalControl matches 1008 "matches" 53 _ "" "", 53 matches "matches" "", 
+
+
+#==================
+# Define binary ops
+#==================
+_defineBinaryOperator - subtract
+_defineBinaryOperator / divide
+_defineBinaryOperator * multiply
+_defineBinaryOperator + add
+_defineBinaryOperator ^ power
+_defineBinaryOperator == equals
+_defineBinaryOperator != not_equals
+_defineBinaryOperator < less_than
+_defineBinaryOperator > greater_than
+_defineBinaryOperator <= less_than_or_equal_to
+_defineBinaryOperator >= greater_than
+_defineBinaryOperator and and
+_defineBinaryOperator or or
+_defineBinaryOperator MATCHES matches
+
+
+
+#===============
+# Define traits
+#===============
+# Basic object traits
+_defineTraitType rotation 2000 "Rotation" [Object, ]
+_defineTraitType x_position 2001 "X Position" [Object, ]
+_defineTraitType y_position 2002 "Y Position" [Object, ]
+_defineTraitType insibility_as_a_percent 2003 "Invisibility as a %" [Object, ]
+_defineTraitType size_as_a_percent 2004 "Size as a %" [Object, ]
+_defineTraitType speed 2005 "Speed" [Object, ]
+_defineTraitType clone_index 2006 "Clone Index" [Object, ]
+_defineTraitType total_clones 2007 "Total Clones" [Object, ]
+_defineTraitType width 2008 "Width" [Object, ]
+_defineTraitType height 2009 "Height" [Object, ]
+_defineTraitType z_index 2010 "Z Index" [Object, ]
+_defineTraitType origin_x 2011 "Origin X" [Object, ]
+_defineTraitType origin_y 2012 "Origin Y" [Object, ]
+_defineTraitType name 2018 "Name" [Object, ]
+# Basic game traits
+_defineTraitType width 3000 "Width" [Game, ]
+_defineTraitType height 3001 "Height" [Game, ]
+_defineTraitType tilt_up_percent 3002 "Tilt Up %" [Game, ]
+_defineTraitType tilt_down_percent 3003 "Tilt Down %" [Game, ]
+_defineTraitType tilt_left_percent 3004 "Tilt Left %" [Game, ]
+_defineTraitType tilt_right_percent 3005 "Tilt Right %" [Game, ]
+_defineTraitType last_touch_x 3006 "Last Touch X" [Game, ]
+_defineTraitType last_touch_y 3007 "Last Touch Y" [Game, ]
+_defineTraitType total_objects 3008 "Total Objects" [Game, ]

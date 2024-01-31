@@ -1,0 +1,38 @@
+When game_starts:
+    background.color = rgb(0, 0, 0)
+    save_input = noformat_number, "type a big number"
+    noformat_number = round(noformat_number)
+    if (noformat_number MATCHES /e\+/):
+        set_text =
+            "the number you provided is too big; hopscotch is reading it as scientific notation now (7e+12 for example).",
+            hsb(28,100,100)
+    else:
+        # "section one: adding comma to long numbers"
+        custom_ability (
+            "Format Number",
+            recursion = floor((length(round(noformat_number)) - 1) / 3),
+            noformat_number = round(noformat_number)
+            ):
+            if (recursion == 0):
+                self.Return = noformat_number
+            else:
+                custom_ability this:
+                    recursion - 1,
+                    noformat_number
+                self.Return = join(
+                    join(
+                        Return[0, length(Return) - (recursion * 3 + (recursion - 1))],
+                        ","[noformat_number[0] == "-"]
+                    ), 
+                    Return[length(Return) - (recursion * 3 + (recursion - 1)), length(Return)]
+                )
+    formatted_long_number = self.Return
+    # "section two: cuttin long numbers down followed by an abbreviation"
+    power = floor((length(noformat_number) - (1 + noformat_number[0] == "-")) / 3)
+    number_w_abbr = join(
+        round((noformat_number * 100) / (10 ^ (3 * power))) / 100,
+        "KMBtqQsSondUDT"[power - 1]
+    )
+    set_text =
+        join(join(formatted_long_number, "\n or "), number_w_abbr),
+        rgb(255, 255, 255)
