@@ -308,6 +308,9 @@ module.exports.hopscotchify = (htnCode, options) => {
 	const undefinedCustomRuleNames = Object.getOwnPropertyNames(customRuleDefinitionCallbacks).filter(e=>!!customRuleDefinitionCallbacks[e])
 	if (undefinedCustomRuleNames.length > 0)
 		throw new parser.SyntaxError("Undefined custom rule", undefinedCustomRuleNames, "")
+	const undefinedCustomBlockNames = Object.getOwnPropertyNames(customBlockDefinitionCallbacks).filter(e=>!!customBlockDefinitionCallbacks[e])
+	if (undefinedCustomBlockNames.length > 0)
+		throw new parser.SyntaxError("Undefined custom Block", undefinedCustomBlockNames, "")
 	return project
 }
 
