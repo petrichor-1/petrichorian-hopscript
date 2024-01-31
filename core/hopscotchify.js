@@ -618,7 +618,7 @@ function binaryOperatorPriority(operator) {
 	case "<=":
 	case ">":
 	case ">=":
-	case "!-":
+	case "!=":
 	case "==":
 	case "=":
 	case "MATCHES":
