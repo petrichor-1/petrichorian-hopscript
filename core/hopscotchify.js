@@ -125,13 +125,12 @@ module.exports.hopscotchify = (htnCode, options) => {
 				if (!objectType)
 					throw "Undefined object type " + objectTypeName
 				const objectAttributes = function(){
-					if (!object.attributes)
-						return {
-							xPosition: Math.random() * project.stageSize.width,
-							yPosition: Math.random() * project.stageSize.height
-						}
-					const result = {}
-					object.attributes.forEach(attribute => {
+					const result = {
+						xPosition: Math.random() * project.stageSize.width,
+						yPosition: Math.random() * project.stageSize.height,
+						resizeScale: 1
+					}
+					object.attributes?.forEach(attribute => {
 						if (attribute.name.type != Types.identifier)
 							throw new parser.SyntaxError("Should be impossible: Unknown sttribute name type", Types.identifier, attribute.name.type, attribute.name.location)
 						const attributeName = attribute.name.value
@@ -151,6 +150,11 @@ module.exports.hopscotchify = (htnCode, options) => {
 								throw new parser.SyntaxError("Object positions must be numbers", Types.number, attribute.value.type, attribute.value.location)
 							result.yPosition = attribute.value.value
 							break
+						case "resize_scale":
+							if (attribute.value.type != Types.number)
+								throw new parser.SyntaxError("Object resize scale must be numbers", Types.number, attribute.value.type, attribute.value.location)
+							result.resizeScale = attribute.value.value
+							break
 						default:
 							throw new parser.SyntaxError(`Unknown object attribute '${attributeName}'`, ["x_position", "y_position", "text"], attributeName, attribute.name.location)
 						}
@@ -165,6 +169,7 @@ module.exports.hopscotchify = (htnCode, options) => {
 				hsObject.objectID = randomUUID()
 				hsObject.xPosition = objectAttributes.xPosition.toString()
 				hsObject.yPosition = objectAttributes.yPosition.toString()
+				hsObject.resizeScale = objectAttributes.resizeScale.toString()
 				if (objectAttributes.text) {
 					if (hsObject.type != 1) //HSObjectType.Text
 						throw new parser.SyntaxError("Only text objects can have text", "", "text:", block.attributes[0].location) // location is approximate
