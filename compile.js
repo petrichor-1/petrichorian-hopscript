@@ -16,8 +16,30 @@ try {
 	console.log(JSON.stringify(hopscotchified))
 } catch (error) {
 	try {
-		const message = `${error.toString()}\nExpected '${error.expected}', found '${error.found}' at ${inputPath}:${error.location.start.line-preludeLineCount}:${error.location.start.column}`
+		const expected = error.expected.map ? error.expected.map(e => {
+			if (e.text)
+				return e.text
+			if (e.description)
+				return e.description
+			if (e.type == "class")
+				return e.parts.join(" or ")
+			if (e.type == "end")
+				return "end of file"
+			return e
+		}) : [error.expected]
+		const message = `Syntax error: Expected '${expected.filter(e=>!e.startsWith("[internal]")).join("', '")}', found '${error.found}'\n\tat ${inputPath}:${error.location.start.line-preludeLineCount}:${error.location.start.column}`
 		console.log(message)
+		const line = htnCode.split('\n')[error.location.start.line-1]
+		const before = line.substring(0,error.location.start.column-1)
+		const problematic = line.substring(error.location.start.column-1,error.location.end.column-1)
+		const after = line.substring(error.location.end.column-1, line.length)
+		console.log(`${before}\x1b[31m${problematic}\x1b[0m${after}`)
+		let arrowLine = ""
+		for (let i = 1; i < error.location.start.column; i++)
+			arrowLine += " "
+		for (let i = 0; i < error.location.end.column - error.location.start.column; i++)
+			arrowLine += "^"
+		console.log(arrowLine)
 	} catch {
 		console.log(error)
 	}
