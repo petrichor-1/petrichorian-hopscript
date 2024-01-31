@@ -650,7 +650,12 @@ function createBlockFromUndefinedTypeOfClasses(allowedBlockClasses, parametersKe
 				if (trait)
 					return createOriginalObjectTrait(trait)
 			}
-			throw new parser.SyntaxError("Should be impossible: Unhandled original object scope", [], "", block.location)
+			const ooHsVariable = getOrAddObjectVariableNamed(variableDescription.name, project)
+			return {
+				type: 8005, //HSBlockType.OriginalObject
+				variable: ooHsVariable.objectIdString,
+				description: "Variable" // Correct
+			}
 		case "Self":
 			if (maybeTraits) {
 				const trait = maybeTraits["Object"]
