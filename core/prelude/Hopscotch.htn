@@ -6,6 +6,9 @@
 #=============
 # Object types
 #=============
+#Custom
+#TODO: Finish these
+_defineObjectType text 1 "text-object.png" 74 55
 #Characters
 _defineObjectType chillanna 29 "chillanna.png" 172.5 172.5
 _defineObjectType cosmic_cody 28 "astro.png" 187.5 187.5
