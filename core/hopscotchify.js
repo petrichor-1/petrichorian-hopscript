@@ -138,8 +138,15 @@ module.exports.hopscotchify = (htnCode, options) => {
 			case Types.comment:
 				// This branch intentionally left blank
 				break
+			case Types.customRule:
+				if (!line.value.doesHaveContainer)
+					throw new parser.SyntaxError("Top level custom rules must be definitions", ":", "", line.value.location)
+				if (!line.value.value.type == Types.identifier)
+					throw new parser.SyntaxError("Should be impossible: Unknown custom rule name type", Types.identifier, line.value.value.type, line.value.value.location)
+				addCustomRuleDefinition(customRules, line.value.value.value, line, project, customRuleDefinitionCallbacks, stateStack, StateLevels)
+				break
 			default:
-				throw "Bad top level type"
+				throw new parser.SyntaxError("Bad top level type", [Types.comment, Types.object, Types.customRule], line.value.type, line.value.location)
 			}
 			break
 		case StateLevels.inObjectOrCustomRule:
@@ -210,26 +217,7 @@ module.exports.hopscotchify = (htnCode, options) => {
 				})
 				if (!line.value.doesHaveContainer)
 					break
-				if (customRules[nameAsString])
-					throw new parser.SyntaxError("Duplicate custom rule definition", "", nameAsString, line.location)
-				const beforeGameStartsAbility = createEmptyAbility()
-				project.abilities.push(beforeGameStartsAbility)
-				const hsCustomRule = {
-					id: randomUUID(),
-					abilityID: beforeGameStartsAbility.abilityID,
-					name: unSnakeCase(nameAsString),
-					parameters: [], //TODO
-					rules: []
-				}
-				project.customRules.push(hsCustomRule)
-				customRuleDefinitionCallbacks[nameAsString].forEach(callback => callback(hsCustomRule))
-				customRuleDefinitionCallbacks[nameAsString] = null
-				customRules[nameAsString] = hsCustomRule
-				stateStack.push({
-					level: StateLevels.inObjectOrCustomRule,
-					object: hsCustomRule,
-					beforeGameStartsAbility: beforeGameStartsAbility
-				})
+				addCustomRuleDefinition(customRules, nameAsString, line, project, customRuleDefinitionCallbacks, stateStack, StateLevels)
 				break
 			default:
 				throw new parser.SyntaxError("Bad object-level type", [Types.whenBlock, Types.parenthesisBlock, Types.comment, Types.binaryOperatorBlock], line.value.type, line.value.location)
@@ -280,6 +268,29 @@ module.exports.hopscotchify = (htnCode, options) => {
 	if (undefinedCustomRuleNames.length > 0)
 		throw new parser.SyntaxError("Undefined custom rule", undefinedCustomRuleNames, "")
 	return project
+}
+
+function addCustomRuleDefinition(customRules, nameAsString, line, project, customRuleDefinitionCallbacks, stateStack, StateLevels) {
+	if (customRules[nameAsString])
+		throw new parser.SyntaxError("Duplicate custom rule definition", "", nameAsString, line.location)
+	const beforeGameStartsAbility = createEmptyAbility()
+	project.abilities.push(beforeGameStartsAbility)
+	const hsCustomRule = {
+		id: randomUUID(),
+		abilityID: beforeGameStartsAbility.abilityID,
+		name: unSnakeCase(nameAsString),
+		parameters: [], //TODO
+		rules: []
+	}
+	project.customRules.push(hsCustomRule)
+	customRuleDefinitionCallbacks[nameAsString]?.forEach(callback => callback(hsCustomRule))
+	customRuleDefinitionCallbacks[nameAsString] = null
+	customRules[nameAsString] = hsCustomRule
+	stateStack.push({
+		level: StateLevels.inObjectOrCustomRule,
+		object: hsCustomRule,
+		beforeGameStartsAbility: beforeGameStartsAbility
+	})
 }
 
 function handleWhenBlock(whenBlock, Types, parsed, validScopes, project, options, currentState, stateStack, StateLevels) {
@@ -359,7 +370,7 @@ function createBlockOfClasses(allowedBlockClasses, parametersKey, block, Types, 
 	case Types.binaryOperatorBlock:
 		throw new parser.SyntaxError("Should be impossible: Unconverted binary operator block", [], "", block.location)
 	default:
-		throw "Unknown block form"
+		throw new parser.SyntaxError("Should be impossible: Unknown block form", [Types.comment, Types.identifier, Types.comment], block.type, block.location)
 	}
 	const blockType = BlockTypes[blockName]
 	if (!blockType)
