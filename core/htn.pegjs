@@ -283,14 +283,28 @@ nonNewlineWhitespace
 	{ return c }
 
 object
-	= type:objectTypeName whitespace+ name:identifier whitespace* ":"
+	= type:objectTypeName whitespace+ name:identifier whitespace* attributes:objectAttributes? whitespace* ":"
 	{
 		objectNames.push(name)
 		return {
 			type: Types.object,
 			objectType: type,
-			name: name
+			name: name,
+			attributes: attributes
 		}
+	}
+
+objectAttributes
+	= "(" whitespace* attributes:(objectAttribute "," whitespace*)* finalAttribute:objectAttribute whitespace* ")"
+	{
+		const result = attributes || []
+		result.push(finalAttribute)
+		return result
+	}
+objectAttribute
+	= name:identifier whitespace* ":" whitespace* value:(number / string)
+	{
+		return {name:name,value:value}
 	}
 
 objectTypeName
