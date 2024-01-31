@@ -277,6 +277,9 @@ function addEventParameterReference(eventParameterId) {
 	case 8003: //HSBlockType.Game
 		finalResult += "Screen"
 		break
+	case 8004:
+		finalResult += "Self"
+		break
 	default:
 		throw "Unknown event parameter type " + eventParameter.blockType
 	}
