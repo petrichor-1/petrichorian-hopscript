@@ -155,27 +155,22 @@ module.exports.hopscotchify = (htnCode, options) => {
 				addCustomRuleDefinition(customRules, line.value.value.value, line, project, customRuleDefinitionCallbacks, stateStack, StateLevels)
 				break
 			case Types.customAbilityReference:
-				if (!line.value.doesHaveContainer)
-					throw new parser.SyntaxError("Top level custom blocks must be definitions", ":", "", line.value.location)
-				if (!line.value.value.type == Types.identifier)
-					throw new parser.SyntaxError("Should be impossible: Unknown custom block name type", Types.identifier, line.value.value.type, line.value.value.location)
-				const name = unSnakeCase(line.value.value.value)
-				const customBlockAbility = createEmptyAbility()
-				project.abilities.push(customBlockAbility)
-				customBlockDefinitionCallbacks[name]?.forEach(callback => {
-					callback(customBlockAbility)
-				})
-				customBlockDefinitionCallbacks[name] = null
-				customBlocks[name] = customBlockAbility
-				customBlockAbility.name = name
-				stateStack.push({
-					level: StateLevels.inAbility,
-					ability: customBlockAbility,
-					checkIfElseBlock: null
-				})
+				const definition = line.value
+				handleCustomBlockDefinition(definition)
 				break
+			case Types.parenthesisBlock:
+				if (line.value.name.type == Types.customAbilityReference) {
+					const parenthesisBlock = deepCopy(line.value)
+					if (line.value.name.value.type != Types.identifier)
+						throw new parser.SyntaxError("Should be impossible: Unknown custom block name type", Types.identifier, line.value.name.value.type, line.value.name.value.location)
+					parenthesisBlock.value = line.value.name.value
+					parenthesisBlock.type = Types.customAbilityReference
+					handleCustomBlockDefinition(parenthesisBlock)
+					break
+				}
+				// Intentionally fall through
 			default:
-				throw new parser.SyntaxError("Bad top level type", [Types.comment, Types.object, Types.customRule, Types.customAbilityReference], line.value.type, line.value.location)
+				throw new parser.SyntaxError("Bad top level type", [Types.comment, Types.object, Types.customRule, Types.customAbilityReference, Types.parenthesisBlock], line.value.type, line.value.location)
 			}
 			break
 		case StateLevels.inObjectOrCustomRule:
@@ -332,6 +327,50 @@ module.exports.hopscotchify = (htnCode, options) => {
 	if (undefinedCustomBlockNames.length > 0)
 		throw new parser.SyntaxError("Undefined custom Block", undefinedCustomBlockNames, "")
 	return project
+
+	function handleCustomBlockDefinition(definition) {
+		if (!definition.doesHaveContainer)
+			throw new parser.SyntaxError("Top level custom blocks must be definitions", ":", "", definition.location)
+		if (!definition.value.type == Types.identifier)
+			throw new parser.SyntaxError("Should be impossible: Unknown custom block name type", Types.identifier, definition.value.type, definition.value.location)
+		const name = unSnakeCase(definition.value.value)
+		const customBlockAbility = createEmptyAbility()
+		customBlockAbility.parameters = []
+		if ((definition.parameters?.length || 0) > 0) {
+			for (let i = 0; i < definition.parameters.length; i++) {
+				const parameter = definition.parameters[i]
+				const parameterValue = function(){
+					switch (parameter.value.type) {
+					case Types.string:
+						return parameter.value.value
+					default:
+						throw "Should be impossible: Unknown default value for custom block type" + parameter.value.type
+					}
+				}()
+				if (parameter.label.type != Types.identifier)
+					throw "Should be impossible; INvalid parameter label type in custom block definition"
+				const hsParameter = {
+					type: 57, //constant
+					defaultValue: parameterValue,
+					value: parameterValue,
+					key: unSnakeCase(parameter.label.value)
+				}
+				customBlockAbility.parameters.push(hsParameter)
+			}
+		}
+		project.abilities.push(customBlockAbility)
+		customBlockDefinitionCallbacks[name]?.forEach(callback => {
+			callback(customBlockAbility)
+		})
+		customBlockDefinitionCallbacks[name] = null
+		customBlocks[name] = customBlockAbility
+		customBlockAbility.name = name
+		stateStack.push({
+			level: StateLevels.inAbility,
+			ability: customBlockAbility,
+			checkIfElseBlock: null
+		})
+	}
 }
 
 function addCustomRuleDefinition(customRules, nameAsString, line, project, customRuleDefinitionCallbacks, stateStack, StateLevels) {
