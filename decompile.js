@@ -124,8 +124,15 @@ function addBlock(hsBlock, parametersKey) {
 	if (hsBlock.type == 123) { //HSBlockTypes.Ability
 		finalResult += "custom_block "
 		finalResult += snakeCaseify(hsBlock.description)
-		if (hsBlock.parameters)
-			throw "TODO: Custom block parameters"
+		if (hsBlock.parameters?.length > 0) {
+			finalResult += "("
+			hsBlock.parameters.forEach(hsParameter => {
+				finalResult += snakeCaseify(hsParameter.key)
+				finalResult += ": "
+				addParameterValue(hsParameter)
+			})
+			finalResult += ")"
+		}
 		return
 	}
 	const block = blockNamesByHSType[hsBlock.type]
@@ -198,6 +205,8 @@ function addVariableFromDatum(datum) {
 			return "Game"
 		case 8004: //HSBlockType.Self
 			return "Self"
+		case 8005: //HSBlockType.OriginalObject
+			return "Original_object"
 		default:
 			throw `Unknown variable type ${datum.type}`
 		}
@@ -244,6 +253,9 @@ function addLocalVariable(datum) {
 function addAbility(hsAbility) {
 	hsAbility.blocks.forEach(block => {
 		addBlock(block,"parameters")
+		if (block.type == 123) { //HSBlockType.ability
+			return newLine()
+		}
 		if (block.controlScript) {
 			finalResult += ":"
 			currentIndentationLevel++
