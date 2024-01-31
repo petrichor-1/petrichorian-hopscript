@@ -289,6 +289,7 @@ function addAbility(hsAbility) {
 		if (block.type == 123) { //HSBlockType.ability
 			return newLine()
 		}
+		let stillNeedsNewline = true
 		if (block.controlScript) {
 			finalResult += ":"
 			currentIndentationLevel++
@@ -298,19 +299,29 @@ function addAbility(hsAbility) {
 				throw `Missing ability with id ${block.controlScript.abilityID} as child of ability with id ${hsAbility.abilityID}`
 			addAbility(childAbility)
 			currentIndentationLevel--
+			stillNeedsNewline = false
 		}
 		if (block.controlFalseScript) {
 			const childAbility = project.abilities.find(e=>e.abilityID == block.controlFalseScript.abilityID)
 			if (childAbility && childAbility.blocks.length > 0) {
-				newLine()
+				if (stillNeedsNewline)
+					newLine()
+				//Unindent 1
+				if (!/\t$/.test(finalResult)) {
+					newLine()
+				} else {
+					finalResult = finalResult.substring(0,finalResult.length-1)
+				}
 				finalResult += "else:"
 				currentIndentationLevel++
 				newLine()
 				addAbility(childAbility)
 				currentIndentationLevel--
+				stillNeedsNewline = false
 			}
 		}
-		newLine()
+		if (stillNeedsNewline)
+			newLine()
 	})
 }
 
