@@ -176,7 +176,7 @@ _defineBlockType conditionalOperator and 1004 "and" 49 _ "" "", 49 and "and" "",
 _defineBlockType conditionalOperator or 1005 "or" 49 _ "" "", 49 or "or" "", 
 _defineBlockType conditionalOperator not 1009 "not" 49 _ "not" "", 
 _defineBlockType conditionalOperator flipped 1010 "flipped"
-_defineBlockType conditionalControl matches 1008 "matches" 53 _ "" "", 53 matches "matches" "", 
+_defineBlockType conditionalOperator matches 1008 "matches" 53 _ "" "", 53 matches "matches" "", 
 
 
 #==================
