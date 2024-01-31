@@ -121,6 +121,13 @@ function addBlock(hsBlock, parametersKey) {
 	if (hsBlock.type == 69) { //HSBlockTypes.Comment
 		return addComment(hsBlock)
 	}
+	if (hsBlock.type == 123) { //HSBlockTypes.Ability
+		finalResult += "custom_block "
+		finalResult += snakeCaseify(hsBlock.description)
+		if (hsBlock.parameters)
+			throw "TODO: Custom block parameters"
+		return
+	}
 	const block = blockNamesByHSType[hsBlock.type]
 	if (!block)
 		throw "Undefined block type " + hsBlock.type
