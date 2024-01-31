@@ -30,6 +30,19 @@ _defineObjectType space_pod 10 "spacepod.png" 150 150
 _defineObjectType raccoon 31 "raccoon.png" 172.5 172.5
 _defineObjectType bird 32 "bird.png" 150 150
 _defineObjectType crocodile 3001 "crocodileJaws.png" 288 164
+#Jungle
+_defineObjectType banyan 26 "banyan.png" 600 600
+_defineObjectType parrot 20 "parrot-flying-object.png" 150 150
+_defineObjectType mandrill 21 "mandrill.png" 150 150
+_defineObjectType miss_chief 23 "miss-chief.png" 150 150
+_defineObjectType mosquito 22 "mosquito.png" 150 150
+_defineObjectType jeepers 25 "jeepers.png" 390 390
+_defineObjectType venus 24 "venus.png" 150 150
+_defineObjectType toucan 58 "toucan.png" 150 150
+_defineObjectType anteater 59 "anteater.png" 150 150
+_defineObjectType sloth 61 "sloth.png" 150 150
+_defineObjectType iguana 62 "iguana.png" 150 150
+_defineObjectType hut 63 "hut.png" 150 150
 #Shapes
 _defineObjectType heart 153 "heartV3.png" 150 127
 _defineObjectType arch 155 "fullSizeArch.png" 150 75
