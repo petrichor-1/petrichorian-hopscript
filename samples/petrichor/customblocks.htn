@@ -1,0 +1,8 @@
+bear bear:
+	When game_starts:
+		create_a_clone_of_this_object
+		set_position(to_x: 512, y: 384)
+		custom_block test:
+			set_text(to: join("Hello, I am clone #", with: join(Self.clone_index, with: join(" of ", with: Self.name))), color: random_color)
+	When object_is_cloned:
+		custom_block test
