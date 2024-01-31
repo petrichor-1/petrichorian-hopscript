@@ -1,0 +1,242 @@
+custom_block change_color:
+	#Changes to random colors for a while.
+	repeat(times: "10"):
+		set_color(random_color)
+		wait_milliseconds("100")
+custom_block grow:
+	#Gradually get bigger.
+	repeat(times: "10"):
+		grow_by(percent: "10")
+	send_to_back
+custom_block spin(times: "5"):
+	#Turn on the spot a certain number of times.
+	set_speed(to: "1000")
+	turn(degrees: ("360" * times))
+	set_angle("0")
+	set_speed(to: "400")
+custom_block go_to_finger:
+	#Go to the position where the screen was last tapped or pressed.
+	set_position(to_x: Game.last_touch_x, y: Game.last_touch_y)
+custom_block go_to_center:
+	#Go to the middle of the screen.
+	set_position(to_x: (Game.width / "2"), y: (Game.height / "2"))
+custom_block jump:
+	#Move up, do a flip, and move back down again.
+	set_speed(to: "500")
+	change_y(by: "100")
+	turn(degrees: "360")
+	change_y(by: "-100")
+	set_speed(to: "400")
+custom_rule fireworks(sparks: "20"):
+	When game_starts:
+		#Create a fireworks effect with clones. You can change how many sparks there are.
+		(sparks = min("50", sparks))
+		set_invisibility(percent: "100")
+	When game_is_playing:
+		check_once_if((Self.total_clones < sparks)):
+			create_a_clone_of_this_object
+	When object_is_cloned:
+		set_invisibility(percent: "100")
+	When is_tapped(Screen):
+		#The clones go to where the finger was and move outwards, before falling and fading.
+		set_speed(to: "1000")
+		custom_block go_to_finger
+		set_color(random("3", to: "6"))
+		set_angle(random("0", to: "360"))
+		set_invisibility(percent: "0")
+		move_forward(random("100", to: "300"))
+		set_speed(to: "50")
+		change_y(by: "-50")
+		set_invisibility(percent: "100")
+	When (Self.insibility_as_a_percent == "0"):
+		repeat(times: "50"):
+			set_invisibility(percent: (Self.insibility_as_a_percent + "2"))
+custom_rule drag_me:
+	When is_pressed(Self):
+		#Lets you move an object around by pressing on it.
+		custom_block go_to_finger
+custom_rule draw_like_a_pen:
+	When is_pressed(Self):
+		#Draws a trail whenever you press on the object.
+		draw_a_trail(color: "HSB(335,89,84)", width: "10"):
+			custom_block go_to_finger
+	When is_tapped(Self):
+		#The object also goes to your finger when the device is tapped, so that it does not draw a continuous line after lifting your finger.
+		custom_block go_to_finger
+custom_rule mirror_draw(symmetry: "5"):
+	(symmetry = min(symmetry, "100"))
+	(thickness = ("60" / symmetry))
+	(horizontal_center = (Game.width / "2"))
+	(vertical_center = (Game.height / "2"))
+	(angle_section = ("360" / symmetry))
+	(axis_of_reference = "270")
+	(axis_index = "0")
+	(color = random("1", to: "360"))
+	When game_starts:
+		#Draws the same thing rotated around the center of the screen and mirrored.
+	When (Self.total_clones < min((symmetry * "2"), "200")):
+		#Quickly create clones — double the number of axes of symmetry, for mirror effect.
+		create_a_clone_of_this_object
+	When game_starts:
+		#There are double the amount of objects to the number of axes.
+		(axis_index = floor((Self.clone_index / "2")))
+	When object_is_cloned:
+		#There are double the amount of objects to the number of axes.
+		(axis_index = floor((Self.clone_index / "2")))
+	When is_tapped(Screen):
+		#Set a new color to use, every time the device is tapped.
+		increase(color, by: "20")
+	When is_pressed(Screen):
+		set_invisibility(percent: "100")
+	When is_not_pressed(Screen):
+		set_invisibility(percent: "0")
+	When is_tapped(Screen):
+		(distance_from_center = square_root((((Game.last_touch_x - horizontal_center) ^ "2") + ((Game.last_touch_y - vertical_center) ^ "2"))))
+		#Find angle of touch relative to the axis of reference, thanks to ThinBuffaloSr for shortened code.
+		(mirror_angle_offset = ((arccos(((Game.last_touch_x - horizontal_center) / distance_from_center)) * ((Game.last_touch_y - vertical_center) / absolute_value((Game.last_touch_y - vertical_center)))) - axis_of_reference))
+		(individual_angle = (axis_of_reference + (axis_index * angle_section)))
+		#Adds an offset for the mirror effect around each axis.
+		check_if_else((modulo(Self.clone_index, %: "2") == "0")):
+			increase(individual_angle, by: mirror_angle_offset)
+		else:
+			increase(individual_angle, by: (mirror_angle_offset * "-1"))
+		set_position(to_x: ((distance_from_center * cos(individual_angle)) + horizontal_center), y: ((distance_from_center * sin(individual_angle)) + vertical_center))
+	When is_pressed(Screen):
+		#Same code as in the "When device is tapped" rule, but with Draw a Trail.
+		#The "When 📱device is tapped" rule makes sure that the trail is not continuous from one tap to another.
+		(distance_from_center = square_root((((Game.last_touch_x - horizontal_center) ^ "2") + ((Game.last_touch_y - vertical_center) ^ "2"))))
+		(mirror_angle_offset = ((arccos(((Game.last_touch_x - horizontal_center) / distance_from_center)) * ((Game.last_touch_y - vertical_center) / absolute_value((Game.last_touch_y - vertical_center)))) - axis_of_reference))
+		(individual_angle = (axis_of_reference + (axis_index * angle_section)))
+		check_if_else((modulo(Self.clone_index, %: "2") == "0")):
+			increase(individual_angle, by: mirror_angle_offset)
+		else:
+			increase(individual_angle, by: (mirror_angle_offset * "-1"))
+		draw_a_trail(color: h(color, s: "80", b: "85"), width: thickness):
+			set_position(to_x: ((distance_from_center * cos(individual_angle)) + horizontal_center), y: ((distance_from_center * sin(individual_angle)) + vertical_center))
+custom_rule bounce:
+	(height = "70")
+	(bounce_height = height)
+	(horizontal_velocity = "4")
+	(vertical_velocity = "0")
+	When game_is_playing:
+		#You can tilt your device left and right to move the object horizontally.
+		(horizontal_velocity = (Game.tilt_right_percent / "4"))
+	When game_is_playing:
+		#Add gravity and make sure that the object keeps moving every frame.
+		increase(vertical_velocity, by: "-4")
+		set_position(to_x: (Self.x_position + horizontal_velocity), y: (Self.y_position + vertical_velocity))
+	When (Self.y_position < "50"):
+		#Make the object bounce when it hits the ground.
+		(vertical_velocity = bounce_height)
+		check_once_if((vertical_velocity >= "4")):
+			increase(bounce_height, by: "-3")
+	When is_tapped(Screen):
+		#Make the object bounce when the device is tapped.
+		(bounce_height = height)
+custom_rule make_a_grid(size: "5"):
+	(columns = size)
+	(rows = size)
+	(column_number = "0")
+	(row_number = "0")
+	(spacing = Self.height)
+	(start_cloning = "0")
+	(start_x = "100")
+	(start_y = (Game.height - "100"))
+	When game_starts:
+		#Create a square grid of clones of this object.
+	When game_starts:
+		#You can remove this Set Position block if you’d like the grid to start where the character is.
+		set_position(to_x: start_x, y: start_y)
+		create_a_clone_of_this_object
+	When object_is_cloned:
+		#A clone inherits the properties of the object it was cloned from.
+		#To make the next clone in the row, the clone will move right.
+		set_position(to_x: (Self.x_position + spacing), y: Self.y_position)
+		increase(column_number, by: "1")
+		check_once_if((column_number == columns)):
+			#To create a new row, the clone will move all the way left and move down.
+			set_position(to_x: (Self.x_position - (column_number * spacing)), y: (Self.y_position - spacing))
+			(column_number = "0")
+			increase(row_number, by: "1")
+		check_once_if(not(((row_number == (rows - "1")) and (column_number == (columns - "1"))))):
+			#If this is not the last clone in the grid, continue making a clone of this object.
+			check_once_if((Self.total_clones < (columns * rows))):
+				#don’t make too many clones
+				set_invisibility(percent: "0")
+				create_a_clone_of_this_object
+custom_rule gradient(color1: "Purple", color2: "Yellow"):
+	(start_hue = "0")
+	(end_hue = "0")
+	When game_starts:
+		#Draws a gradient background between two colors.
+		set_invisibility(percent: "100")
+		check_if_else((color1 MATCHES "red")):
+			(start_hue = "0")
+		else:
+			check_if_else((color1 MATCHES "orange")):
+				(start_hue = "20")
+			else:
+				check_if_else((color1 MATCHES "yellow")):
+					(start_hue = "60")
+				else:
+					check_if_else((color1 MATCHES "green")):
+						(start_hue = "100")
+					else:
+						check_if_else((color1 MATCHES "blue")):
+							(start_hue = "200")
+						else:
+							check_if_else((color1 MATCHES "purple")):
+								(start_hue = "270")
+							else:
+								check_if_else((color1 MATCHES "pink")):
+									(start_hue = "330")
+								else:
+									(start_hue = random("1", to: "360"))
+		check_if_else((color2 MATCHES "red")):
+			(end_hue = "0")
+		else:
+			check_if_else((color2 MATCHES "orange")):
+				(end_hue = "20")
+			else:
+				check_if_else((color2 MATCHES "yellow")):
+					(end_hue = "45")
+				else:
+					check_if_else((color2 MATCHES "green")):
+						(end_hue = "100")
+					else:
+						check_if_else((color2 MATCHES "blue")):
+							(end_hue = "200")
+						else:
+							check_if_else((color2 MATCHES "purple")):
+								(end_hue = "270")
+							else:
+								check_if_else((color2 MATCHES "pink")):
+									(end_hue = "330")
+								else:
+									(end_hue = random("1", to: "360"))
+		(y_delta = "15")
+		(starting_x = (Self.width * "-1"))
+		(starting_y = (Self.height * "-1"))
+		(number_of_lines = ((Game.height + Self.height) / y_delta))
+		#Choose the shorter distance between the two colors.
+		(hue_delta_magnitude = min(min(modulo(absolute_value((end_hue - start_hue)), %: "360"), modulo(absolute_value(((start_hue + "360") - end_hue)), %: "360")), modulo(absolute_value(((end_hue + "360") - start_hue)), %: "360")))
+		(hue_delta_direction = ((end_hue - start_hue) / absolute_value((end_hue - start_hue))))
+		check_once_if((hue_delta_magnitude == ((end_hue + "360") - start_hue))):
+			(hue_delta_direction = "1")
+		check_once_if((hue_delta_magnitude == ((start_hue + "360") - end_hue))):
+			(hue_delta_direction = "-1")
+		(hue_delta = (hue_delta_magnitude * hue_delta_direction))
+		#Draw horizontal stripes starting from the bottom of the screen, moving up and changing the color each time.
+		set_origin(to_x: starting_x, y: starting_y)
+		repeat(times: number_of_lines):
+			draw_a_trail(color: h((((Self.y_position / Game.height) * hue_delta) + start_hue), s: "86", b: "96"), width: y_delta):
+				set_origin(to_x: Game.width, y: Self.origin_y)
+			set_origin(to_x: starting_x, y: (Self.origin_y + y_delta))
+		custom_block go_to_center
+		broadcast_message(named: "done drawing")
+	When message_matches("done drawing"):
+		set_invisibility(percent: "0")
+custom_rule tap_to_change_scene:
+	When is_tapped(Screen):
+		change_scene(to: Next_scene)
+
