@@ -50,6 +50,21 @@ project.abilities.forEach(ability => {
 		return
 	finalResult += "custom_block "
 	finalResult += snakeCaseify(ability.name)
+	if ((ability.parameters?.length ?? 0) > 0) {
+		finalResult += "("
+		finalResult += snakeCaseify(ability.parameters[0].key)
+		finalResult += ": \""
+		finalResult += ability.parameters[0].defaultValue.replace(/"/g,'\\"')
+		finalResult += '"'
+		for (let i = 1; i < ability.parameters.length; i++) {
+			finalResult += ", "
+			finalResult += snakeCaseify(ability.parameters[i].key)
+			finalResult += ": \""
+			finalResult += ability.parameters[i].defaultValue.replace(/"/g,'\\"')
+			finalResult += '"'
+		}
+		finalResult += ")"
+	}
 	finalResult += ":"
 	currentIndentationLevel++
 	newLine()
