@@ -404,7 +404,7 @@ module.exports.hopscotchify = (htnCode, options) => {
 		})
 		if (!customRule.doesHaveContainer)
 			return
-		addCustomRuleDefinition(customRules, nameAsString, line, project, customRuleDefinitionCallbacks, stateStack, StateLevels, Types, null)
+		addCustomRuleDefinition(customRules, nameAsString, line, project, customRuleDefinitionCallbacks, stateStack, StateLevels, Types, line.value.parameters)
 	}
 
 	function handleCustomBlockDefinition(definition) {
