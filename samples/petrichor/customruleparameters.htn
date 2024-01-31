@@ -1,0 +1,10 @@
+custom_rule test(param1: "Hello"):
+	When game_starts:
+		show_popup(message: param1)
+
+octopus octopus_who_is_guilty_of_32_federal_crimes:
+	custom_rule test(param1: "HI")
+	custom_rule second_test(hello: "Well hello there!"):
+		When game_starts:
+			wait(seconds: 100)
+			show_popup(message: hello)
