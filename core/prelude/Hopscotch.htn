@@ -136,6 +136,9 @@ _defineBlockType operator(Event) is_not_pressed 7020 "is Not Pressed" 50 _ "" ""
 _defineBlockType operator(Event) i_get_a_message 7023 "I Get a Message" 53 _ "I get a message" "", 
 _defineBlockType operator(Event) message_matches 7024 "Message Matches" 52 _ "message matches" "", 
 _defineBlockType operator(Event) object_is_cloned 7015 "Object is Cloned"
+#Collisions rules
+_defineBlockType operator(Event) bumps 7010 "Bumps" 50 _ "" "", 50 _ "" "", 
+_defineBlockType operator(Event) is_touching 7001 "is Touching" 50 _ "" "", 50 _ "" "", 
 
 #Math
 _defineBlockType operator(Number) add 4000 "+" 57 _ "" "2", 57 + "+" "3", 
