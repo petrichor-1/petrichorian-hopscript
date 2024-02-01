@@ -421,6 +421,7 @@ module.exports.hopscotchify = (htnCode, options) => {
 				const parameterValue = function(){
 					switch (parameter.value.type) {
 					case Types.string:
+					case Types.number:
 						return parameter.value.value
 					default:
 						throw "Should be impossible: Unknown default value for custom block type" + parameter.value.type
