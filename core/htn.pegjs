@@ -377,8 +377,23 @@ parameterTypeDefinition
 	}
 
 blockClass
-	= "operator"
-	/ "conditionalOperator"
+	= "operator(" type:identifier ")"
+	{
+		return {class:"operator",dataType:type}
+	}
+	/ "conditionalOperator(" type:identifier ")"
+	{
+		return {class:"conditionalOperator",dataType:type}
+	}
 	/ "method"
+	{
+		return {class:"method"}
+	}
 	/ "control"
+	{
+		return {class:"control"}
+	}
 	/ "conditionalControl"
+	{
+		return {class:"conditionalControl"}
+	}

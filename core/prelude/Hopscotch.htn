@@ -128,68 +128,68 @@ _defineBlockType method change_scene 125 "Change Scene" 56 to "to" "0",
 _defineBlockType method broadcast_message 126 "Broadcast Message" 53 named "named" "", 
 
 #Game rules
-_defineBlockType operator game_starts 7000 "Game Starts"
-_defineBlockType operator game_is_playing 7021 "Game is Playing"
-_defineBlockType operator is_tapped 7001 "is Tapped" 50 _ "" "", 
-_defineBlockType operator is_pressed 7003 "is Pressed" 50 _ "" "", 
-_defineBlockType operator is_not_pressed 7020 "is Not Pressed" 50 _ "" "", 
-_defineBlockType operator i_get_a_message 7023 "I Get a Message" 53 _ "I get a message" "", 
-_defineBlockType operator message_matches 7024 "Message Matches" 52 _ "message matches" "", 
-_defineBlockType operator object_is_cloned 7015 "Object is Cloned"
+_defineBlockType operator(Event) game_starts 7000 "Game Starts"
+_defineBlockType operator(Event) game_is_playing 7021 "Game is Playing"
+_defineBlockType operator(Event) is_tapped 7001 "is Tapped" 50 _ "" "", 
+_defineBlockType operator(Event) is_pressed 7003 "is Pressed" 50 _ "" "", 
+_defineBlockType operator(Event) is_not_pressed 7020 "is Not Pressed" 50 _ "" "", 
+_defineBlockType operator(Event) i_get_a_message 7023 "I Get a Message" 53 _ "I get a message" "", 
+_defineBlockType operator(Event) message_matches 7024 "Message Matches" 52 _ "message matches" "", 
+_defineBlockType operator(Event) object_is_cloned 7015 "Object is Cloned"
 
 #Math
-_defineBlockType operator add 4000 "+" 57 _ "" "2", 57 + "+" "3", 
-#TODO: Use the correct character in the key for second parameter, it being empty is wrong and that is visible in the ios app editor. The web explorer probably doesn't display correctly either (untested)
-_defineBlockType operator subtract 4001 "-" 42 _ "" "5", 42 _ "" "2", 
-_defineBlockType operator multiply 4002 "×" 42 _ "" "2", 42 * "×" "3", 
-#TODO: Why can't i use `/`? Is it thinking its the start of a regex literal?
-#      If those are actually causing trouble now its probably fine to break
-#      compatability with tri's htn
-_defineBlockType operator divide 4003 "÷" 42 _ "" "5", 42 by "÷" "2", 
-_defineBlockType operator random 4004 "Random" 45 _ "" "1", 46 to "to" "100", 
-_defineBlockType operator power 4005 "^" 42 _ "" "2", 42 ^ "^" "3", 
-_defineBlockType operator square_root 4006 "√" 42 _ "" "25", 
-_defineBlockType operator sin 4007 "Sin" 42 _ "" "45", 
-_defineBlockType operator cos 4008 "Cos" 42 _ "" "45", 
-_defineBlockType operator tan 4012 "Tan" 42 _ "" "45", 
-_defineBlockType operator arcsin 4013 "Arcsin" 57 _ "" "0.5", 
-_defineBlockType operator arccos 4014 "Arccos" 57 _ "" "0.5", 
-_defineBlockType operator arctan 4015 "Arctan" 57 _ "" "0.5", 
-_defineBlockType operator max 4016 "Maximum" 42 _ "" "100", 42 _ "" "200", 
-_defineBlockType operator min 4017 "Minimum" 42 _ "" "0", 42 _ "" "10", 
-_defineBlockType operator round 4009 "Round" 57 _ "" "2.5", 
-_defineBlockType operator floor 4018 "Floor" 57 _ "" "2.5", 
-_defineBlockType operator ceiling 4019 "Ceiling" 57 _ "" "2.5", 
-_defineBlockType operator absolute_value 4010 "Absolute Value" 42 _ "" "-10", 
-_defineBlockType operator modulo 4011 "%" 42 _ "" "5", 42 % "%" "2", 
+_defineBlockType operator(Number) add 4000 "+" 57 _ "" "2", 57 + "+" "3", 
+#TODO: Use the correct ch(Number)aracter in the key for second parameter, it being empty is wrong and that is visible in the ios app editor. The web explorer probably doesn't display correctly either (untested)
+_defineBlockType operator(Number) subtract 4001 "-" 42 _ "" "5", 42 _ "" "2", 
+_defineBlockType operator(Number) multiply 4002 "×" 42 _ "" "2", 42 * "×" "3", 
+#TODO: Why can't i use `/(Number)`? Is it thinking its the start of a regex literal?
+#      If those are actua(Number)lly causing trouble now its probably fine to break
+#      compatability with(Number) tri's htn
+_defineBlockType operator(Number) divide 4003 "÷" 42 _ "" "5", 42 by "÷" "2", 
+_defineBlockType operator(Number) random 4004 "Random" 45 _ "" "1", 46 to "to" "100", 
+_defineBlockType operator(Number) power 4005 "^" 42 _ "" "2", 42 ^ "^" "3", 
+_defineBlockType operator(Number) square_root 4006 "√" 42 _ "" "25", 
+_defineBlockType operator(Number) sin 4007 "Sin" 42 _ "" "45", 
+_defineBlockType operator(Number) cos 4008 "Cos" 42 _ "" "45", 
+_defineBlockType operator(Number) tan 4012 "Tan" 42 _ "" "45", 
+_defineBlockType operator(Number) arcsin 4013 "Arcsin" 57 _ "" "0.5", 
+_defineBlockType operator(Number) arccos 4014 "Arccos" 57 _ "" "0.5", 
+_defineBlockType operator(Number) arctan 4015 "Arctan" 57 _ "" "0.5", 
+_defineBlockType operator(Number) max 4016 "Maximum" 42 _ "" "100", 42 _ "" "200", 
+_defineBlockType operator(Number) min 4017 "Minimum" 42 _ "" "0", 42 _ "" "10", 
+_defineBlockType operator(Number) round 4009 "Round" 57 _ "" "2.5", 
+_defineBlockType operator(Number) floor 4018 "Floor" 57 _ "" "2.5", 
+_defineBlockType operator(Number) ceiling 4019 "Ceiling" 57 _ "" "2.5", 
+_defineBlockType operator(Number) absolute_value 4010 "Absolute Value" 42 _ "" "-10", 
+_defineBlockType operator(Number) modulo 4011 "%" 42 _ "" "5", 42 % "%" "2", 
 #Text
-_defineBlockType operator character_at_index 9000 "Character at Index" 57 in "in" "", 42 at "at" "0", 
-_defineBlockType operator characters_between 9001 "Characters between" 57 in "in" "", 42 between "between" "0", 42 and "and" "1", 
-_defineBlockType operator length 9002 "Length" 57 _ "" "", 
-_defineBlockType operator join 9003 "Join" 57 _ "" "", 57 with "with" "", 
+_defineBlockType operator(String) character_at_index 9000 "Character at Index" 57 in "in" "", 42 at "at" "0", 
+_defineBlockType operator(String) characters_between 9001 "Characters between" 57 in "in" "", 42 between "between" "0", 42 and "and" "1", 
+_defineBlockType operator(Number) length 9002 "Length" 57 _ "" "", 
+_defineBlockType operator(String) join 9003 "Join" 57 _ "" "", 57 with "with" "", 
 #Color
 #TODO: should be `random` but there is no way to differentiate that and random(_, to:) yet
-_defineBlockType operator random_color 5000 "Random"
+_defineBlockType operator(Color) random_color 5000 "Random"
 #TODO: Alias
-_defineBlockType operator h 5002 "HSB" 42 _ "H" "172", 42 s "S" "86", 42 b "B" "96", 
+_defineBlockType operator(Color) h 5002 "HSB" 42 _ "H" "172", 42 s "S" "86", 42 b "B" "96", 
 #TODO: Alias
-_defineBlockType operator r 5001 "RGB" 42 _ "R" "34", 42 g "G" "246", 42 b "B" "217", 
+_defineBlockType operator(Color) r 5001 "RGB" 42 _ "R" "34", 42 g "G" "246", 42 b "B" "217", 
 
 
 #====================
 # Define conditionals
 #====================
-_defineBlockType conditionalOperator equals 1000 "=" 57 _ "" "7", 57 _ "=" "7", 
-_defineBlockType conditionalOperator not_equals 1001 "≠" 57 _ "" "6", 57 _ "≠" "7", 
-_defineBlockType conditionalOperator less_than 1002 "＜" 57 _ "" "6", 57 _ "＜" "7", 
-_defineBlockType conditionalOperator greater_than 1003 "＞" 57 _ "" "8", 57 _ "＞" "7", 
-_defineBlockType conditionalOperator less_than_or_equal_to 1007 "＜=" 57 _ "" "5", 57 _ "＜=" "7", 
-_defineBlockType conditionalOperator greater_than_or_equal_to 1006 "＞=" 57 _ "" "8", 57 _ "＞=" "7", 
-_defineBlockType conditionalOperator and 1004 "and" 49 _ "" "", 49 and "and" "", 
-_defineBlockType conditionalOperator or 1005 "or" 49 _ "" "", 49 or "or" "", 
-_defineBlockType conditionalOperator not 1009 "not" 49 _ "not" "", 
-_defineBlockType conditionalOperator flipped 1010 "flipped"
-_defineBlockType conditionalOperator matches 1008 "matches" 53 _ "" "", 53 matches "matches" "", 
+_defineBlockType conditionalOperator(Boolean) equals 1000 "=" 57 _ "" "7", 57 _ "=" "7", 
+_defineBlockType conditionalOperator(Boolean) not_equals 1001 "≠" 57 _ "" "6", 57 _ "≠" "7", 
+_defineBlockType conditionalOperator(Boolean) less_than 1002 "＜" 57 _ "" "6", 57 _ "＜" "7", 
+_defineBlockType conditionalOperator(Boolean) greater_than 1003 "＞" 57 _ "" "8", 57 _ "＞" "7", 
+_defineBlockType conditionalOperator(Boolean) less_than_or_equal_to 1007 "＜=" 57 _ "" "5", 57 _ "＜=" "7", 
+_defineBlockType conditionalOperator(Boolean) greater_than_or_equal_to 1006 "＞=" 57 _ "" "8", 57 _ "＞=" "7", 
+_defineBlockType conditionalOperator(Boolean) and 1004 "and" 49 _ "" "", 49 and "and" "", 
+_defineBlockType conditionalOperator(Boolean) or 1005 "or" 49 _ "" "", 49 or "or" "", 
+_defineBlockType conditionalOperator(Boolean) not 1009 "not" 49 _ "not" "", 
+_defineBlockType conditionalOperator(Boolean) flipped 1010 "flipped"
+_defineBlockType conditionalOperator(Boolean) matches 1008 "matches" 53 _ "" "", 53 matches "matches" "", 
 
 
 #==================

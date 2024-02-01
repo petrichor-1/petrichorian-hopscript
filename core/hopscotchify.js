@@ -618,11 +618,11 @@ function createBlockOfClasses(allowedBlockClasses, parametersKey, block, Types, 
 	const blockType = BlockTypes[blockName]
 	if (!blockType)
 		return createBlockFromUndefinedTypeOfClasses(allowedBlockClasses, parametersKey, block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, project, validScopes, options)
-	if (!allowedBlockClasses.includes(blockType.class))
-		throw "Invalid block class"
+	if (!allowedBlockClasses.includes(blockType.class.class))
+		throw new parser.SyntaxError("Invalid block class", allowedBlockClasses, blockType.class.class, block.location)
 	result.type = blockType.type
 	result.description = blockType.description
-	result.block_class = blockType.class
+	result.block_class = blockType.class.class
 	for (let i = 0; i < blockType.parameters.length; i++) {
 		const parameterSchema = blockType.parameters[i]
 		if (blockParameters.length <= i)
