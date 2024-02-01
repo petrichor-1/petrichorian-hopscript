@@ -1,0 +1,6 @@
+#include default.htn
+
+text pen:
+	custom_rule draw_like_a_pen
+	When game_is_playing:
+		set_text(to: "hello", color: h(1,s: 0, b:100))
