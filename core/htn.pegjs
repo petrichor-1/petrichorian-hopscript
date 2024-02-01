@@ -19,6 +19,7 @@
 	let binaryOperatorBlockTypes = {}
 	let traitTypes = {}
 	let objectNames = []
+	let parameterTypes = {}
 }
 
 file
@@ -32,6 +33,7 @@ file
 			traitTypes: traitTypes,
 			binaryOperatorBlockTypes: binaryOperatorBlockTypes,
 			objectNames: objectNames,
+			parameterTypes: parameterTypes,
 		}
 	}
 
@@ -43,7 +45,7 @@ line
 		return contents
 	}
 lineContents
-	= indentationWhitespace:nonNewlineWhitespace* block:(object / block / objectTypeDefinition / blockTypeDefinition / binaryOperatorBlockTypeDefinition / traitTypeDefinition)
+	= indentationWhitespace:nonNewlineWhitespace* block:(object / block / internalDefinition)
 	{
 		if (!block)
 			return null
@@ -312,6 +314,9 @@ objectTypeName "object type name"
 	= !"When " !"custom_rule" !"custom_block" value:identifier
 	{ return value }
 
+internalDefinition
+	= objectTypeDefinition / blockTypeDefinition / binaryOperatorBlockTypeDefinition / traitTypeDefinition / parameterTypeDefinition
+
 objectTypeDefinition "[internal] object type definition"
 	= "_defineObjectType " name:objectTypeName " " typeId:number " " filename:string " " width:number " " height:number
 	{
@@ -362,6 +367,12 @@ binaryOperatorBlockTypeDefinition "[internal] binary operator definition"
 	= "_defineBinaryOperator " keyword:binaryOperatorKeyword " " mapsTo:blockName
 	{
 		binaryOperatorBlockTypes[keyword] = mapsTo.value
+	}
+
+parameterTypeDefinition
+	= "_defineParameterType " hsType:number " " types:(identifier " ")+
+	{
+		parameterTypes[hsType.value] = types.map(e=>e[0].value)
 	}
 
 blockClass

@@ -240,3 +240,27 @@ _defineTraitType tilt_right_percent 3005 "Tilt Right %" [Game, ]
 _defineTraitType last_touch_x 3006 "Last Touch X" [Game, ]
 _defineTraitType last_touch_y 3007 "Last Touch Y" [Game, ]
 _defineTraitType total_objects 3008 "Total Objects" [Game, ]
+
+#========================
+# Define parameter types
+#========================
+_defineParameterType 42 String Number 
+_defineParameterType 43 Number 
+_defineParameterType 44 Color 
+_defineParameterType 45 Number 
+_defineParameterType 46 Number 
+_defineParameterType 45 Variable 
+_defineParameterType 48 String Number 
+_defineParameterType 49 Boolean 
+_defineParameterType 50 Object 
+_defineParameterType 51 Sound 
+_defineParameterType 52 Boolean Event 
+_defineParameterType 53 String Number 
+_defineParameterType 54 Object 
+_defineParameterType 55 String 
+_defineParameterType 56 Scene 
+_defineParameterType 57 Number 
+_defineParameterType 58 Product 
+_defineParameterType 59 Rhythm 
+_defineParameterType 60 MusicNote 
+_defineParameterType 61 Instrument 
