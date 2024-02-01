@@ -19,6 +19,9 @@
 		},
 		{
 			"include": "#parameterLabels"
+		},
+		{
+			"include": "#internalDefinitions"
 		}
 	],
 	"repository": {
@@ -61,6 +64,12 @@
 			"patterns": [{
 				"name": "keyword.other",
 				"match": "[^_0-9\\-#\\(\\)=\",/\\[\\]:\\t \\n][^#\\(\\)=\",/\\[\\]:\\t \\n]*:"
+			}]
+		},
+		"internalDefinitions": {
+			"patterns": [{
+				"name": "meta.preprocessor",
+				"match": "^(_defineBlockType|_defineObjectType|_defineTraitType|_defineParameterType|_defineBinaryOperator) "
 			}]
 		}
 	},
