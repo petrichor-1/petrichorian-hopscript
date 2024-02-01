@@ -63,9 +63,9 @@ try {
 		const message = `Syntax error: ${error.message ? error.message : ""} \n\tExpected '${expected.filter(e=>!e.startsWith("[internal]")).join("', '")}', found '${error.found}'\n\tat ${file}:${error.location.start.line-lineOffset}:${error.location.start.column}`
 		console.log(message)
 		const line = htnCode.split('\n')[error.location.start.line-1]
-		const before = line.substring(0,error.location.start.column-1)
-		const problematic = line.substring(error.location.start.column-1,error.location.end.column-1)
-		const after = line.substring(error.location.end.column-1, line.length)
+		const before = line.substring(0,error.location.start.column-1).replace(/\t/g," ")
+		const problematic = line.substring(error.location.start.column-1,error.location.end.column-1).replace(/\t/g," ")
+		const after = line.substring(error.location.end.column-1, line.length).replace(/\t/g," ")
 		console.log(`${before}\x1b[31m${problematic}\x1b[0m${after}`)
 		let arrowLine = ""
 		for (let i = 1; i < error.location.start.column; i++)
