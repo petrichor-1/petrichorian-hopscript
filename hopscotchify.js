@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 const fs = require('fs')
 const {parseArgs} = require('node:util')
 const {hopscotchify} = require('./core/hopscotchify.js')
