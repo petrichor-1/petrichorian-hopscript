@@ -1,10 +1,26 @@
 const fs = require('fs')
+const {parseArgs} = require('node:util')
 const {hopscotchify} = require('./core/hopscotchify.js')
 
 if (process.argv.length < 3)
 	return console.error(`Nope! Try ${process.argv[0]} ${process.argv[1]} <file.htn>`)
 
-const inputPath = process.argv[2]
+const argOptions = {
+	allowPositionals: true,
+	options: {
+		ignoreParameterLabels: {
+			type: "boolean"
+		}
+	}
+}
+const parsedArgs  = parseArgs(argOptions)
+
+if (parsedArgs.positionals.length != 1)
+	return console.error(`Nope! Try ${process.argv[0]} ${process.argv[1]} <file.htn>`)
+
+const inputPath = parsedArgs.positionals[0]
+const ignoreParameterLabels = parsedArgs.values.ignoreParameterLabels || false
+
 const project = fs.readFileSync(inputPath).toString()
 const preludePath = __dirname + "/core/prelude/"
 const preludeFiles = [preludePath+"Hopscotch.htn"]
@@ -35,7 +51,7 @@ fileMap.push({file: inputPath, starts: prelude.split('\n').length, length: proje
 const htnCode = prelude + "\n" + project
 
 try {
-	const hopscotchified = hopscotchify(htnCode, {checkParameterLabels: true})
+	const hopscotchified = hopscotchify(htnCode, {checkParameterLabels: !ignoreParameterLabels})
 	console.log(JSON.stringify(hopscotchified))
 } catch (error) {
 	try {
