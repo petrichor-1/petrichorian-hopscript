@@ -1,36 +1,8 @@
-const parser = require("./htn.js")
 const { randomUUID } = require('crypto')
-const { HSParameterType } = require('./HSParameterType.js')
+const {secondPass} = require('./secondPass.js')
+const {HSParameterType} = require('./HSParameterType.js')
 
 module.exports.hopscotchify = (htnCode, options) => {
-	const parsed = parser.parse(htnCode)
-	const lines = parsed.lines
-	const Types = parsed.tokenTypes
-
-	const validScopes = [{path: "Self", scope: "Self"}, {path: "Original_object", scope: "Original_object"}, {path: "Game", scope: "Game"}, {path: "User", scope: "User"}, {path: "Local", scope: "Local"}]
-	for (let i = 0; i < parsed.objectNames.length; i++) {
-		const objectName = parsed.objectNames[i]
-		if (objectName.type != Types.identifier)
-			throw "Should be impossible: Non-identifier object name"
-		if (validScopes.map(e=>e.path).includes(objectName.value))
-			throw new parser.SyntaxError("Duplicate scope path", null, objectName.value, objectName.location)
-		const scope = {
-			path: objectName.value,
-			scope: "Object",
-			_callbacksForWhenDefined: [],
-			whenDefined: function(callback) {
-				if (this._object)
-					return callback(this._object)
-				this._callbacksForWhenDefined.push(callback)
-			},
-			hasBeenDefinedAs: function(object) {
-				this._callbacksForWhenDefined.forEach(c=>c(object))
-				this._object = object
-			}
-		}
-		validScopes.push(scope)
-	}
-
 	let project = {
 		stageSize: {
 			width: 1024,
@@ -73,360 +45,23 @@ module.exports.hopscotchify = (htnCode, options) => {
 		customBlockDefinitionCallbacks[name] = customBlockDefinitionCallbacks[name] || []
 		customBlockDefinitionCallbacks[name].push(callback)
 	}
-
-	let indentationType;
-	let indentationLevelWhitespaceCount;
-	let currentIndendationLevel = 0
-
-	const StateLevels = {
-		topLevel: 0,
-		inObjectOrCustomRule: 1,
-		inAbility: 2,
-	}
-	let stateStack = [{
-		level: StateLevels.topLevel
-	}]
-	function currentState() {
-		return stateStack[stateStack.length-1]
-	}
-	let latestDiscardedState;
-	for (let i = 0; i < lines.length; i++) {
-		const line = lines[i]
-		if (line.type != Types.line) {
-			throw "Unknown line type " + line.type
-		}
-		const indentationWhitespace = line.indentationWhitespace
-		if (!indentationType && indentationWhitespace.length > 0) {
-			indentationType = indentationWhitespace[0]
-			indentationLevelWhitespaceCount = indentationWhitespace.length
-		}
-		let newIndentationLevel = currentIndendationLevel
-		if (indentationLevelWhitespaceCount) {
-			let indentationLevelOfLine = indentationWhitespace.length/indentationLevelWhitespaceCount
-			if (indentationWhitespace.find(e=>e!=indentationType))
-				throw "Mixing whitespace type in indentation"
-			if (indentationLevelOfLine - currentIndendationLevel > 1)
-				throw "Bad change in indentation level" + JSON.stringify(line)
-			newIndentationLevel = indentationLevelOfLine
-		}
-		for (let i = newIndentationLevel; i < currentIndendationLevel; i++) {
-			latestDiscardedState = stateStack.pop()
-		}
-		switch (currentState().level) {
-		case StateLevels.topLevel:
-			switch (line.value.type) {
-			case Types.object:
-				const object = line.value
-				const objectTypeIdentifier = object.objectType
-				if (objectTypeIdentifier.type != Types.identifier)
-					throw "Non-identifier object type"
-				const objectTypeName = objectTypeIdentifier.value
-				const objectType = parsed.objectTypes[objectTypeName]
-				if (!objectType)
-					throw "Undefined object type " + objectTypeName
-				const objectAttributes = function(){
-					const result = {
-						xPosition: Math.random() * project.stageSize.width,
-						yPosition: Math.random() * project.stageSize.height,
-						resizeScale: 1,
-						rotation: 0
-					}
-					object.attributes?.forEach(attribute => {
-						if (attribute.name.type != Types.identifier)
-							throw new parser.SyntaxError("Should be impossible: Unknown sttribute name type", Types.identifier, attribute.name.type, attribute.name.location)
-						const attributeName = attribute.name.value
-						switch (attributeName) {
-						case "text":
-							if (attribute.value.type != Types.string)
-								throw new parser.SyntaxError("Object text must be a string", Types.string, attribute.value.type, attribute.value.location)
-							result.text = attribute.value.value
-							break
-						case "x_position":
-							if (attribute.value.type != Types.number)
-								throw new parser.SyntaxError("Object positions must be numbers", Types.number, attribute.value.type, attribute.value.location)
-							result.xPosition = parseFloat(attribute.value.value)
-							break
-						case "y_position":
-							if (attribute.value.type != Types.number)
-								throw new parser.SyntaxError("Object positions must be numbers", Types.number, attribute.value.type, attribute.value.location)
-							result.yPosition = parseFloat(attribute.value.value)
-							break
-						case "resize_scale":
-							if (attribute.value.type != Types.number)
-								throw new parser.SyntaxError("Object resize scale must be numbers", Types.number, attribute.value.type, attribute.value.location)
-							result.resizeScale = parseFloat(attribute.value.value)
-							break
-						case "rotation":
-							if (attribute.value.type != Types.number)
-								throw new parser.SyntaxError("Object rotation must be numbers", Types.number, attribute.value.type, attribute.value.location)
-							result.rotation = parseFloat(attribute.value.value)
-							break
-						default:
-							throw new parser.SyntaxError(`Unknown object attribute '${attributeName}'`, ["x_position", "y_position", "text"], attributeName, attribute.name.location)
-						}
-					})
-					return result
-				}()
-				const hsObject = deepCopy(objectType)
-				if (object.name.type != Types.identifier)
-					throw "Should be impossible: Invalid object name type"
-				hsObject.name = unSnakeCase(object.name.value)
-				hsObject.rules = []
-				hsObject.objectID = randomUUID()
-				hsObject.xPosition = objectAttributes.xPosition.toString()
-				hsObject.yPosition = objectAttributes.yPosition.toString()
-				hsObject.resizeScale = objectAttributes.resizeScale.toString()
-				hsObject.rotation = objectAttributes.rotation.toString()
-				if (objectAttributes.text) {
-					if (hsObject.type != 1) //HSObjectType.Text
-						throw new parser.SyntaxError("Only text objects can have text", "", "text:", block.attributes[0].location) // location is approximate
-					hsObject.text = objectAttributes.text
-				}
-				const ability = createEmptyAbility()
-				project.abilities.push(ability)
-				hsObject.abilityID = ability.abilityID
-				project.objects.push(hsObject)
-				project.scenes[0].objects.push(hsObject.objectID)
-				validScopes.find(e=>e.path == object.name.value).hasBeenDefinedAs(hsObject)
-				stateStack.push({
-					level: StateLevels.inObjectOrCustomRule,
-					object: hsObject,
-					beforeGameStartsAbility: ability
-				})
-				break
-			case Types.comment:
-				// This branch intentionally left blank
-				break
-			case Types.customRule:
-				if (!line.value.doesHaveContainer)
-					throw new parser.SyntaxError("Top level custom rules must be definitions", ":", "", line.value.location)
-				if (!line.value.value.type == Types.identifier)
-					throw new parser.SyntaxError("Should be impossible: Unknown custom rule name type", Types.identifier, line.value.value.type, line.value.value.location)
-				addCustomRuleDefinition(customRules, line.value.value.value, line, project, customRuleDefinitionCallbacks, stateStack, StateLevels, Types, null)
-				break
-			case Types.customAbilityReference:
-				const definition = line.value
-				handleCustomBlockDefinition(definition)
-				break
-			case Types.parenthesisBlock:
-				if (line.value.name.type == Types.customAbilityReference) {
-					const parenthesisBlock = deepCopy(line.value)
-					if (line.value.name.value.type != Types.identifier)
-						throw new parser.SyntaxError("Should be impossible: Unknown custom block name type", Types.identifier, line.value.name.value.type, line.value.name.value.location)
-					parenthesisBlock.value = line.value.name.value
-					parenthesisBlock.type = Types.customAbilityReference
-					handleCustomBlockDefinition(parenthesisBlock)
-					break
-				}
-				if (line.value.name.type == Types.customRule) {
-					const parenthesisBlock = deepCopy(line.value)
-					if (line.value.name.value.type != Types.identifier)
-						throw new parser.SyntaxError("Should be impossible: Unknown custom block name type", Types.identifier, line.value.name.value.type, line.value.name.value.location)
-					if (!parenthesisBlock.doesHaveContainer)
-						throw new parser.SyntaxError("Top level custom rules must be definitions", ":", "", line.value.location)
-					parenthesisBlock.value = line.value.name.value
-					parenthesisBlock.type = Types.customRule
-					addCustomRuleDefinition(customRules, parenthesisBlock.value.value, line, project, customBlockDefinitionCallbacks, stateStack, StateLevels, Types, parenthesisBlock.parameters)
-					break
-				}
-				// Intentionally fall through
-			default:
-				throw new parser.SyntaxError("Bad top level type", [Types.comment, Types.object, Types.customRule, Types.customAbilityReference, Types.parenthesisBlock], line.value.type, line.value.location)
-			}
-			break
-		case StateLevels.inObjectOrCustomRule:
-			switch (line.value.type) {
-			case Types.parenthesisBlock:
-				if (line.value.name.type == Types.identifier && line.value.name.value == "When") {
-					if (line.value.parameters.length > 1)
-						throw new parser.SyntaxError("Multiple parameters in parenthesised binary operator when block", "", JSON.stringify(line.value.parameters), line.value.location)
-					if (line.value.parameters[0].type != Types.parameterValue)
-						throw new parser.SyntaxError("Should be impossible: Unknown type for parameter value", Types.parameterValue, line.value.parameters[0].type, line.value.parameters[0].location)
-					const block = line.value.parameters[0].value
-					if (block.type != Types.binaryOperatorBlock)
-						throw new parser.SyntaxError("Bad object-level parenthesised binary operator block", [Types.binaryOperatorBlock], block.type, block.location)
-					const whenBlock = {
-						type: Types.whenBlock,
-						value: block,
-						doesHaveContainer: line.value.doesHaveContainer
-					}
-					handleWhenBlock(whenBlock, Types, parsed, validScopes, project, options, currentState, stateStack, StateLevels)
-					break
-				}
-				switch (line.value.name.type) {
-				case Types.whenBlock:
-					const modifiedBlock = deepCopy(line.value)
-					modifiedBlock.name = line.value.name.value
-					const whenBlock = {
-						type: Types.whenBlock,
-						value: modifiedBlock,
-						doesHaveContainer: modifiedBlock.doesHaveContainer
-					}
-					handleWhenBlock(whenBlock, Types, parsed, validScopes, project, options, currentState, stateStack, StateLevels)
-					break
-				case Types.customRule:
-					const customRule = {
-						type: Types.customRule,
-						value: line.value.name.value,
-						doesHaveContainer: line.value.doesHaveContainer,
-						parameters: line.value.parameters
-					}
-					handleCustomRule(customRule, line, Types)
-					break
-				default:
-					throw new parser.SyntaxError("Bad object-level parenthesis block", [Types.whenBlock, Types.customRule], line.value.name.type, line.value.name.location)
-				}
-				break
-			case Types.whenBlock:
-				handleWhenBlock(line.value, Types, parsed, validScopes, project, options, currentState, stateStack, StateLevels)
-				break
-			case Types.comment:
-				if (currentState().object.rules.length != 0)
-					break // Not in the initial before-game-starts ability
-				currentState().beforeGameStartsAbility.blocks.push(createHsCommentFrom(line.value))
-				break
-			case Types.binaryOperatorBlock:
-				const leftSide = line.value.leftSide
-				if (leftSide && leftSide.name?.type == Types.whenBlock) {
-					const whenBlock = {
-						type: Types.whenBlock,
-						value: deepCopy(line.value),
-						location: line.location,
-						doesHaveContainer: line.value.doesHaveContainer
-					}
-					whenBlock.value.leftSide.name = leftSide.name.value
-					handleWhenBlock(whenBlock, Types, parsed, validScopes, project, options, currentState, stateStack, StateLevels)
-					break
-				}
-				if (leftSide && leftSide.type == Types.whenBlock) {
-					const whenBlock = {
-						type: Types.whenBlock,
-						value: deepCopy(line.value),
-						location: line.location,
-						doesHaveContainer: line.value.doesHaveContainer
-					}
-					whenBlock.value.leftSide = leftSide.value
-					handleWhenBlock(whenBlock, Types, parsed, validScopes, project, options, currentState, stateStack, StateLevels)
-					break
-				}
-				if (currentState().object.rules.length != 0)
-					throw new parser.SyntaxError("Cannot include blocks after the first rule", [Types.whenBlock, Types.parenthesisBlock, Types.comment], line.value.type, line.location)
-				const hsMethodBlock = createMethodBlockFrom(line.value, Types, parsed.blockTypes, parsed.binaryOperatorBlockTypes, parsed.traitTypes, validScopes, project, options)
-				currentState().beforeGameStartsAbility.blocks.push(hsMethodBlock)
-				break
-			case Types.customRule:
-				const customRule = line.value
-				handleCustomRule(customRule, line, Types)
-				break
-			default:
-				throw new parser.SyntaxError("Bad object-level type", [Types.whenBlock, Types.parenthesisBlock, Types.comment, Types.binaryOperatorBlock], line.value.type, line.value.location)
-			}
-			break
-		case StateLevels.inAbility:
-			if (line.value.type == Types.identifier && line.value.value == "else") {
-				if (!latestDiscardedState)
-					throw new parser.SyntaxError("Should be impossible: Else in a weird place", "", line.value.value, line,value.location)
-				const checkIfElseBlock = latestDiscardedState.checkIfElseBlock
-				if (!checkIfElseBlock)
-					throw new parser.SyntaxError("Else for non-check_if_else block", "", line.value.value, line.value.location)
-				if (checkIfElseBlock.controlFalseScript)
-					throw new parser.SyntaxError("Multiple else in check if else block", "", line.value.value, line.value.location)
-				const elseAbility = createEmptyAbility()
-				project.abilities.push(elseAbility)
-				checkIfElseBlock.controlFalseScript = {abilityID: elseAbility.abilityID}
-				stateStack.push({
-					level: StateLevels.inAbility,
-					ability: elseAbility
-				})
-				break
-			}
-			const hsBlock = createMethodBlockFrom(line.value, Types, parsed.blockTypes, parsed.binaryOperatorBlockTypes, parsed.traitTypes, validScopes, project, options)
-			currentState().ability.blocks.push(hsBlock)
-			if (hsBlock.type == 123) { //HSBlockType.ability
-				onDefinitionOfCustomBlockNamed(hsBlock.description, hsAbility => {
-					hsBlock.controlScript.abilityID = hsAbility.abilityID
-				})
-			}
-			if (["control", "conditionalControl"].includes(hsBlock.block_class)) {
-				if (!line.value.doesHaveContainer) {
-					if (line.value.type == Types.customAbilityReference || line.value.name?.type == Types.customAbilityReference)
-						break
-					throw new parser.SyntaxError("Empty control block", ":", "", line.value.location)
-				}
-				const ability = createEmptyAbility()
-				project.abilities.push(ability)
-				hsBlock.controlScript = {abilityID: ability.abilityID}
-				if (hsBlock.type == 123) { //HSBlockType.Ability
-					customBlockDefinitionCallbacks[hsBlock.description]?.forEach(callback => {
-						callback(ability)
-					})
-					customBlockDefinitionCallbacks[hsBlock.description] = null
-					customBlocks[hsBlock.description] = ability
-					ability.name = hsBlock.description
-				}
-				stateStack.push({
-					level: StateLevels.inAbility,
-					ability: ability,
-					checkIfElseBlock: hsBlock.type == 124 ? //HSBlockType.CheckIfElse
-						hsBlock : null
-				})
-			} else if (line.value.doesHaveContainer) {
-				throw "Container on non-control block"
-			}
-			break
-		default:
-			throw "Unknown state"
-		}
-		currentIndendationLevel = newIndentationLevel
-	}
-	const undefinedCustomRuleNames = Object.getOwnPropertyNames(customRuleDefinitionCallbacks).filter(e=>!!customRuleDefinitionCallbacks[e])
-	if (undefinedCustomRuleNames.length > 0)
-		throw new parser.SyntaxError("Undefined custom rule", undefinedCustomRuleNames, "")
-	const undefinedCustomBlockNames = Object.getOwnPropertyNames(customBlockDefinitionCallbacks).filter(e=>!!customBlockDefinitionCallbacks[e])
-	if (undefinedCustomBlockNames.length > 0)
-		throw new parser.SyntaxError("Undefined custom Block", undefinedCustomBlockNames, "")
-	return project
-
-	function handleCustomRule(customRule, line, Types) {
-		if (customRule.value.type != Types.identifier)
-			throw "Should be impossible: Non-identifier custom rules name"
-		const nameAsString = customRule.value.value
-		const rulesList = currentState().object.rules
-		const tempid = "TEMP" + randomUUID()
-		rulesList.push(tempid)
-		onDefinitionOfCustomRuleNamed(nameAsString, hsCustomRule => {
-			const hsCustomRuleInstance = createCustomRuleInstanceFor(hsCustomRule, customRule.parameters, customRule.location, Types, options)
-			project.customRuleInstances.push(hsCustomRuleInstance)
-			const index = rulesList.findIndex(e => e == tempid)
-			if (index < 0)
-				throw "Should be imposssible: Placeholder rule removed"
-			rulesList[index] = hsCustomRuleInstance.id
-		})
-		if (!customRule.doesHaveContainer)
-			return
-		addCustomRuleDefinition(customRules, nameAsString, line, project, customRuleDefinitionCallbacks, stateStack, StateLevels, Types, line.value.parameters)
-	}
-
-	function handleCustomBlockDefinition(definition) {
-		if (!definition.doesHaveContainer)
-			throw new parser.SyntaxError("Top level custom blocks must be definitions", ":", "", definition.location)
-		if (!definition.value.type == Types.identifier)
-			throw new parser.SyntaxError("Should be impossible: Unknown custom block name type", Types.identifier, definition.value.type, definition.value.location)
+	return secondPass(htnCode, options, project.stageSize, (e)=>{throw e},addHsObjectAndBeforeGameStartsAbility, addCustomRuleDefinition, createCustomBlockAbilityFromDefinition, createElseAbilityFor, createMethodBlock, createAbilityAsControlScriptOf, createAbilityForRuleFrom, o=>o.rules.length, addBlockToAbility, hasUndefinedCustomRules, hasUndefinedCustomBlocks, ()=>project, handleCustomRule)
+	function createCustomBlockAbilityFromDefinition(definition, Types) {
 		const name = unSnakeCase(definition.value.value)
 		const customBlockAbility = createEmptyAbility()
 		customBlockAbility.parameters = []
 		if ((definition.parameters?.length || 0) > 0) {
 			for (let i = 0; i < definition.parameters.length; i++) {
 				const parameter = definition.parameters[i]
-				const parameterValue = function(){
+				const parameterValue = function () {
 					switch (parameter.value.type) {
-					case Types.string:
-					case Types.number:
-						return parameter.value.value
-					default:
-						throw "Should be impossible: Unknown default value for custom block type" + parameter.value.type
+						case Types.string:
+						case Types.number:
+							return parameter.value.value
+						default:
+							throw "Should be impossible: Unknown default value for custom block type" + parameter.value.type
 					}
-				}()
+				} ()
 				if (parameter.label.type != Types.identifier)
 					throw "Should be impossible; INvalid parameter label type in custom block definition"
 				const hsParameter = {
@@ -445,69 +80,142 @@ module.exports.hopscotchify = (htnCode, options) => {
 		customBlockDefinitionCallbacks[name] = null
 		customBlocks[name] = customBlockAbility
 		customBlockAbility.name = name
-		stateStack.push({
-			level: StateLevels.inAbility,
-			ability: customBlockAbility,
-			checkIfElseBlock: null
-		})
+		return customBlockAbility
 	}
-}
-
-function addCustomRuleDefinition(customRules, nameAsString, line, project, customRuleDefinitionCallbacks, stateStack, StateLevels, Types, maybeParameters) {
-	if (customRules[nameAsString])
-		throw new parser.SyntaxError("Duplicate custom rule definition", "", nameAsString, line.location)
-	const beforeGameStartsAbility = createEmptyAbility()
-	project.abilities.push(beforeGameStartsAbility)
-	const hsCustomRule = {
-		id: randomUUID(),
-		abilityID: beforeGameStartsAbility.abilityID,
-		name: unSnakeCase(nameAsString),
-		parameters: [], //TODO
-		rules: []
+	function createElseAbilityFor(checkIfElseBlock) {
+		const elseAbility = createEmptyAbility()
+		project.abilities.push(elseAbility)
+		checkIfElseBlock.controlFalseScript = { abilityID: elseAbility.abilityID }
+		return elseAbility
 	}
-	maybeParameters?.forEach(parameterValue => {
-		const parameter = {}
-		if (parameterValue.type != Types.parameterValue)
-			throw new parser.SyntaxError("Should be impossible: Unknow parameter value type", Types.parameterValue, parameterValue.type, parameterValue.location)
-		if (parameterValue.label.type != Types.identifier)
-			throw new parser.SyntaxError("Should be impossible: Unknown parameter label type", Types.identifier, parameterValue.label.type, parameterValue.label.location)
-		parameter.key = unSnakeCase(parameterValue.label.value)
-		switch (parameterValue.value.type) {
-		case Types.string:
-		case Types.number:
-			parameter.defaultValue = parameterValue.value.value
-			parameter.value = parameterValue.value.value
-			break
-		default:
-			throw new parser.SyntaxError("Should be impossible: Unknown parameer value value type", [Types.string, Types.number], parameterValue.value.type, parameterValue.value.location)
+	function createMethodBlock(line, Types, parsed, validScopes, options, currentState) {
+		const hsBlock = createMethodBlockFrom(line.value, Types, parsed.blockTypes, parsed.binaryOperatorBlockTypes, parsed.traitTypes, validScopes, project, options)
+		currentState().ability.blocks.push(hsBlock)
+		if (hsBlock.type == 123) { //HSBlockType.ability
+			onDefinitionOfCustomBlockNamed(hsBlock.description, hsAbility => {
+				hsBlock.controlScript.abilityID = hsAbility.abilityID
+			})
 		}
-		hsCustomRule.parameters.push(parameter)
-	})
-	project.customRules.push(hsCustomRule)
-	customRuleDefinitionCallbacks[nameAsString]?.forEach(callback => callback(hsCustomRule))
-	customRuleDefinitionCallbacks[nameAsString] = null
-	customRules[nameAsString] = hsCustomRule
-	stateStack.push({
-		level: StateLevels.inObjectOrCustomRule,
-		object: hsCustomRule,
-		beforeGameStartsAbility: beforeGameStartsAbility
-	})
-}
+		return hsBlock
+	}
+	function handleCustomRule(customRule, line, Types, object, nextStateIfContainer) {
+		if (customRule.value.type != Types.identifier)
+			throw "Should be impossible: Non-identifier custom rules name"
+		const nameAsString = customRule.value.value
+		const rulesList = object.rules
+		const tempid = "TEMP" + randomUUID()
+		rulesList.push(tempid)
+		onDefinitionOfCustomRuleNamed(nameAsString, hsCustomRule => {
+			const hsCustomRuleInstance = createCustomRuleInstanceFor(hsCustomRule, customRule.parameters, customRule.location, Types, options)
+			project.customRuleInstances.push(hsCustomRuleInstance)
+			const index = rulesList.findIndex(e => e == tempid)
+			if (index < 0)
+				throw "Should be imposssible: Placeholder rule removed"
+			rulesList[index] = hsCustomRuleInstance.id
+		})
+		if (!customRule.doesHaveContainer)
+			return
+		addCustomRuleDefinition(nameAsString, line, Types, line.value.parameters, nextStateIfContainer)
+	}
+	function addHsObjectAndBeforeGameStartsAbility(objectType, object, objectAttributes, error, validScopes) {
+		const hsObject = deepCopy(objectType)
+		hsObject.name = unSnakeCase(object.name.value)
+		hsObject.rules = []
+		hsObject.objectID = randomUUID()
+		hsObject.xPosition = objectAttributes.xPosition.toString()
+		hsObject.yPosition = objectAttributes.yPosition.toString()
+		hsObject.resizeScale = objectAttributes.resizeScale.toString()
+		hsObject.rotation = objectAttributes.rotation.toString()
+		if (objectAttributes.text) {
+			if (hsObject.type != 1) //HSObjectType.Text
+				error(new parser.SyntaxError("Only text objects can have text", "", "text:", object.attributes[0].location)) // location is approximate
+			hsObject.text = objectAttributes.text
+		}
+		const ability = createEmptyAbility()
+		project.abilities.push(ability)
+		hsObject.abilityID = ability.abilityID
+		project.objects.push(hsObject)
+		project.scenes[0].objects.push(hsObject.objectID)
+		validScopes.find(e => e.path == object.name.value).hasBeenDefinedAs(hsObject)
+		return { hsObject, ability }
+	}
+	function addBlockToAbility(line, Types, parsed, validScopes, options, ability) {
+		const hsMethodBlock = createMethodBlockFrom(line.value, Types, parsed.blockTypes, parsed.binaryOperatorBlockTypes, parsed.traitTypes, validScopes, project, options)
+		ability.blocks.push(hsMethodBlock)
+	}
+	function hasUndefinedCustomBlocks() {
+		const undefinedCustomBlockNames = Object.getOwnPropertyNames(customBlockDefinitionCallbacks).filter(e => !!customBlockDefinitionCallbacks[e])
+		const hasUndefinedCustomBlocks = undefinedCustomBlockNames.length > 0
+		return hasUndefinedCustomBlocks
+	}
+	
+	function hasUndefinedCustomRules() {
+		const undefinedCustomRuleNames = Object.getOwnPropertyNames(customRuleDefinitionCallbacks).filter(e => !!customRuleDefinitionCallbacks[e])
+		const hasUndefinedCustomRules = undefinedCustomRuleNames.length > 0
+		return hasUndefinedCustomRules
+	}
+	function addCustomRuleDefinition(nameAsString, line, Types, maybeParameters, transitionStateWith) {
+		if (customRules[nameAsString])
+			throw new parser.SyntaxError("Duplicate custom rule definition", "", nameAsString, line.location)
+		const beforeGameStartsAbility = createEmptyAbility()
+		project.abilities.push(beforeGameStartsAbility)
+		const hsCustomRule = {
+			id: randomUUID(),
+			abilityID: beforeGameStartsAbility.abilityID,
+			name: unSnakeCase(nameAsString),
+			parameters: [], //TODO
+			rules: []
+		}
+		maybeParameters?.forEach(parameterValue => {
+			const parameter = {}
+			if (parameterValue.type != Types.parameterValue)
+				throw new parser.SyntaxError("Should be impossible: Unknow parameter value type", Types.parameterValue, parameterValue.type, parameterValue.location)
+			if (parameterValue.label.type != Types.identifier)
+				throw new parser.SyntaxError("Should be impossible: Unknown parameter label type", Types.identifier, parameterValue.label.type, parameterValue.label.location)
+			parameter.key = unSnakeCase(parameterValue.label.value)
+			switch (parameterValue.value.type) {
+			case Types.string:
+			case Types.number:
+				parameter.defaultValue = parameterValue.value.value
+				parameter.value = parameterValue.value.value
+				break
+			default:
+				throw new parser.SyntaxError("Should be impossible: Unknown parameer value value type", [Types.string, Types.number], parameterValue.value.type, parameterValue.value.location)
+			}
+			hsCustomRule.parameters.push(parameter)
+		})
+		project.customRules.push(hsCustomRule)
+		customRuleDefinitionCallbacks[nameAsString]?.forEach(callback => callback(hsCustomRule))
+		customRuleDefinitionCallbacks[nameAsString] = null
+		customRules[nameAsString] = hsCustomRule
+		transitionStateWith(hsCustomRule, beforeGameStartsAbility)
+	}
 
-function handleWhenBlock(whenBlock, Types, parsed, validScopes, project, options, currentState, stateStack, StateLevels) {
-	if (!whenBlock.doesHaveContainer)
-		throw new parser.SyntaxError("Empty rule", ":", "", whenBlock.location)
-	const hsBlock = createOperatorBlockFrom(whenBlock.value, Types, parsed.blockTypes, parsed.binaryOperatorBlockTypes, parsed.traitTypes, validScopes, project, options)
-	const rule = createRuleWith(hsBlock)
-	currentState().object.rules.push(rule.id)
-	project.rules.push(rule)
-	const ability = createEmptyAbility()
-	rule.abilityID = ability.abilityID
-	project.abilities.push(ability)
-	stateStack.push({
-		level: StateLevels.inAbility,
-		ability: ability
-	})
+	function createAbilityForRuleFrom(whenBlock, Types, parsed, validScopes, options, currentObject) {
+		const hsBlock = createOperatorBlockFrom(whenBlock.value, Types, parsed.blockTypes, parsed.binaryOperatorBlockTypes, parsed.traitTypes, validScopes, project, options)
+		const rule = createRuleWith(hsBlock)
+		currentObject.rules.push(rule.id)
+		project.rules.push(rule)
+		const ability = createEmptyAbility()
+		rule.abilityID = ability.abilityID
+		project.abilities.push(ability)
+		return ability
+	}
+
+	function createAbilityAsControlScriptOf(hsBlock) {
+		const ability = createEmptyAbility()
+		project.abilities.push(ability)
+		hsBlock.controlScript = { abilityID: ability.abilityID }
+		if (hsBlock.type == 123) { //HSBlockType.Ability
+			customBlockDefinitionCallbacks[hsBlock.description]?.forEach(callback => {
+				callback(ability)
+			})
+			customBlockDefinitionCallbacks[hsBlock.description] = null
+			customBlocks[hsBlock.description] = ability
+			ability.name = hsBlock.description
+		}
+		return ability
+	}
 }
 
 function deepCopy(object) {
@@ -530,41 +238,13 @@ function unSnakeCase(snakeCaseString) {
 	return words.join(" ")
 }
 
-function createCustomRuleInstanceFor(hsCustomRule, parameters, location, Types, options) {
-	const {checkParameterLabels} = options
-	const result = {
-		id: randomUUID(),
-		customRuleID: hsCustomRule.id,
-		parameters: []
+function createEmptyAbility() {
+	const timeBetween1970And2001 = 978307200000
+	return {
+		blocks: [],
+		abilityID: randomUUID(),
+		createdAt: (Date.now() - timeBetween1970And2001) / 1000,
 	}
-	if (hsCustomRule.parameters.length > 0) {
-		if (hsCustomRule.parameters.length != (parameters?.length || 0))
-			throw new parser.SyntaxError("Wrong amount of parameters", hsCustomRule.parameters.length, parameters?.length || 0, location)
-		for (let i = 0; i < hsCustomRule.parameters.length; i++) {
-			const hsParameter = hsCustomRule.parameters[i]
-			const parameter = parameters[i]
-			if (parameter.type != Types.parameterValue)
-				throw new parser.SyntaxError("Should be impossible: Unknown parameyer type", Types.parameterValue, parameter.type, parameter.location)
-			if (checkParameterLabels) {
-				const label = parameter.label
-				if (label.type != Types.identifier)
-					throw new parser.SyntaxError("Should be impossible: Non-identifier parameter label for custom rule instance", Types.identifier, label.type, label.location)
-				if (unSnakeCase(label.value) != hsParameter.key)
-					throw new parser.SyntaxError("Incorrect parameter label", hsParameter.key, unSnakeCase(label.value), label.location)
-			}
-			const newHsParameter = deepCopy(hsParameter)
-			switch (parameter.value.type) {
-			case Types.string:
-			case Types.number:
-				newHsParameter.value = parameter.value.value
-				break
-			default:
-				throw new parser.SyntaxError("Should be impossible; Unknown custom rule parameter value type", [Types.string, Types.number], parameter.value.type, parameter.value.location)
-			}
-			result.parameters.push(newHsParameter)
-		}
-	}
-	return result
 }
 
 function createOperatorBlockFrom(block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, project, options) {
@@ -1010,15 +690,6 @@ function createRuleWith(hsBlock) {
 	return result
 }
 
-function createEmptyAbility() {
-	const timeBetween1970And2001 = 978307200000
-	return {
-		blocks: [],
-		abilityID: randomUUID(),
-		createdAt: (Date.now() - timeBetween1970And2001) / 1000,
-	}
-}
-
 function createHsCommentFrom(comment) {
 	return {
 		"parameters":[
@@ -1033,4 +704,41 @@ function createHsCommentFrom(comment) {
 		"description":"#",
 		"block_class":"method"
 	}
+}
+
+function createCustomRuleInstanceFor(hsCustomRule, parameters, location, Types, options) {
+	const {checkParameterLabels} = options
+	const result = {
+		id: randomUUID(),
+		customRuleID: hsCustomRule.id,
+		parameters: []
+	}
+	if (hsCustomRule.parameters.length > 0) {
+		if (hsCustomRule.parameters.length != (parameters?.length || 0))
+			throw new parser.SyntaxError("Wrong amount of parameters", hsCustomRule.parameters.length, parameters?.length || 0, location)
+		for (let i = 0; i < hsCustomRule.parameters.length; i++) {
+			const hsParameter = hsCustomRule.parameters[i]
+			const parameter = parameters[i]
+			if (parameter.type != Types.parameterValue)
+				throw new parser.SyntaxError("Should be impossible: Unknown parameyer type", Types.parameterValue, parameter.type, parameter.location)
+			if (checkParameterLabels) {
+				const label = parameter.label
+				if (label.type != Types.identifier)
+					throw new parser.SyntaxError("Should be impossible: Non-identifier parameter label for custom rule instance", Types.identifier, label.type, label.location)
+				if (unSnakeCase(label.value) != hsParameter.key)
+					throw new parser.SyntaxError("Incorrect parameter label", hsParameter.key, unSnakeCase(label.value), label.location)
+			}
+			const newHsParameter = deepCopy(hsParameter)
+			switch (parameter.value.type) {
+			case Types.string:
+			case Types.number:
+				newHsParameter.value = parameter.value.value
+				break
+			default:
+				throw new parser.SyntaxError("Should be impossible; Unknown custom rule parameter value type", [Types.string, Types.number], parameter.value.type, parameter.value.location)
+			}
+			result.parameters.push(newHsParameter)
+		}
+	}
+	return result
 }
