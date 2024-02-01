@@ -1,0 +1,68 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "petrichorian hopscript",
+	"patterns": [
+		{
+			"include": "#keywords"
+		},
+		{
+			"include": "#strings"
+		},
+		{
+			"include": "#binaryOperations"
+		},
+		{
+			"include": "#constantScope"
+		},
+		{
+			"include": "#number"
+		},
+		{
+			"include": "#parameterLabels"
+		}
+	],
+	"repository": {
+		"keywords": {
+			"patterns": [{
+				"name": "keyword.control.phopscript",
+				"match": "^[\\t \\n]*(When|custom_rule|custom_block)\\b"
+			}]
+		},
+		"strings": {
+			"name": "string.quoted.double.phopscript",
+			"begin": "\"",
+			"end": "\"",
+			"patterns": [
+				{
+					"name": "constant.character.escape.phopscript",
+					"match": "\\\\."
+				}
+			]
+		},
+		"binaryOperations": {
+			"patterns": [{
+				"name": "keyword.operator.phopscript",
+				"match": "(\\-|\\+|\\*|%|\\^|=|==|/|<|<=|>|>=)"
+			}]
+		},
+		"constantScope": {
+			"patterns": [{
+				"name": "entity.name.type.phopscript",
+				"match": "(Self|Original_object|Game|Local)\\."
+			}]
+		},
+		"number": {
+			"patterns": [{
+				"name": "constant.numeric",
+				"match": "\\-?[0-9]+(e\\+?[0-9]+)?(\\.[0-9]+(e[\\+\\-]?[0-9]+)?)?"
+				}]
+		},
+		"parameterLabels": {
+			"patterns": [{
+				"name": "keyword.other",
+				"match": "[^_0-9\\-#\\(\\)=\",/\\[\\]:\\t \\n][^#\\(\\)=\",/\\[\\]:\\t \\n]*:"
+			}]
+		}
+	},
+	"scopeName": "source.phs"
+}

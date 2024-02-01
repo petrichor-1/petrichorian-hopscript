@@ -1,0 +1,25 @@
+{
+  "name": "petrichorianhopscript",
+  "displayName": "phs",
+  "description": "petrichorian hopscript",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [{
+      "id": "phopscript",
+      "aliases": ["petrichorian hopscript", "phopscript"],
+      "extensions": [".htn"],
+      "configuration": "./language-configuration.json"
+    }],
+    "grammars": [{
+      "language": "phopscript",
+      "scopeName": "source.phs",
+      "path": "./syntaxes/phopscript.tmLanguage.json"
+    }]
+  }
+}
