@@ -1,7 +1,7 @@
 const parser = require("./htn.js")
 
-module.exports.secondPass = (htnCode, options, stageSize, error, addHsObjectAndBeforeGameStartsAbility, addCustomRuleDefinition, createCustomBlockAbilityFromDefinition, createElseAbilityFor, createMethodBlock, createAbilityAsControlScriptOf, createAbilityForRuleFrom, rulesCountForObject, addBlockToAbility, hasUndefinedCustomRules, hasUndefinedCustomBlocks, returnValue, handleCustomRule) => {
-	const parsed = parser.parse(htnCode)
+module.exports.secondPass = (htnCode, options, stageSize, error, addHsObjectAndBeforeGameStartsAbility, addCustomRuleDefinition, createCustomBlockAbilityFromDefinition, createElseAbilityFor, createMethodBlock, createAbilityAsControlScriptOf, createAbilityForRuleFrom, rulesCountForObject, addBlockToAbility, hasUndefinedCustomRules, hasUndefinedCustomBlocks, returnValue, handleCustomRule, transformParsed) => {
+	const parsed = transformParsed(parser.parse(htnCode))
 	const lines = parsed.lines
 	const Types = parsed.tokenTypes
 
