@@ -3,6 +3,7 @@
 const fs = require('fs')
 const {parseArgs} = require('node:util')
 const {hopscotchify} = require('./core/hopscotchify.js')
+const preludeify = require("./core/preludeify.js")
 
 if (process.argv.length < 3)
 	return console.error(`Nope! Try ${process.argv[0]} ${process.argv[1]} <file.htn>`)
@@ -24,33 +25,7 @@ const inputPath = parsedArgs.positionals[0]
 const ignoreParameterLabels = parsedArgs.values.ignoreParameterLabels || false
 
 const project = fs.readFileSync(inputPath).toString()
-const preludePath = __dirname + "/core/prelude/"
-const preludeFiles = [preludePath+"Hopscotch.htn"]
-for (let i = 0; project.split('\n')[i].startsWith("#include "); i++) {
-	const nextFile = project.split('\n')[i].substring("#include ".length)
-	if (/\//.test(nextFile))
-		return console.error(`Invalid include file path ${nextFile}`)
-	const fullPath = preludePath + nextFile
-	if (!fs.existsSync(fullPath))
-		return console.error(`Include file ${nextFile} does not exist`)
-	preludeFiles.push(fullPath)
-}
-const alreadyIncluded = new Set()
-let prelude = ""
-const fileMap = []
-preludeFiles.forEach(path => {
-	if (alreadyIncluded.has(path))
-		return
-	alreadyIncluded.add(path)
-	const fileContents = fs.readFileSync(path).toString()
-	fileMap.push({file: path, starts: prelude.split('\n').length, length: fileContents.split('\n').length})
-	prelude+=fileContents
-	prelude += "\n"
-})
-
-fileMap.push({file: inputPath, starts: prelude.split('\n').length, length: project.split('\n').length})
-
-const htnCode = prelude + "\n" + project
+const {htnCode, fileMap} = preludeify(project, inputPath)
 
 try {
 	const hopscotchified = hopscotchify(htnCode, {checkParameterLabels: !ignoreParameterLabels})
