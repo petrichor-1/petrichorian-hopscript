@@ -329,13 +329,14 @@ objectTypeDefinition "[internal] object type definition"
 	}
 
 traitTypeDefinition "[internal] trait type definition"
-	= "_defineTraitType " name:identifier " " typeId:number " " description:string " [" allowedScopes:(traitScope ", ")* "]"
+	= "_defineTraitType " type:identifier " " name:identifier " " typeId:number " " description:string " [" allowedScopes:(traitScope ", ")* "]"
 	{
 		const trait = traitTypes[name.value] = traitTypes[name.value] ?? {}
 		allowedScopes.forEach(e=>{
 			trait[e[0]] = {
 				type: parseFloat(typeId.value),
 				description: description.value,
+				dataType: type,
 			}
 		})
 	}
