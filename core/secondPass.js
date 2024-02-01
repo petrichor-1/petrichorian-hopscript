@@ -9,9 +9,9 @@ module.exports.secondPass = (htnCode, options, stageSize, error, addHsObjectAndB
 	for (let i = 0; i < parsed.objectNames.length; i++) {
 		const objectName = parsed.objectNames[i]
 		if (objectName.type != Types.identifier)
-			throw "Should be impossible: Non-identifier object name"
+			error("Should be impossible: Non-identifier object name")
 		if (validScopes.map(e=>e.path).includes(objectName.value))
-			throw new parser.SyntaxError("Duplicate scope path", null, objectName.value, objectName.location)
+			error(new parser.SyntaxError("Duplicate scope path", null, objectName.value, objectName.location))
 		const scope = {
 			path: objectName.value,
 			scope: "Object",
@@ -136,9 +136,9 @@ module.exports.secondPass = (htnCode, options, stageSize, error, addHsObjectAndB
 				break
 			case Types.customRule:
 				if (!line.value.doesHaveContainer)
-					throw new parser.SyntaxError("Top level custom rules must be definitions", ":", "", line.value.location)
+					error(new parser.SyntaxError("Top level custom rules must be definitions", ":", "", line.value.location))
 				if (!line.value.value.type == Types.identifier)
-					throw new parser.SyntaxError("Should be impossible: Unknown custom rule name type", Types.identifier, line.value.value.type, line.value.value.location)
+					error(new parser.SyntaxError("Should be impossible: Unknown custom rule name type", Types.identifier, line.value.value.type, line.value.value.location))
 				addCustomRuleDefinition(line.value.value.value, line, Types, null, (hsCustomRule, beforeGameStartsAbility) => {
 					stateStack.push({
 						level: StateLevels.inObjectOrCustomRule,
@@ -156,7 +156,7 @@ module.exports.secondPass = (htnCode, options, stageSize, error, addHsObjectAndB
 				if (line.value.name.type == Types.customAbilityReference) {
 					const parenthesisBlock = deepCopy(line.value)
 					if (line.value.name.value.type != Types.identifier)
-						throw new parser.SyntaxError("Should be impossible: Unknown custom block name type", Types.identifier, line.value.name.value.type, line.value.name.value.location)
+						error(new parser.SyntaxError("Should be impossible: Unknown custom block name type", Types.identifier, line.value.name.value.type, line.value.name.value.location))
 					parenthesisBlock.value = line.value.name.value
 					parenthesisBlock.type = Types.customAbilityReference
 					handleCustomBlockDefinition(parenthesisBlock, error, createCustomBlockAbilityFromDefinition)
@@ -181,7 +181,7 @@ module.exports.secondPass = (htnCode, options, stageSize, error, addHsObjectAndB
 				}
 				// Intentionally fall through
 			default:
-				throw new parser.SyntaxError("Bad top level type", [Types.comment, Types.object, Types.customRule, Types.customAbilityReference, Types.parenthesisBlock], line.value.type, line.value.location)
+				error(new parser.SyntaxError("Bad top level type", [Types.comment, Types.object, Types.customRule, Types.customAbilityReference, Types.parenthesisBlock], line.value.type, line.value.location))
 			}
 			break
 		case StateLevels.inObjectOrCustomRule:
@@ -189,18 +189,18 @@ module.exports.secondPass = (htnCode, options, stageSize, error, addHsObjectAndB
 			case Types.parenthesisBlock:
 				if (line.value.name.type == Types.identifier && line.value.name.value == "When") {
 					if (line.value.parameters.length > 1)
-						throw new parser.SyntaxError("Multiple parameters in parenthesised binary operator when block", "", JSON.stringify(line.value.parameters), line.value.location)
+						error(new parser.SyntaxError("Multiple parameters in parenthesised binary operator when block", "", JSON.stringify(line.value.parameters), line.value.location))
 					if (line.value.parameters[0].type != Types.parameterValue)
-						throw new parser.SyntaxError("Should be impossible: Unknown type for parameter value", Types.parameterValue, line.value.parameters[0].type, line.value.parameters[0].location)
+						error(new parser.SyntaxError("Should be impossible: Unknown type for parameter value", Types.parameterValue, line.value.parameters[0].type, line.value.parameters[0].location))
 					const block = line.value.parameters[0].value
 					if (block.type != Types.binaryOperatorBlock)
-						throw new parser.SyntaxError("Bad object-level parenthesised binary operator block", [Types.binaryOperatorBlock], block.type, block.location)
+						error(new parser.SyntaxError("Bad object-level parenthesised binary operator block", [Types.binaryOperatorBlock], block.type, block.location))
 					const whenBlock = {
 						type: Types.whenBlock,
 						value: block,
 						doesHaveContainer: line.value.doesHaveContainer
 					}
-					handleWhenBlock(whenBlock, Types, parsed, validScopes, options, currentState, stateStack, StateLevels, createAbilityForRuleFrom)
+					handleWhenBlock(whenBlock, Types, parsed, validScopes, options, currentState, stateStack, StateLevels, createAbilityForRuleFrom, error)
 					break
 				}
 				switch (line.value.name.type) {
@@ -212,7 +212,7 @@ module.exports.secondPass = (htnCode, options, stageSize, error, addHsObjectAndB
 						value: modifiedBlock,
 						doesHaveContainer: modifiedBlock.doesHaveContainer
 					}
-					handleWhenBlock(whenBlock, Types, parsed, validScopes, options, currentState, stateStack, StateLevels, createAbilityForRuleFrom)
+					handleWhenBlock(whenBlock, Types, parsed, validScopes, options, currentState, stateStack, StateLevels, createAbilityForRuleFrom, error)
 					break
 				case Types.customRule:
 					const customRule = {
@@ -230,11 +230,11 @@ module.exports.secondPass = (htnCode, options, stageSize, error, addHsObjectAndB
 					})
 					break
 				default:
-					throw new parser.SyntaxError("Bad object-level parenthesis block", [Types.whenBlock, Types.customRule], line.value.name.type, line.value.name.location)
+					error(new parser.SyntaxError("Bad object-level parenthesis block", [Types.whenBlock, Types.customRule], line.value.name.type, line.value.name.location))
 				}
 				break
 			case Types.whenBlock:
-				handleWhenBlock(line.value, Types, parsed, validScopes, options, currentState, stateStack, StateLevels, createAbilityForRuleFrom)
+				handleWhenBlock(line.value, Types, parsed, validScopes, options, currentState, stateStack, StateLevels, createAbilityForRuleFrom, error)
 				break
 			case Types.comment:
 				if (currentState().object.rules.length != 0)
@@ -251,7 +251,7 @@ module.exports.secondPass = (htnCode, options, stageSize, error, addHsObjectAndB
 						doesHaveContainer: line.value.doesHaveContainer
 					}
 					whenBlock.value.leftSide.name = leftSide.name.value
-					handleWhenBlock(whenBlock, Types, parsed, validScopes, options, currentState, stateStack, StateLevels, createAbilityForRuleFrom)
+					handleWhenBlock(whenBlock, Types, parsed, validScopes, options, currentState, stateStack, StateLevels, createAbilityForRuleFrom, error)
 					break
 				}
 				if (leftSide && leftSide.type == Types.whenBlock) {
@@ -262,11 +262,11 @@ module.exports.secondPass = (htnCode, options, stageSize, error, addHsObjectAndB
 						doesHaveContainer: line.value.doesHaveContainer
 					}
 					whenBlock.value.leftSide = leftSide.value
-					handleWhenBlock(whenBlock, Types, parsed, validScopes, options, currentState, stateStack, StateLevels, createAbilityForRuleFrom)
+					handleWhenBlock(whenBlock, Types, parsed, validScopes, options, currentState, stateStack, StateLevels, createAbilityForRuleFrom, error)
 					break
 				}
 				if (rulesCountForObject(currentState().object) != 0)
-					throw new parser.SyntaxError("Cannot include blocks after the first rule", [Types.whenBlock, Types.parenthesisBlock, Types.comment], line.value.type, line.location)
+					error(new parser.SyntaxError("Cannot include blocks after the first rule", [Types.whenBlock, Types.parenthesisBlock, Types.comment], line.value.type, line.location))
 				const ability = currentState().beforeGameStartsAbility
 				addBlockToAbility(line, Types, parsed, validScopes, options, ability)
 				break
@@ -281,7 +281,7 @@ module.exports.secondPass = (htnCode, options, stageSize, error, addHsObjectAndB
 				})
 				break
 			default:
-				throw new parser.SyntaxError("Bad object-level type", [Types.whenBlock, Types.parenthesisBlock, Types.comment, Types.binaryOperatorBlock], line.value.type, line.value.location)
+				error(new parser.SyntaxError("Bad object-level type", [Types.whenBlock, Types.parenthesisBlock, Types.comment, Types.binaryOperatorBlock], line.value.type, line.value.location))
 			}
 			break
 		case StateLevels.inAbility:
@@ -305,7 +305,7 @@ module.exports.secondPass = (htnCode, options, stageSize, error, addHsObjectAndB
 				if (!line.value.doesHaveContainer) {
 					if (line.value.type == Types.customAbilityReference || line.value.name?.type == Types.customAbilityReference)
 						break
-					throw new parser.SyntaxError("Empty control block", ":", "", line.value.location)
+					error(new parser.SyntaxError("Empty control block", ":", "", line.value.location))
 				}
 				const ability = createAbilityAsControlScriptOf(hsBlock)
 				stateStack.push({
@@ -315,18 +315,18 @@ module.exports.secondPass = (htnCode, options, stageSize, error, addHsObjectAndB
 						hsBlock : null
 				})
 			} else if (line.value.doesHaveContainer) {
-				throw "Container on non-control block"
+				error("Container on non-control block")
 			}
 			break
 		default:
-			throw "Unknown state"
+			error("Unknown state")
 		}
 		currentIndendationLevel = newIndentationLevel
 	}
 	if (hasUndefinedCustomRules())
-		throw new parser.SyntaxError("Undefined custom rule", "TODO: undefinedCustomRuleNames", "")
+		error(new parser.SyntaxError("Undefined custom rule", "TODO: undefinedCustomRuleNames", ""))
 	if (hasUndefinedCustomBlocks())
-		throw new parser.SyntaxError("Undefined custom Block", "TODO: undefinedCustomBlockNames", "")
+		error(new parser.SyntaxError("Undefined custom Block", "TODO: undefinedCustomBlockNames", ""))
 	return returnValue()
 
 	function handleCustomBlockDefinition(definition, error, createCustomBlockAbilityFromDefinition) {
@@ -343,9 +343,9 @@ module.exports.secondPass = (htnCode, options, stageSize, error, addHsObjectAndB
 	}
 }
 
-function handleWhenBlock(whenBlock, Types, parsed, validScopes, options, currentState, stateStack, StateLevels, createAbilityForRuleFrom) {
+function handleWhenBlock(whenBlock, Types, parsed, validScopes, options, currentState, stateStack, StateLevels, createAbilityForRuleFrom, error) {
 	if (!whenBlock.doesHaveContainer)
-		throw new parser.SyntaxError("Empty rule", ":", "", whenBlock.location)
+		error(new parser.SyntaxError("Empty rule", ":", "", whenBlock.location))
 	const currentObject = currentState().object
 	const ability = createAbilityForRuleFrom(whenBlock, Types, parsed, validScopes, options, currentObject)
 	stateStack.push({
