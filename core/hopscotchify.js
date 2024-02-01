@@ -2,6 +2,7 @@ const { randomUUID } = require('crypto')
 const {secondPass} = require('./secondPass.js')
 const {HSParameterType} = require('./HSParameterType.js')
 const { parenthesisificateBinaryOperatorBlock } = require('./parenthesisificateBinaryOperatorBlock.js')
+const { eventParameterPrototypeForIdentifier } = require('./eventParameterPrototypeForIdentifier.js')
 
 module.exports.hopscotchify = (htnCode, options) => {
 	let project = {
@@ -367,24 +368,6 @@ function createCustomBlockReferenceFrom(block, Types) {
 		}
 	}
 	return hsBlock
-}
-
-function eventParameterPrototypeForIdentifier(identifier) {
-	// THis gets mutated so return a fresh one
-	switch (identifier.value) {
-	case "Screen":
-		return {
-			blockType: 8003,
-			description: "📱 My iPad"
-		}
-	case "Self":
-		return {
-			blockType: 8004,
-			description: "Self"
-		}
-	default:
-		return null
-	}
 }
 
 function createEventParameterUsing(prototype) {
