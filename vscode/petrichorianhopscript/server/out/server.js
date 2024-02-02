@@ -267,6 +267,21 @@ function completionsForObjectLevel(line, cursorCharacter, isAllowedToUseSetBlock
     console.log(words);
     return [];
 }
+function completionsForCustomBlocks() {
+    //TODO: Return all known custom block names
+    return [];
+}
+function completionsForAbilityLevel(line, cursorCharacter) {
+    const words = line.split(/[ \t\n]/g).filter(e => e != '');
+    if (!/\(/.test(line))
+        return completionsForBlocksOfClasses(["method"]);
+    if (words[words.length - 1].endsWith(")") && /\(/.test(line.substring(0, cursorCharacter)))
+        return completionsForInsideParenthesisBlockParentheses(line, cursorCharacter);
+    if (words.length == 2 && words[0] == "custom_block")
+        return completionsForCustomBlocks();
+    console.log(words);
+    return [];
+}
 // This handler provides the initial list of the completion items.
 connection.onCompletion((_textDocumentPosition) => {
     if (!latestParsed)
@@ -278,6 +293,8 @@ connection.onCompletion((_textDocumentPosition) => {
             return completionsForTopLevel(line);
         case StateLevels.inObjectOrCustomRule:
             return completionsForObjectLevel(line, _textDocumentPosition.position.character, !lineState.object.hasRules);
+        case StateLevels.inAbility:
+            return completionsForAbilityLevel(line, _textDocumentPosition.position.character);
         default:
             console.log(lineState);
             return completionsForBlocksOfClasses(["method"]);
