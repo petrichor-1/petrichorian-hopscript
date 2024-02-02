@@ -38,6 +38,12 @@ export function handleCustomRule(customRule: any, line: any, Types: any, object:
 	addCustomRuleDefinition(nameAsString, line, Types, line.value.parameters, nextStateIfContainer)
 }
 
+export function createAbilityForRuleFrom(whenBlock: any, Types: any, parsed: any, validScopes: any, options: any, currentObject: any): any {
+	createOperatorBlockFrom(whenBlock.value, Types, parsed.blockTypes, parsed.binaryOperatorBlockTypes, parsed.traitTypes, validScopes, null, options)
+	currentObject.hasRules = true
+	return {}
+}
+
 function createOperatorBlockFrom(block: any, Types: any, BlockTypes: any, BinaryOperatorBlockTypes: any, TraitTypes: any, validScopes: any, project: any, options: any): any {
 	return createBlockOfClasses(["operator","conditionalOperator"], "params", block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, project, options)
 }

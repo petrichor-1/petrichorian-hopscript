@@ -1,6 +1,6 @@
 const parser = require("./htn.js")
 
-module.exports.secondPass = (htnCode, options, stageSize, error, addHsObjectAndBeforeGameStartsAbility, addCustomRuleDefinition, createCustomBlockAbilityFromDefinition, createElseAbilityFor, createMethodBlock, createAbilityAsControlScriptOf, createAbilityForRuleFrom, rulesCountForObject, addBlockToAbility, hasUndefinedCustomRules, hasUndefinedCustomBlocks, returnValue, handleCustomRule, transformParsed) => {
+module.exports.secondPass = (htnCode, options, stageSize, error, addHsObjectAndBeforeGameStartsAbility, addCustomRuleDefinition, createCustomBlockAbilityFromDefinition, createElseAbilityFor, createMethodBlock, createAbilityAsControlScriptOf, createAbilityForRuleFrom, rulesCountForObject, addBlockToAbility, hasUndefinedCustomRules, hasUndefinedCustomBlocks, returnValue, handleCustomRule, transformParsed, linely) => {
 	const parsed = transformParsed(parser.parse(htnCode))
 	const lines = parsed.lines
 	const Types = parsed.tokenTypes
@@ -67,6 +67,7 @@ module.exports.secondPass = (htnCode, options, stageSize, error, addHsObjectAndB
 		for (let i = newIndentationLevel; i < currentIndendationLevel; i++) {
 			latestDiscardedState = stateStack.pop()
 		}
+		linely(currentState(), StateLevels, line)
 		switch (currentState().level) {
 		case StateLevels.topLevel:
 			switch (line.value.type) {
@@ -237,7 +238,7 @@ module.exports.secondPass = (htnCode, options, stageSize, error, addHsObjectAndB
 				handleWhenBlock(line.value, Types, parsed, validScopes, options, currentState, stateStack, StateLevels, createAbilityForRuleFrom, error)
 				break
 			case Types.comment:
-				if (currentState().object.rules.length != 0)
+				if ((currentState().object?.rules?.length || 0) != 0)
 					break // Not in the initial before-game-starts ability
 				currentState().beforeGameStartsAbility.blocks.push(createHsCommentFrom(line.value))
 				break

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.handleCustomRule = exports.addCustomRuleDefinition = exports.resetSecondPassFunctions = exports.createMethodBlock = exports.addHsObjectAndBeforeGameStartsAbility = void 0;
+exports.createAbilityForRuleFrom = exports.handleCustomRule = exports.addCustomRuleDefinition = exports.resetSecondPassFunctions = exports.createMethodBlock = exports.addHsObjectAndBeforeGameStartsAbility = void 0;
 const { parenthesisificateBinaryOperatorBlock } = require("../../../../core/parenthesisificateBinaryOperatorBlock.js");
 const { eventParameterPrototypeForIdentifier } = require('../../../../core/eventParameterPrototypeForIdentifier.js');
 const { HSParameterType } = require("../../../../core/HSParameterType.js");
@@ -42,6 +42,12 @@ function handleCustomRule(customRule, line, Types, object, nextStateIfContainer)
     addCustomRuleDefinition(nameAsString, line, Types, line.value.parameters, nextStateIfContainer);
 }
 exports.handleCustomRule = handleCustomRule;
+function createAbilityForRuleFrom(whenBlock, Types, parsed, validScopes, options, currentObject) {
+    createOperatorBlockFrom(whenBlock.value, Types, parsed.blockTypes, parsed.binaryOperatorBlockTypes, parsed.traitTypes, validScopes, null, options);
+    currentObject.hasRules = true;
+    return {};
+}
+exports.createAbilityForRuleFrom = createAbilityForRuleFrom;
 function createOperatorBlockFrom(block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, project, options) {
     return createBlockOfClasses(["operator", "conditionalOperator"], "params", block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, project, options);
 }
