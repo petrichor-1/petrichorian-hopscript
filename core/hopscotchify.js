@@ -3,6 +3,7 @@ const {secondPass} = require('./secondPass.js')
 const {HSParameterType} = require('./HSParameterType.js')
 const { parenthesisificateBinaryOperatorBlock } = require('./parenthesisificateBinaryOperatorBlock.js')
 const { eventParameterPrototypeForIdentifier } = require('./eventParameterPrototypeForIdentifier.js')
+const parser = require('./htn.js')
 
 module.exports.hopscotchify = (htnCode, options) => {
 	let project = {
