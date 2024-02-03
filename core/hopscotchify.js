@@ -129,6 +129,7 @@ module.exports.hopscotchify = (htnCode, options) => {
 		hsObject.yPosition = objectAttributes.yPosition.toString()
 		hsObject.resizeScale = objectAttributes.resizeScale.toString()
 		hsObject.rotation = objectAttributes.rotation.toString()
+		hsObject.text = "" //NEEDED
 		if (objectAttributes.text) {
 			if (hsObject.type != 1) //HSObjectType.Text
 				error(new parser.SyntaxError("Only text objects can have text", "", "text:", object.attributes[0].location)) // location is approximate
