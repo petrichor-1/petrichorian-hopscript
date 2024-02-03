@@ -48,7 +48,7 @@ module.exports.hopscotchify = (htnCode, options) => {
 		customBlockDefinitionCallbacks[name] = customBlockDefinitionCallbacks[name] || []
 		customBlockDefinitionCallbacks[name].push(callback)
 	}
-	return secondPass(htnCode, options, project.stageSize, (e)=>{throw e},addHsObjectAndBeforeGameStartsAbility, addCustomRuleDefinition, createCustomBlockAbilityFromDefinition, createElseAbilityFor, createMethodBlock, createAbilityAsControlScriptOf, createAbilityForRuleFrom, o=>o.rules.length, addBlockToAbility, hasUndefinedCustomRules, hasUndefinedCustomBlocks, ()=>project, handleCustomRule, e=>e)
+	return secondPass(htnCode, options, project.stageSize, (e)=>{throw e},addHsObjectAndBeforeGameStartsAbility, addCustomRuleDefinition, createCustomBlockAbilityFromDefinition, createElseAbilityFor, createMethodBlock, createAbilityAsControlScriptOf, createAbilityForRuleFrom, o=>o.rules.length, addBlockToAbility, hasUndefinedCustomRules, hasUndefinedCustomBlocks, ()=>project, handleCustomRule, e=>e, ()=>{})
 	function createCustomBlockAbilityFromDefinition(definition, Types) {
 		const name = unSnakeCase(definition.value.value)
 		const customBlockAbility = createEmptyAbility()
