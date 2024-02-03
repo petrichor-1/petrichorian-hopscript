@@ -118,7 +118,7 @@ function createBlockOfClasses(allowedBlockClasses: string | any[], parametersKey
 			break
 		case Types.identifier:
 			if (parameterSchema.type == HSParameterType.HSObject) {
-				const eventParameterPrototype = eventParameterPrototypeForIdentifier(parameterValue.value)
+				const eventParameterPrototype = eventParameterPrototypeForIdentifier(parameterValue.value, validScopes)
 				if (!eventParameterPrototype)
 					error({message: "Cannot make eventParameter from this", expected: ["Screen", "Self"], found: parameterValue.value.value, location: parameterValue.location})
 				break

@@ -336,7 +336,7 @@ function createBlockOfClasses(allowedBlockClasses, parametersKey, block, Types, 
 			break
 		case Types.identifier:
 			if (hsParameter.type == HSParameterType.HSObject) {
-				const eventParameterPrototype = eventParameterPrototypeForIdentifier(parameterValue.value)
+				const eventParameterPrototype = eventParameterPrototypeForIdentifier(parameterValue.value, validScopes)
 				if (!eventParameterPrototype)
 					throw new parser.SyntaxError("Cannot make eventParameter from this", ["Screen", "Self"], parameterValue.value.value, parameterValue.location)
 				const hsEventParameter = createEventParameterUsing(eventParameterPrototype)
