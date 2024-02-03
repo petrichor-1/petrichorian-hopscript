@@ -248,7 +248,8 @@ function completionsForInsideParenthesisBlockParentheses(line, cursorCharacter) 
                 insertText: insertText
             }];
     }
-    return completionsForBlocksOfClasses(["operator", "conditionalOperator"]);
+    const maybeTypes = latestParsed.parameterTypes[relevantParameter.type];
+    return completionsForBlocksOfClasses(["operator", "conditionalOperator"], maybeTypes);
 }
 function completionsForCustomRules() {
     //TODO: Return all known custom rule names
@@ -315,12 +316,14 @@ connection.onCompletionResolve((item) => {
 documents.listen(connection);
 // Listen on the connection
 connection.listen();
-function completionsForBlocksOfClasses(classes) {
+function completionsForBlocksOfClasses(classes, restrictToTypes = undefined) {
     const completions = [];
     for (const name in latestParsed.blockTypes) {
         if (Object.prototype.hasOwnProperty.call(latestParsed.blockTypes, name)) {
             const blockType = latestParsed.blockTypes[name];
             if (!classes.includes(blockType.class.class))
+                continue;
+            if (restrictToTypes && !restrictToTypes.includes(blockType.class.dataType.value))
                 continue;
             let label = name;
             let snippet = name;

@@ -270,7 +270,8 @@ function completionsForInsideParenthesisBlockParentheses(line: string, cursorCha
 			insertText: insertText
 		}]
 	}
-	return completionsForBlocksOfClasses(["operator", "conditionalOperator"])
+	const maybeTypes = latestParsed.parameterTypes[relevantParameter.type]
+	return completionsForBlocksOfClasses(["operator", "conditionalOperator"], maybeTypes)
 }
 function completionsForCustomRules(): CompletionItem[] {
 	//TODO: Return all known custom rule names
@@ -345,13 +346,15 @@ documents.listen(connection);
 
 // Listen on the connection
 connection.listen();
-function completionsForBlocksOfClasses(classes: String[]): CompletionItem[] {
+function completionsForBlocksOfClasses(classes: String[], restrictToTypes: String[] | undefined = undefined): CompletionItem[] {
 	const completions: CompletionItem[] = [];
 	for (const name in latestParsed.blockTypes) {
 		if (Object.prototype.hasOwnProperty.call(latestParsed.blockTypes, name)) {
 			const blockType = latestParsed.blockTypes[name];
 			if (!classes.includes(blockType.class.class))
 				continue;
+			if (restrictToTypes && !restrictToTypes.includes(blockType.class.dataType.value))
+				continue
 			let label = name;
 			let snippet = name;
 			const maybeBinaryOperator = name == "set" ? "=" : Object.getOwnPropertyNames(latestParsed.binaryOperatorBlockTypes).find((e: any) => latestParsed.binaryOperatorBlockTypes[e] == name);
