@@ -1,0 +1,62 @@
+square floor:
+	Game.hue = random(0, to: 359)
+	When game_starts:
+		set_width(Game.width, height: Game.height * 0.1)
+		set_origin(to_x: 0, y: 0)
+		set_color(h(Game.hue, s: 50, b: 50))
+		set_background(color: h(Game.hue, s: 20, b: 50))
+
+triangle spikes:
+	When game_starts:
+		set_color(h(Game.hue + 180, s: 70, b: 70))
+		set_origin(to_x: Game.width + 100, y: floor.origin_y + floor.height)
+		# repeat(times: 2):
+		# 	create_a_clone_of_this_object
+		# 	set_position(to_x: Self.x_position + Game.width / 1.5, y: Self.y_position)
+		broadcast_message(named: "Go!")
+	When i_get_a_message("Go!"):
+		starting_x = Self.x_position
+		repeat_forever:
+			set_position(to_x: Self.x_position - Game.width / 100 * ((Game.score + 10) / 10), y: Self.y_position)
+			check_once_if(Self.x_position < -1 * Self.width):
+				set_position(to_x: starting_x, y: Self.y_position)
+				increase(Game.score, by: 1)
+	When i_get_a_message("Die"):
+		destroy
+
+square player:
+	When game_starts:
+		set_color(h(Game.hue, s: 70, b: 70))
+		set_origin(to_x: 100, y: floor.origin_y + floor.height)
+	When is_tapped(Screen):
+		change_y(by: 250)
+		turn(degrees: -90)
+		change_y(by: -250)
+	When bumps(Self, spikes):
+		broadcast_message(named: "Die")
+	When i_get_a_message("Die"):
+		turn(degrees: 7200000000)
+
+text game_over(x_position: 20, y_position: 20, text: "Game Over!"):
+	When game_starts:
+		set_position(to_x: Game.width / 2, y: Game.height / 2)
+		set_invisibility(percent: 100)
+		set_size(percent: 200)
+		set_color(h(Game.hue + 180, s: 100, b: 100))
+		create_a_clone_of_this_object
+	custom_rule shadow:
+		When object_is_cloned:
+			send_to_back
+			set_position(to_x: Self.x_position - 5, y: Self.y_position - 5)
+			set_color(h(0, s: 0, b: 0))
+	When i_get_a_message("Die"):
+		set_invisibility(percent: Self.clone_index * 50)
+
+text score(resize_scale: 5, text: ""):
+	When game_starts:
+		wait(seconds: 0)
+		create_a_clone_of_this_object
+	custom_rule shadow
+	When game_is_playing:
+		set_text(to: Game.score, color: h(0, s: 0, b: (1 - Self.clone_index) * 100))
+		set_origin(to_x: 8 - Self.clone_index * 5, y: Game.height - 64 - Self.height - Self.clone_index * 8)
