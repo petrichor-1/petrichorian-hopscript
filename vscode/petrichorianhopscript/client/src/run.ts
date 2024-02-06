@@ -60,6 +60,7 @@ async function versionInfoForProject(hsProject): Promise<any> {
 }
 let players: any = {}
 async function playerFor(versionInfo: any): Promise<string> {
+	return fs.readFileSync(__dirname+"/../webplayer.min.js").toString()
 	const playerVersion = versionInfo.path
 	if (!players[playerVersion]) {
 		const url = `https://d3nbkco6xo1vz0.cloudfront.net/production/${versionInfo.path}`

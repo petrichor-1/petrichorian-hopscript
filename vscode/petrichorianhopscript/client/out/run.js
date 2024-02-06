@@ -62,6 +62,7 @@ async function versionInfoForProject(hsProject) {
 }
 let players = {};
 async function playerFor(versionInfo) {
+    return fs.readFileSync(__dirname + "/../webplayer.min.js").toString();
     const playerVersion = versionInfo.path;
     if (!players[playerVersion]) {
         const url = `https://d3nbkco6xo1vz0.cloudfront.net/production/${versionInfo.path}`;
