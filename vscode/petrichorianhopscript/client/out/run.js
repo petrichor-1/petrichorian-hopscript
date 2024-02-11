@@ -34,6 +34,12 @@ class PHSDebugServer {
             return;
         this.webSocketConnection.send(JSON.stringify({ type: "continue" }));
     }
+    stepToNextBlockInProject() {
+        if (!this.webSocketConnection)
+            return false;
+        this.webSocketConnection.send(JSON.stringify({ type: "step", scope: "project" }));
+        return true;
+    }
     setBreakpoints(positions) {
         this.breakpoints = positions;
         if (this.webSocketConnection)

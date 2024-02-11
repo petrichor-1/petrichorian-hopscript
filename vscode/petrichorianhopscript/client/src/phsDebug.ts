@@ -158,5 +158,10 @@ export class HopscriptDebugSession extends LoggingDebugSession {
 		this.server.continue()
 		this.sendResponse(response);
 	}
+	protected stepInRequest(response: DebugProtocol.StepInResponse, args: DebugProtocol.StepInArguments): void {
+		if (!this.server.stepToNextBlockInProject())
+			return this.sendErrorResponse(response,1)
+		this.sendResponse(response);
+	}
 }
 

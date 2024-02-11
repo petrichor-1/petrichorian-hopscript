@@ -4533,6 +4533,23 @@
 						petrichorIgnoreNextHitBreakpoint = true //The next hit breakpoint will be where we are paused
 						requestAnimationFrame(petrichorAnimationTick)
 						break
+					case "step":
+						switch (data.scope) {
+						case "project":
+							console.log("Stepping to next block")
+							petrichorIgnoreNextHitBreakpoint = true //The next hit breakpoint will be where we are *already* paused
+							// Step to next block
+							do {
+								petrichorIgnoreNextHitBreakpoint = true
+								petrichorStep()
+							} while (!(petrichorCurrentFrameState().id == PetrichorPossibleFrameProgressStates.inExecutable && petrichorCurrentFrameState().currentIndex < petrichorCurrentFrameState().executable.blocksToExecuteNow.length))
+							// Pretend to be a breakpoint for now
+							petrichorDebuggerHandlers.breakpoint(petrichorCurrentFrameState().executable.blocksToExecuteNow[petrichorCurrentFrameState().currentIndex].PETRICHOR_BREAKPOINT_POSITION)
+							break
+						default:
+							throw "UNknown scope " + data.scope
+						}
+						break
 					default:
 						console.error("Unknown message", data)
 					}
@@ -4555,7 +4572,7 @@
 							case PetrichorPossibleFrameProgressStates.ruleInRuleGroup:
 								result.ruleIndex = state.currentIndex
 								const rule = state.ruleGroup.rules()[state.currentIndex]
-								result.location = rule.PETRICHOR_BREAKPOINT_POSITION
+								result.location = rule?.PETRICHOR_BREAKPOINT_POSITION
 								break
 							default:
 								throw ["Unsendable state", state]

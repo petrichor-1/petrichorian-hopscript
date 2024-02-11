@@ -40,6 +40,12 @@ export class PHSDebugServer {
 			return
 		this.webSocketConnection.send(JSON.stringify({type:"continue"}))
 	}
+	public stepToNextBlockInProject(): boolean {
+		if (!this.webSocketConnection)
+			return false
+		this.webSocketConnection.send(JSON.stringify({type:"step",scope:"project"}))
+		return true
+	}
 	private setBreakpoints(positions: PHSBreakpointPosition[]) {
 		this.breakpoints = positions
 		if (this.webSocketConnection)

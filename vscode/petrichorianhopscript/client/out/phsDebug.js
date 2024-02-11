@@ -136,6 +136,11 @@ class HopscriptDebugSession extends debugadapter_1.LoggingDebugSession {
         this.server.continue();
         this.sendResponse(response);
     }
+    stepInRequest(response, args) {
+        if (!this.server.stepToNextBlockInProject())
+            return this.sendErrorResponse(response, 1);
+        this.sendResponse(response);
+    }
 }
 exports.HopscriptDebugSession = HopscriptDebugSession;
 //# sourceMappingURL=phsDebug.js.map
