@@ -52,6 +52,13 @@ class PHSDebugServer {
         this._responseCallbacks[responseId] = callback;
         this.webSocketConnection.send(JSON.stringify({ type: "getvars", responseId, blockType: type }));
     }
+    getLocalVariables(callback) {
+        if (!this.webSocketConnection)
+            return;
+        const responseId = this.createResponseId();
+        this._responseCallbacks[responseId] = callback;
+        this.webSocketConnection.send(JSON.stringify({ type: "getlocals", responseId }));
+    }
     createResponseId() {
         return this._nextResponseId++;
     }

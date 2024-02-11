@@ -4572,6 +4572,12 @@
 						console.log(result)
 						ws.send(JSON.stringify({type:"response", id:data.responseId, value:result}))
 						break
+					case "getlocals":
+						{console.log("getting local variables")
+						const result = []
+						petrichorCurrentFrameState().ruleGroup._environment.map.forEach((value, name) =>result.push({name,value}))
+						ws.send(JSON.stringify({type:"response", id:data.responseId, value:result}))
+						break}
 					default:
 						console.error("Unknown message", data)
 					}

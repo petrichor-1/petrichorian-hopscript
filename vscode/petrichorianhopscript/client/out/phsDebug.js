@@ -145,26 +145,30 @@ class HopscriptDebugSession extends debugadapter_1.LoggingDebugSession {
     scopesRequest(response, args) {
         response.body = {
             scopes: [
-                new debugadapter_1.Scope("Game", this._variableHandles.create("Game"))
+                new debugadapter_1.Scope("Local", this._variableHandles.create("Local")),
+                new debugadapter_1.Scope("Game", this._variableHandles.create("Game")),
             ]
         };
         this.sendResponse(response);
     }
     async variablesRequest(response, args, request) {
         const scope = this._variableHandles.get(args.variablesReference);
+        const gotVars = variables => {
+            response.body = { variables: variables.map(v => {
+                    const dapVariable = {
+                        name: v.name,
+                        value: `"${v.value}"`,
+                        variablesReference: 0
+                    };
+                    return dapVariable;
+                }) };
+            this.sendResponse(response);
+        };
         switch (scope) {
             case "Game":
-                return this.server.getVariablesOfBlockType(8003, variables => {
-                    response.body = { variables: variables.map(v => {
-                            const dapVariable = {
-                                name: v.name,
-                                value: `"${v.value}"`,
-                                variablesReference: 0
-                            };
-                            return dapVariable;
-                        }) };
-                    this.sendResponse(response);
-                }); // HSBlockType.Game
+                return this.server.getVariablesOfBlockType(8003, gotVars); // HSBlockType.Game
+            case "Local":
+                return this.server.getLocalVariables(gotVars);
             default:
                 this.sendErrorResponse(response, 2);
         }
