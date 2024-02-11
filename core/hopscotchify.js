@@ -5,6 +5,8 @@ const { parenthesisificateBinaryOperatorBlock } = require('./parenthesisificateB
 const { eventParameterPrototypeForIdentifier } = require('./eventParameterPrototypeForIdentifier.js')
 const parser = require('./htn.js')
 
+const BREAKPOINT_POSITION_KEY = "PETRICHOR_BREAKPOINT_POSITION"
+
 module.exports.hopscotchify = (htnCode, options) => {
 	let project = {
 		stageSize: {
@@ -285,17 +287,17 @@ function createBlockOfClasses(allowedBlockClasses, parametersKey, block, Types, 
 				throw new parser.SyntaxError("Unknown block name type", Types.identifier, blockName.type, blockName.location)
 			const newBlock = deepCopy(block)
 			newBlock.value = blockName
-			return createCustomBlockReferenceFrom(newBlock, Types)
+			return createCustomBlockReferenceFrom(newBlock, Types, options.addBreakpointLines)
 		default:
 			throw new parser.SyntaxError("Unknown block name type " + block.name.type, [Types.identifier, Types.customAbilityReference], block.name.type, block.name.location)
 		}
 		break
 	case Types.comment:
-		return createHsCommentFrom(block)
+		return createHsCommentFrom(block, options.addBreakpointLines)
 	case Types.binaryOperatorBlock:
 		throw new parser.SyntaxError("Should be impossible: Unconverted binary operator block", [], "", block.location)
 	case Types.customAbilityReference:
-		return createCustomBlockReferenceFrom(block, Types)
+		return createCustomBlockReferenceFrom(block, Types, options.addBreakpointLines)
 	default:
 		throw new parser.SyntaxError("Should be impossible: Unknown block form", [Types.comment, Types.identifier, Types.comment], block.type, block.location)
 	}
@@ -354,10 +356,12 @@ function createBlockOfClasses(allowedBlockClasses, parametersKey, block, Types, 
 		}
 		result[parametersKey].push(hsParameter)
 	}
+	if (options.addBreakpointLines)
+		result[BREAKPOINT_POSITION_KEY] = block.location.start
 	return result
 }
 
-function createCustomBlockReferenceFrom(block, Types) {
+function createCustomBlockReferenceFrom(block, Types, addBreakpointLines) {
 	if (block.value.type != Types.identifier)
 		throw new parser.SyntaxError("Should be impossible: Unknown custom block name form", Types.identifier, block.value.type, block.value.location)
 	const name = unSnakeCase(block.value.value)
@@ -369,6 +373,8 @@ function createCustomBlockReferenceFrom(block, Types) {
 			abilityID: "PETRICHOR__TEMP"
 		}
 	}
+	if (addBreakpointLines)
+		hsBlock[BREAKPOINT_POSITION_KEY] = block.location.start
 	return hsBlock
 }
 
@@ -572,8 +578,8 @@ function createRuleWith(hsBlock) {
 	return result
 }
 
-function createHsCommentFrom(comment) {
-	return {
+function createHsCommentFrom(comment, addBreakpointLines) {
+	const result = {
 		"parameters":[
 			{
 				"defaultValue":"",
@@ -586,6 +592,9 @@ function createHsCommentFrom(comment) {
 		"description":"#",
 		"block_class":"method"
 	}
+	if (addBreakpointLines)
+		result[BREAKPOINT_POSITION_KEY] = comment.location.start
+	return result
 }
 
 function createCustomRuleInstanceFor(hsCustomRule, parameters, location, Types, options) {
