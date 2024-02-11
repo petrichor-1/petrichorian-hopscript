@@ -47,11 +47,93 @@ class HopscriptDebugSession extends debugadapter_1.LoggingDebugSession {
         await this._configurationDone.wait(1000);
         console.log("HELLO");
         try {
-            await (0, run_1.run)(args.program);
+            this.server = await run_1.PHSDebugServer.run(args.program);
+            this.server.onBreakpointReachedAtLine = (line, stateStack) => {
+                this.latestStateStack = stateStack;
+                this.sendEvent(new debugadapter_1.StoppedEvent('breakpoint at ' + line, 1));
+            };
+            if (this.waitingBreakpointLines)
+                this.server.setBreakpointsFromNumbers(this.waitingBreakpointLines);
         }
         catch (error) {
             this.sendErrorResponse(response, error.toString());
         }
+        this.sendResponse(response);
+    }
+    async setBreakPointsRequest(response, args, request) {
+        if (this.server) {
+            this.server.setBreakpointsFromNumbers(args.lines);
+        }
+        else {
+            this.waitingBreakpointLines = args.lines;
+        }
+        // pretend to verify breakpoint locations
+        const actualBreakpoints0 = args.lines.map(async (l) => {
+            const bp = new debugadapter_1.Breakpoint(true, l);
+            bp.id = l;
+            return bp;
+        });
+        const actualBreakpoints = await Promise.all(actualBreakpoints0);
+        response.body = {
+            breakpoints: actualBreakpoints
+        };
+        this.sendResponse(response);
+    }
+    threadsRequest(response) {
+        // runtime supports no threads so just return a default thread.
+        response.body = {
+            threads: [
+                new debugadapter_1.Thread(1, "Thread")
+            ]
+        };
+        this.sendResponse(response);
+    }
+    stackTraceRequest(response, args) {
+        if (!this.latestStateStack)
+            return this.sendErrorResponse(response, 1);
+        const startFrame = typeof args.startFrame === 'number' ? args.startFrame : 0;
+        const maxLevels = typeof args.levels === 'number' ? args.levels : 1000;
+        const endFrame = startFrame + maxLevels;
+        const PetrichorPossibleFrameProgressStates = {
+            preFrame: 0,
+            stageProject: 1,
+            stageScene: 2,
+            stageRuleGroups: 3,
+            inRuleGroup: 4,
+            ruleInRuleGroup: 5,
+            inRule: 6,
+            inStageScript: 7,
+            inExecutable: 8,
+            inCustomRuleGroups: 9,
+        };
+        function nameForState(state) {
+            switch (state.id) {
+                case PetrichorPossibleFrameProgressStates.ruleInRuleGroup:
+                    return `Rule #${state.ruleIndex}`;
+                case PetrichorPossibleFrameProgressStates.inExecutable:
+                    return `Block ${state.blockTypeName}(${state.parameterCount} parameters)`;
+                default:
+                    return "Unknown" + JSON.stringify(state);
+            }
+        }
+        const result = [];
+        for (let i = startFrame; result.length < endFrame && i < this.latestStateStack.length; i++) {
+            const state = this.latestStateStack[i];
+            if (![PetrichorPossibleFrameProgressStates.ruleInRuleGroup, PetrichorPossibleFrameProgressStates.inExecutable].includes(state.id))
+                continue;
+            result.push(state);
+        }
+        response.body = {
+            stackFrames: result.map((state, ix) => {
+                const sf = new debugadapter_1.StackFrame(ix, nameForState(state), state.location?.file, state.location?.line, state.location?.column);
+                return sf;
+            }),
+            totalFrames: result.length
+        };
+        this.sendResponse(response);
+    }
+    continueRequest(response, args) {
+        this.server.continue();
         this.sendResponse(response);
     }
 }

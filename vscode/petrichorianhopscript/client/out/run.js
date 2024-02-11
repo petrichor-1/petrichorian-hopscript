@@ -1,18 +1,60 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.run = void 0;
+exports.PHSDebugServer = void 0;
 // import * as vscode from 'vscode'
 const fs = require("fs");
 const preludeify = require("../../../../core/preludeify.js");
 const hopscotchify_js_1 = require("../../../../core/hopscotchify.js");
 const http = require("http");
+const ws_1 = require("ws");
+class PHSDebugServer {
+    constructor(httpServer, wsServer, offset) {
+        this.breakpoints = [];
+        this.httpServer = httpServer;
+        this.offset = offset;
+        wsServer.on("connection", connection => {
+            this.webSocketConnection = connection;
+            this.setBreakpoints(this.breakpoints);
+            connection.on("message", messageData => {
+                const data = JSON.parse(messageData.toString());
+                switch (data.type) {
+                    case "breakpoint":
+                        const line = data.value.location.line - this.offset;
+                        this.onBreakpointReachedAtLine(line, data.value.stateStack);
+                        break;
+                }
+            });
+        });
+    }
+    setBreakpointsFromNumbers(lines) {
+        return this.setBreakpoints(lines.map(e => { return { line: e + this.offset }; }));
+    }
+    continue() {
+        if (!this.webSocketConnection)
+            return;
+        this.webSocketConnection.send(JSON.stringify({ type: "continue" }));
+    }
+    setBreakpoints(positions) {
+        this.breakpoints = positions;
+        if (this.webSocketConnection)
+            this.webSocketConnection.send(JSON.stringify({ type: "breakpoints", value: this.breakpoints }));
+    }
+    static async run(path) {
+        const { server, offset } = await run(path);
+        const wsServer = new ws_1.WebSocketServer({
+            port: 1338
+        });
+        return new PHSDebugServer(server, wsServer, offset);
+    }
+}
+exports.PHSDebugServer = PHSDebugServer;
 async function run(path) {
     // if (!vscode.workspace.isTrusted)
     // 	return // I don't think this is necessary, but it can't hurt
     const fullPath = path; //vscode.Uri.joinPath(vscode.workspace.workspaceFolders[0].uri, path)
     const code = fs.readFileSync(fullPath /*.fsPath*/).toString();
-    const { htnCode } = preludeify(code);
-    const hsProject = (0, hopscotchify_js_1.hopscotchify)(htnCode, { checkParameterLabels: true });
+    const { htnCode, fileMap } = preludeify(code);
+    const hsProject = (0, hopscotchify_js_1.hopscotchify)(htnCode, { checkParameterLabels: true, addBreakpointLines: true });
     const versionInfo = await versionInfoForProject(hsProject);
     const server = http.createServer(async (message, response) => {
         response.writeHead(200);
@@ -29,9 +71,8 @@ async function run(path) {
     });
     server.listen(1337, "localhost");
     // vscode.commands.executeCommand('js-debug-companion.launch', {browserType: "chrome", URL: "http://localhost:1337"})
-    return server;
+    return { server, offset: fileMap[fileMap.length - 1].starts };
 }
-exports.run = run;
 let html;
 function htmlOrGetFromFile(versionInfo) {
     if (!html)

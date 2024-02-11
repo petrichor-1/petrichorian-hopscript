@@ -16,7 +16,8 @@
 		"@vscode/debugadapter": "^1.64.0",
 		"@vscode/debugprotocol": "^1.64.0",
 		"await-notify": "^1.0.1",
-		"vscode-languageclient": "^9.0.1"
+		"vscode-languageclient": "^9.0.1",
+		"ws": "^8.16.0"
 	},
 	"devDependencies": {
 		"@types/vscode": "^1.75.1",

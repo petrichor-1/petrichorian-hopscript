@@ -41,6 +41,11 @@
           }
         }
       }
+    ],
+    "breakpoints": [
+      {
+        "language": "phopscript"
+      }
     ]
   },
   "scripts": {

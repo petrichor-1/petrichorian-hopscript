@@ -3,14 +3,63 @@ import * as fs from 'fs'
 import * as preludeify from '../../../../core/preludeify.js'
 import {hopscotchify} from '../../../../core/hopscotchify.js'
 import * as http from 'http'
+import {WebSocketServer} from 'ws'
 
-export async function run(path: string): Promise<http.Server> {
+interface PHSBreakpointPosition {
+	line: number
+}
+
+export class PHSDebugServer {
+	httpServer: http.Server
+	webSocketConnection: any
+	breakpoints: PHSBreakpointPosition[] = []
+	offset: number //Temporary
+	onBreakpointReachedAtLine: ((line: number, stateStack: any[]) => void) | undefined
+	constructor(httpServer: http.Server, wsServer: WebSocketServer, offset: number) {
+		this.httpServer = httpServer
+		this.offset = offset
+		wsServer.on("connection", connection => {
+			this.webSocketConnection = connection
+			this.setBreakpoints(this.breakpoints)
+			connection.on("message", messageData => {
+				const data = JSON.parse(messageData.toString())
+				switch (data.type) {
+				case "breakpoint":
+					const line = data.value.location.line-this.offset
+					this.onBreakpointReachedAtLine(line, data.value.stateStack)
+					break
+				}
+			})
+		})
+	}
+	public setBreakpointsFromNumbers(lines: number[]) {
+		return this.setBreakpoints(lines.map(e=>{return {line:e+this.offset}}))
+	}
+	public continue() {
+		if (!this.webSocketConnection)
+			return
+		this.webSocketConnection.send(JSON.stringify({type:"continue"}))
+	}
+	private setBreakpoints(positions: PHSBreakpointPosition[]) {
+		this.breakpoints = positions
+		if (this.webSocketConnection)
+			this.webSocketConnection.send(JSON.stringify({type: "breakpoints", value: this.breakpoints}))
+	}
+	static async run(path:string): Promise<PHSDebugServer> {
+		const {server, offset} = await run(path)
+		const wsServer = new WebSocketServer({
+			port: 1338
+		});
+		return new PHSDebugServer(server, wsServer, offset)
+	}
+}
+async function run(path: string): Promise<any> {
 	// if (!vscode.workspace.isTrusted)
 	// 	return // I don't think this is necessary, but it can't hurt
 	const fullPath = path//vscode.Uri.joinPath(vscode.workspace.workspaceFolders[0].uri, path)
 	const code = fs.readFileSync(fullPath/*.fsPath*/).toString()
-	const {htnCode} = preludeify(code)
-	const hsProject = hopscotchify(htnCode, {checkParameterLabels: true})
+	const {htnCode, fileMap} = preludeify(code)
+	const hsProject = hopscotchify(htnCode, {checkParameterLabels: true, addBreakpointLines: true})
 	const versionInfo = await versionInfoForProject(hsProject)
 	const server = http.createServer(async (message, response) => {
 		response.writeHead(200)
@@ -27,7 +76,7 @@ export async function run(path: string): Promise<http.Server> {
 	})
 	server.listen(1337, "localhost")
 	// vscode.commands.executeCommand('js-debug-companion.launch', {browserType: "chrome", URL: "http://localhost:1337"})
-	return server
+	return {server, offset: fileMap[fileMap.length-1].starts}
 }
 
 let html: String

@@ -275,7 +275,7 @@ function completionsForCustomBlocks() {
 function completionsForAbilityLevel(line, cursorCharacter) {
     const words = line.split(/[ \t\n]/g).filter(e => e != '');
     if (!/\(/.test(line))
-        return completionsForBlocksOfClasses(["method"]);
+        return completionsForBlocksOfClasses(["method", "control", "condtional_control"]);
     if (words[words.length - 1].endsWith(")") && /\(/.test(line.substring(0, cursorCharacter)))
         return completionsForInsideParenthesisBlockParentheses(line, cursorCharacter);
     if (words.length == 2 && words[0] == "custom_block")
@@ -298,7 +298,7 @@ connection.onCompletion((_textDocumentPosition) => {
             return completionsForAbilityLevel(line, _textDocumentPosition.position.character);
         default:
             console.log(lineState);
-            return completionsForBlocksOfClasses(["method"]);
+            return completionsForBlocksOfClasses(["method", "control", "conditional_control"]);
     }
 });
 // This handler resolves additional information for the item selected in

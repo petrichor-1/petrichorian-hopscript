@@ -4517,5 +4517,53 @@
 			</script>
 			__PETRICHOR__PIXI_SCRIPT__TAG__
 			<script src="/player.js"></script>
+			<script>
+				const ws = new WebSocket("ws://localhost:1338")
+				ws.onmessage = message => {
+					const data = JSON.parse(message.data)
+					if (!data)
+						return console.error("Undefined message", message)
+					switch (data.type) {
+					case "breakpoints":
+						console.log("Setting breakpoints, previously " + JSON.stringify(petrichorBreakpoints) + " now will be " + JSON.stringify(data.value))
+						petrichorBreakpoints = data.value
+						break
+					case "continue":
+						console.log("Continuing")
+						petrichorIgnoreNextHitBreakpoint = true //The next hit breakpoint will be where we are paused
+						requestAnimationFrame(petrichorAnimationTick)
+						break
+					default:
+						console.error("Unknown message", data)
+					}
+				}
+				petrichorDebuggerHandlers.breakpoint = (location) => {
+					console.log("READECH BRAEkpoint!!!11!! at line " + location.line)
+					const sendableStateStack = petrichorFrameStateStack.filter(state=> [PetrichorPossibleFrameProgressStates.inExecutable, PetrichorPossibleFrameProgressStates.ruleInRuleGroup].includes(state.id))
+						.map(state=>{
+							const result = {
+								id: state.id
+							}
+							switch (state.id) {
+							case PetrichorPossibleFrameProgressStates.inExecutable:
+								const block = state.executable.blocksToExecuteNow[state.currentIndex]
+								result.blockType = block.type
+								result.blockTypeName = HSBlockType[block.type]
+								result.parameterCount = block.parameters?.length || 0
+								result.location = block.PETRICHOR_BREAKPOINT_POSITION
+								break
+							case PetrichorPossibleFrameProgressStates.ruleInRuleGroup:
+								result.ruleIndex = state.currentIndex
+								const rule = state.ruleGroup.rules()[state.currentIndex]
+								result.location = rule.PETRICHOR_BREAKPOINT_POSITION
+								break
+							default:
+								throw ["Unsendable state", state]
+							}
+							return result
+						})
+					ws.send(JSON.stringify({type:"breakpoint", value: {location, stateStack: sendableStateStack}}))
+				}
+			</script>
 	</body>
 </html>
