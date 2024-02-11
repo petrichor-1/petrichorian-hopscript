@@ -4510,7 +4510,6 @@
 						if (!window.main)
 							return setTimeout(startProjectIfPossible, 100)
 						main.enterFullscreen()
-						main.play()
 					}
 					setTimeout(startProjectIfPossible, 100)
 				}))
@@ -4524,6 +4523,10 @@
 					if (!data)
 						return console.error("Undefined message", message)
 					switch (data.type) {
+					case "play":
+						console.log("Playing")
+						main.play()
+						break
 					case "breakpoints":
 						console.log("Setting breakpoints, previously " + JSON.stringify(petrichorBreakpoints) + " now will be " + JSON.stringify(data.value))
 						petrichorBreakpoints = data.value

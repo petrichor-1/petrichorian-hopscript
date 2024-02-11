@@ -46,10 +46,16 @@ export class PHSDebugServer {
 		this.webSocketConnection.send(JSON.stringify({type:"step",scope:"project"}))
 		return true
 	}
+	private hasPlayed = false
 	private setBreakpoints(positions: PHSBreakpointPosition[]) {
 		this.breakpoints = positions
-		if (this.webSocketConnection)
-			this.webSocketConnection.send(JSON.stringify({type: "breakpoints", value: this.breakpoints}))
+		if (!this.webSocketConnection)
+			return
+		this.webSocketConnection.send(JSON.stringify({type: "breakpoints", value: this.breakpoints}))
+		if (this.hasPlayed)
+			return
+		this.webSocketConnection.send(JSON.stringify({type:"play"}))
+		this.hasPlayed = true
 	}
 	static async run(path:string): Promise<PHSDebugServer> {
 		const {server, offset} = await run(path)

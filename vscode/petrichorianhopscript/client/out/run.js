@@ -10,6 +10,7 @@ const ws_1 = require("ws");
 class PHSDebugServer {
     constructor(httpServer, wsServer, offset) {
         this.breakpoints = [];
+        this.hasPlayed = false;
         this.httpServer = httpServer;
         this.offset = offset;
         wsServer.on("connection", connection => {
@@ -42,8 +43,13 @@ class PHSDebugServer {
     }
     setBreakpoints(positions) {
         this.breakpoints = positions;
-        if (this.webSocketConnection)
-            this.webSocketConnection.send(JSON.stringify({ type: "breakpoints", value: this.breakpoints }));
+        if (!this.webSocketConnection)
+            return;
+        this.webSocketConnection.send(JSON.stringify({ type: "breakpoints", value: this.breakpoints }));
+        if (this.hasPlayed)
+            return;
+        this.webSocketConnection.send(JSON.stringify({ type: "play" }));
+        this.hasPlayed = true;
     }
     static async run(path) {
         const { server, offset } = await run(path);
