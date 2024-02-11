@@ -43,6 +43,7 @@ class HopscriptDebugSession extends debugadapter_1.LoggingDebugSession {
     }
     async launchRequest(response, args) {
         debugadapter_1.logger.setup(debugadapter_1.Logger.LogLevel.Verbose, false);
+        this.program = args.program;
         // wait 1 second until configuration has finished (and configurationDoneRequest has been called)
         await this._configurationDone.wait(1000);
         console.log("HELLO");
@@ -125,9 +126,8 @@ class HopscriptDebugSession extends debugadapter_1.LoggingDebugSession {
         }
         response.body = {
             stackFrames: result.map((state, ix) => {
-                const sf = new debugadapter_1.StackFrame(ix, nameForState(state), state.location?.file, state.location?.line, state.location?.column);
-                return sf;
-            }),
+                return new debugadapter_1.StackFrame(ix, nameForState(state), new debugadapter_1.Source(this.program, this.program), (state.location?.line || 0) - this.server.offset, state.location?.column || 0);
+            }).reverse(),
             totalFrames: result.length
         };
         this.sendResponse(response);

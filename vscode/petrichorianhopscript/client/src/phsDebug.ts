@@ -5,7 +5,8 @@ import {
 	Breakpoint,
 	StoppedEvent,
 	Thread,
-	StackFrame
+	StackFrame,
+	Source
 } from '@vscode/debugadapter';
 import { DebugProtocol } from '@vscode/debugprotocol';
 import { Subject } from 'await-notify';
@@ -58,8 +59,10 @@ export class HopscriptDebugSession extends LoggingDebugSession {
 	server: PHSDebugServer | undefined
 	waitingBreakpointLines: number[]
 	latestStateStack: any[]
+	protected program: string
 	protected async launchRequest(response: DebugProtocol.LaunchResponse, args: any) {
 		logger.setup(Logger.LogLevel.Verbose, false);
+		this.program = args.program
 
 		// wait 1 second until configuration has finished (and configurationDoneRequest has been called)
 		await this._configurationDone.wait(1000);
@@ -147,9 +150,8 @@ export class HopscriptDebugSession extends LoggingDebugSession {
 
 		response.body = {
 			stackFrames: result.map((state, ix) => {
-				const sf: DebugProtocol.StackFrame = new StackFrame(ix, nameForState(state), state.location?.file, state.location?.line, state.location?.column)
-				return sf;
-			}),
+				return  new StackFrame(ix, nameForState(state), new Source(this.program, this.program), (state.location?.line || 0)-this.server.offset, state.location?.column || 0)
+			}).reverse(),
 			totalFrames: result.length
 		};
 		this.sendResponse(response);
