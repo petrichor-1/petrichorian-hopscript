@@ -10,6 +10,7 @@ class HopscriptDebugSession extends debugadapter_1.LoggingDebugSession {
         // a Mock runtime (or debugger)
         // private _runtime: HopscriptRuntime;
         this._configurationDone = new await_notify_1.Subject();
+        this._variableHandles = new debugadapter_1.Handles();
     }
     /**
      * The 'initialize' request is the first request called by the frontend
@@ -140,6 +141,37 @@ class HopscriptDebugSession extends debugadapter_1.LoggingDebugSession {
         if (!this.server.stepToNextBlockInProject())
             return this.sendErrorResponse(response, 1);
         this.sendResponse(response);
+    }
+    scopesRequest(response, args) {
+        response.body = {
+            scopes: [
+                new debugadapter_1.Scope("Game", this._variableHandles.create("Game"))
+            ]
+        };
+        this.sendResponse(response);
+    }
+    async variablesRequest(response, args, request) {
+        const scope = this._variableHandles.get(args.variablesReference);
+        switch (scope) {
+            case "Game":
+                return this.server.getVariablesOfBlockType(8003, variables => {
+                    response.body = { variables: variables.map(v => {
+                            const dapVariable = {
+                                name: v.name,
+                                value: `"${v.value}"`,
+                                variablesReference: 0
+                            };
+                            return dapVariable;
+                        }) };
+                    this.sendResponse(response);
+                }); // HSBlockType.Game
+            default:
+                this.sendErrorResponse(response, 2);
+        }
+        // response.body = {
+        // 	variables: vs.map(v => this.convertFromRuntime(v))
+        // };
+        // this.sendResponse(response);
     }
 }
 exports.HopscriptDebugSession = HopscriptDebugSession;

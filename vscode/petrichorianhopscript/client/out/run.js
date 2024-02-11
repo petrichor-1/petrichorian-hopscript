@@ -10,6 +10,8 @@ const ws_1 = require("ws");
 class PHSDebugServer {
     constructor(httpServer, wsServer, offset) {
         this.breakpoints = [];
+        this._responseCallbacks = {};
+        this._nextResponseId = 0;
         this.hasPlayed = false;
         this.httpServer = httpServer;
         this.offset = offset;
@@ -23,6 +25,8 @@ class PHSDebugServer {
                         const line = data.value.location.line - this.offset;
                         this.onBreakpointReachedAtLine(line, data.value.stateStack);
                         break;
+                    case "response":
+                        this._responseCallbacks[data.id](data.value);
                 }
             });
         });
@@ -40,6 +44,16 @@ class PHSDebugServer {
             return false;
         this.webSocketConnection.send(JSON.stringify({ type: "step", scope: "project" }));
         return true;
+    }
+    getVariablesOfBlockType(type, callback) {
+        if (!this.webSocketConnection)
+            return;
+        const responseId = this.createResponseId();
+        this._responseCallbacks[responseId] = callback;
+        this.webSocketConnection.send(JSON.stringify({ type: "getvars", responseId, blockType: type }));
+    }
+    createResponseId() {
+        return this._nextResponseId++;
     }
     setBreakpoints(positions) {
         this.breakpoints = positions;

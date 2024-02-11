@@ -4553,6 +4553,25 @@
 							throw "UNknown scope " + data.scope
 						}
 						break
+					case "getvars":
+						console.log(`Getting variables of type ${data.blockType}`)
+						const variables = main.context.projectObjects.HSVariable.filter((e,idx,array)=>e.blockType == data.blockType && !array.some((f,idx2)=>idx2<idx&&f.name==e.name))
+						const result = variables.map(v => {
+							return {
+								name: v.name,
+								value: function(){
+									switch (v.blockType) {
+									case HSBlockType.Game:
+										return v.stageParameterBlock().computedValue()
+									default:
+										return `ERROR UNKNOWN BLOCK TYPE HSBlockType.${HSBlockType[v.blockType]}`
+									}
+								}()
+							}
+						})
+						console.log(result)
+						ws.send(JSON.stringify({type:"response", id:data.responseId, value:result}))
+						break
 					default:
 						console.error("Unknown message", data)
 					}
