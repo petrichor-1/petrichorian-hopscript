@@ -4,6 +4,17 @@ exports.HopscriptDebugSession = void 0;
 const debugadapter_1 = require("@vscode/debugadapter");
 const await_notify_1 = require("await-notify");
 const run_1 = require("./run");
+class HSObject {
+    constructor(id) {
+        this.id = id;
+    }
+}
+class HSClone {
+    constructor(id, cloneIndex) {
+        this.id = id;
+        this.cloneIndex = cloneIndex;
+    }
+}
 class HopscriptDebugSession extends debugadapter_1.LoggingDebugSession {
     constructor() {
         super(...arguments);
@@ -149,6 +160,7 @@ class HopscriptDebugSession extends debugadapter_1.LoggingDebugSession {
                 new debugadapter_1.Scope("Self", this._variableHandles.create("Self")),
                 new debugadapter_1.Scope("Original_object", this._variableHandles.create("Original_object")),
                 new debugadapter_1.Scope("Game", this._variableHandles.create("Game")),
+                new debugadapter_1.Scope("Other objects", this._variableHandles.create("Objects"))
             ]
         };
         this.sendResponse(response);
@@ -175,8 +187,40 @@ class HopscriptDebugSession extends debugadapter_1.LoggingDebugSession {
                 return this.server.getLocalVariables(gotVars);
             case "Original_object":
                 return this.server.getVariablesOfBlockType(8005, gotVars); // HSBlockType.OriginalObject
+            case "Objects":
+                return this.server.getObjects(objects => {
+                    response.body = { variables: objects.map(v => {
+                            const dapVariable = {
+                                name: v.name,
+                                value: `text("${v.text}")`,
+                                variablesReference: this._variableHandles.create(new HSObject(v.id)),
+                            };
+                            return dapVariable;
+                        }) };
+                    this.sendResponse(response);
+                });
             default:
-                this.sendErrorResponse(response, 2);
+                if (scope instanceof HSObject) {
+                    const hsObject = scope;
+                    return this.server.getStageObjectCloneIndicesForObjectWithID(hsObject.id, objects => {
+                        response.body = { variables: objects.map(v => {
+                                const dapVariable = {
+                                    name: v.name,
+                                    value: `clone #${v.cloneIndex}`,
+                                    variablesReference: this._variableHandles.create(new HSClone(v.id, v.cloneIndex)),
+                                };
+                                return dapVariable;
+                            }) };
+                        this.sendResponse(response);
+                    });
+                }
+                else if (scope instanceof HSClone) {
+                    const hsClone = scope;
+                    return this.server.getVariablesForStageObject(hsClone.id, hsClone.cloneIndex, gotVars);
+                }
+                else {
+                    return this.sendErrorResponse(response, 2);
+                }
         }
         // response.body = {
         // 	variables: vs.map(v => this.convertFromRuntime(v))

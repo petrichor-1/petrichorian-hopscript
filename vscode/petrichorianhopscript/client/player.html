@@ -4558,6 +4558,7 @@
 						let blockType = data.blockType
 						let object
 						if (blockType == HSBlockType.OriginalObject) {
+							console.log("For original object")
 							blockType = HSBlockType.Object
 							object = petrichorCurrentFrameState().ruleGroup.parentObject.originalObject
 						}
@@ -4596,6 +4597,49 @@
 						petrichorCurrentFrameState().ruleGroup._environment.map.forEach((value, name) =>result.push({name,value}))
 						ws.send(JSON.stringify({type:"response", id:data.responseId, value:result}))
 						break}
+					case "getobjects":{
+						console.log("Getting objects")
+						const result = main.context.projectObjects.HSObject.map(object=>{
+							return {
+								name: object.name,
+								id: object.objectID,
+								text: object.text
+							}
+						})
+						ws.send(JSON.stringify({type: "response", id:data.responseId, value:result}))
+						break
+					}
+					case "getstageobjs":{
+						console.log(`Getting stage objects for ${data.objectID}`)
+						const result = main.context.projectObjects.HSObject.find(e=>e.objectID==data.objectID)
+							._stageObjects.map(stageObject => {
+								return {
+									id: stageObject.objectID,
+									cloneIndex: stageObject.cloneIndex,
+									name: stageObject.name
+								}
+							})
+						ws.send(JSON.stringify({type: "response", id:data.responseId, value:result}))
+						break
+					}
+					case "getobjectvars": {
+						console.log(`Getting object variables for clone #${data.cloneIndex} of object with id ${data.objectID}`)
+						const object = main.context.projectObjects.HSObject.find(e=>e.objectID == data.objectID)?._stageObjects.find(e=>e.cloneIndex == data.cloneIndex)
+						if (!object)
+							return ws.send(JSON.stringify({type:"response", id:data.responseId, value:[]}))
+						const variables = object.variables.filter((e,i,a)=>!a.some((f,j)=>j<i&&e.name==f.name))
+						const result = variables.map(v=>{
+							return {
+								name: v.name,
+								//Not technically correct, but I have no idea how to make it work otherwise, and
+								//    this does the same thing in less steps in this case
+								value: object[v.name] || "0"
+							}
+						})
+						console.log(result)
+						ws.send(JSON.stringify({type:"response", id:data.responseId, value:result}))
+						break
+					}
 					default:
 						console.error("Unknown message", data)
 					}

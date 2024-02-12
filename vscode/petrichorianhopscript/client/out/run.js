@@ -52,12 +52,33 @@ class PHSDebugServer {
         this._responseCallbacks[responseId] = callback;
         this.webSocketConnection.send(JSON.stringify({ type: "getvars", responseId, blockType: type }));
     }
+    getStageObjectCloneIndicesForObjectWithID(id, callback) {
+        if (!this.webSocketConnection)
+            return;
+        const responseId = this.createResponseId();
+        this._responseCallbacks[responseId] = callback;
+        this.webSocketConnection.send(JSON.stringify({ type: "getstageobjs", responseId, objectID: id }));
+    }
+    getVariablesForStageObject(id, cloneIndex, callback) {
+        if (!this.webSocketConnection)
+            return;
+        const responseId = this.createResponseId();
+        this._responseCallbacks[responseId] = callback;
+        this.webSocketConnection.send(JSON.stringify({ type: "getobjectvars", responseId, objectID: id, cloneIndex }));
+    }
     getLocalVariables(callback) {
         if (!this.webSocketConnection)
             return;
         const responseId = this.createResponseId();
         this._responseCallbacks[responseId] = callback;
         this.webSocketConnection.send(JSON.stringify({ type: "getlocals", responseId }));
+    }
+    getObjects(callback) {
+        if (!this.webSocketConnection)
+            return;
+        const responseId = this.createResponseId();
+        this._responseCallbacks[responseId] = callback;
+        this.webSocketConnection.send(JSON.stringify({ type: "getobjects", responseId }));
     }
     createResponseId() {
         return this._nextResponseId++;

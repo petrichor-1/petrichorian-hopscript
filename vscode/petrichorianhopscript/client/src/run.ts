@@ -55,12 +55,33 @@ export class PHSDebugServer {
 		this._responseCallbacks[responseId] = callback
 		this.webSocketConnection.send(JSON.stringify({type:"getvars",responseId,blockType:type}))
 	}
+	public getStageObjectCloneIndicesForObjectWithID(id: string, callback: (objects: any) => undefined) {
+		if (!this.webSocketConnection)
+			return
+		const responseId = this.createResponseId()
+		this._responseCallbacks[responseId] = callback
+		this.webSocketConnection.send(JSON.stringify({type:"getstageobjs",responseId, objectID: id}))
+	}
+	public getVariablesForStageObject(id: string, cloneIndex: number, callback: (variables: any) => undefined) {
+		if (!this.webSocketConnection)
+			return
+		const responseId = this.createResponseId()
+		this._responseCallbacks[responseId] = callback
+		this.webSocketConnection.send(JSON.stringify({type:"getobjectvars",responseId, objectID: id, cloneIndex}))
+	}
 	public getLocalVariables(callback: (variables: any) => undefined) {
 		if (!this.webSocketConnection)
 			return
 		const responseId = this.createResponseId()
 		this._responseCallbacks[responseId] = callback
 		this.webSocketConnection.send(JSON.stringify({type:"getlocals",responseId}))
+	}
+	public getObjects(callback: (objects: any) => undefined) {
+		if (!this.webSocketConnection)
+			return
+		const responseId = this.createResponseId()
+		this._responseCallbacks[responseId] = callback
+		this.webSocketConnection.send(JSON.stringify({type:"getobjects",responseId}))
 	}
 	private _responseCallbacks: any = {}
 	private _nextResponseId: number = 0
