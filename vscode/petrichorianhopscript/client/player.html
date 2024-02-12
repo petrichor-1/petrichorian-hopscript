@@ -4593,8 +4593,19 @@
 						break
 					case "getlocals":
 						{console.log("getting local variables")
+						const vars = {}
+						const envs = []
+						for (let current = petrichorCurrentFrameState().executable.blocksToExecuteNow[0]._parentNode._environment; current; current = current.parentEnv) {
+							envs.unshift(current)
+						}
+						envs.forEach(env => env.map.forEach((value,name) => vars[name]=value))
 						const result = []
-						petrichorCurrentFrameState().ruleGroup._environment.map.forEach((value, name) =>result.push({name,value}))
+						for (const name in vars) {
+							if (Object.hasOwnProperty.call(vars, name)) {
+								const value = vars[name];
+								result.push({name,value})
+							}
+						}
 						ws.send(JSON.stringify({type:"response", id:data.responseId, value:result}))
 						break}
 					case "getobjects":{
