@@ -168,11 +168,13 @@ export class HopscriptDebugSession extends LoggingDebugSession {
 			return this.sendErrorResponse(response,1)
 		this.sendResponse(response);
 	}
-	private _variableHandles = new Handles<'Game' | 'Local'>()
+	private _variableHandles = new Handles<'Game' | 'Local' | 'Self' | 'Original_object'>()
 	protected scopesRequest(response: DebugProtocol.ScopesResponse, args: DebugProtocol.ScopesArguments): void {
 		response.body = {
 			scopes: [
 				new Scope("Local",this._variableHandles.create("Local")),
+				new Scope("Self",this._variableHandles.create("Self")),
+				new Scope("Original_object",this._variableHandles.create("Original_object")),
 				new Scope("Game",this._variableHandles.create("Game")),
 			]
 		};
@@ -194,8 +196,12 @@ export class HopscriptDebugSession extends LoggingDebugSession {
 		switch (scope) {
 		case "Game":
 			return this.server.getVariablesOfBlockType(8003, gotVars as any) // HSBlockType.Game
+		case "Self":
+			return this.server.getVariablesOfBlockType(8004, gotVars as any) // HSBlockType.Self
 		case "Local":
 			return this.server.getLocalVariables(gotVars as any)
+		case "Original_object":
+			return this.server.getVariablesOfBlockType(8005, gotVars as any) // HSBlockType.OriginalObject
 		default:
 			this.sendErrorResponse(response, 2)
 		}

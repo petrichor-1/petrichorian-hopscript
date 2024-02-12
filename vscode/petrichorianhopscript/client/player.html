@@ -4555,14 +4555,32 @@
 						break
 					case "getvars":
 						console.log(`Getting variables of type ${data.blockType}`)
-						const variables = main.context.projectObjects.HSVariable.filter((e,idx,array)=>e.blockType == data.blockType && !array.some((f,idx2)=>idx2<idx&&f.name==e.name))
-						const result = variables.map(v => {
+						let blockType = data.blockType
+						let object
+						if (blockType == HSBlockType.OriginalObject) {
+							blockType = HSBlockType.Object
+							object = petrichorCurrentFrameState().ruleGroup.parentObject.originalObject
+						}
+						const variables = main.context.projectObjects.HSVariable.filter((e,idx,array)=>e.blockType == blockType)
+						const result = variables
+							.filter((v,i) => {
+								return !variables.some((v2,i2) => {
+									return i2 < i && v2.name == v.name
+								})
+							})
+							.map(v => {
 							return {
 								name: v.name,
 								value: function(){
 									switch (v.blockType) {
 									case HSBlockType.Game:
 										return v.stageParameterBlock().computedValue()
+									case HSBlockType.Self:
+										return v.stageParameterBlock().computedValue(petrichorCurrentFrameState().ruleGroup)
+									case HSBlockType.Object:
+										if (!object)
+											return "ERROR: NO OBJECT"
+										return v.stageParameterBlock().computedValue(object)
 									default:
 										return `ERROR UNKNOWN BLOCK TYPE HSBlockType.${HSBlockType[v.blockType]}`
 									}
