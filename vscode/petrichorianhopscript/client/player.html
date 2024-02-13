@@ -4666,6 +4666,13 @@
 								value: object[v.name] || "0"
 							}
 						})
+						for (let type = HSBlockType.TraitRotation; type < HSBlockType.HS_END_OF_OBJECT_TRAITS; type++) {
+							const parameterBlock = new HSParameterBlock(main.context)
+							parameterBlock.type = type
+							const stageBlock = parameterBlock.stageParameterBlock(object)
+							stageBlock.stageObjects = () => [object]
+							result.push({name: `HSBlockType.${HSBlockType[type]}`, value:stageBlock.computedValue(object)})
+						}
 						console.log(result)
 						ws.send(JSON.stringify({type:"response", id:data.responseId, value:result}))
 						break
