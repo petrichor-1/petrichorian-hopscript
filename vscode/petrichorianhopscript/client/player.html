@@ -4562,6 +4562,10 @@
 							blockType = HSBlockType.Object
 							object = petrichorCurrentFrameState().ruleGroup.parentObject.originalObject
 						}
+						if (blockType == HSBlockType.Self) {
+							console.log("For self")
+							object = petrichorCurrentFrameState().ruleGroup.parentObject
+						}
 						const variables = main.context.projectObjects.HSVariable.filter((e,idx,array)=>e.blockType == blockType)
 						const result = variables
 							.filter((v,i) => {
@@ -4577,7 +4581,6 @@
 									case HSBlockType.Game:
 										return v.stageParameterBlock().computedValue()
 									case HSBlockType.Self:
-										return v.stageParameterBlock().computedValue(petrichorCurrentFrameState().ruleGroup)
 									case HSBlockType.Object:
 										if (!object)
 											return "ERROR: NO OBJECT"
@@ -4593,6 +4596,15 @@
 								const parameterBlock = new HSParameterBlock(main.context)
 								parameterBlock.type = type
 								result.push({name: `HSBlockType.${HSBlockType[type]}`, value:parameterBlock.stageParameterBlock().computedValue()})
+							}
+						}
+						if ([HSBlockType.Object,HSBlockType.Self].includes(blockType)) {
+							for (let type = HSBlockType.TraitRotation; type < HSBlockType.HS_END_OF_OBJECT_TRAITS; type++) {
+								const parameterBlock = new HSParameterBlock(main.context)
+								parameterBlock.type = type
+								const stageBlock = parameterBlock.stageParameterBlock(object)
+								stageBlock.stageObjects = () => [object]
+								result.push({name: `HSBlockType.${HSBlockType[type]}`, value:stageBlock.computedValue(object)})
 							}
 						}
 						console.log(result)
