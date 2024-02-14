@@ -1,4 +1,4 @@
-square bottom_pipe:
+square bottom_pipe(x_position: 200, y_position: 200):
 	When game_starts:
 		set_z_index(1)
 		create_a_clone_of_this_object
@@ -31,7 +31,7 @@ square bottom_pipe:
 		When absolute_value(Self.x_position - bird.x_position) < (Self.width + bird.width) / 2 - 10 and absolute_value(Self.y_position - bird.y_position) < (Self.height + bird.height) / 2 - 10:
 			broadcast_message(named: "Die")
 
-square top_pipe:
+square top_pipe(x_position: 200, y_position: 200):
 	gap_size = "Nonsensical"
 	When game_starts:
 		set_z_index(1)
@@ -58,7 +58,7 @@ square top_pipe:
 			gap_size = random(300, to: 500)
 	custom_rule kill_bird_on_contact
 
-bird bird:
+bird bird(x_position: 200, y_position: 200):
 	When game_starts:
 		set_z_index(2)
 		Self.lives_count = 4
@@ -80,7 +80,7 @@ bird bird:
 					set_position(to_x: Game.width / 2, y: Game.height / 2)
 			wait(seconds: 2)
 
-bird lives_display:
+bird lives_display(x_position: 200, y_position: 200):
 	When Self.total_clones < bird.lives_count:
 		create_a_clone_of_this_object
 	When game_is_playing:
@@ -94,7 +94,7 @@ bird lives_display:
 			else:
 				set_invisibility(percent: 100)
 
-monkey score_shower:
+monkey score_shower(x_position: 200, y_position: 200):
 	When game_starts:
 		set_z_index(3)
 	When game_is_playing:
