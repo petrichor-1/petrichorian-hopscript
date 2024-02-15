@@ -6,8 +6,7 @@ module.exports.secondPass = (htnCode, options, stageSize, externalCallbacks) => 
 	const Types = parsed.tokenTypes
 
 	const validScopes = [{path: "Self", scope: "Self"}, {path: "Original_object", scope: "Original_object"}, {path: "Game", scope: "Game"}, {path: "User", scope: "User"}, {path: "Local", scope: "Local"}]
-	for (let i = 0; i < parsed.objectNames.length; i++) {
-		const objectName = parsed.objectNames[i]
+	parsed.objectNames.forEach(objectName => {
 		if (objectName.type != Types.identifier)
 			externalCallbacks.error("Should be impossible: Non-identifier object name")
 		if (validScopes.map(e=>e.path).includes(objectName.value))
@@ -27,7 +26,7 @@ module.exports.secondPass = (htnCode, options, stageSize, externalCallbacks) => 
 			}
 		}
 		validScopes.push(scope)
-	}
+	})
 
 	let indentationType;
 	let indentationLevelWhitespaceCount;
