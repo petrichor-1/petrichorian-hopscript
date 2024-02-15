@@ -138,7 +138,8 @@ module.exports.secondPass = (htnCode, options, stageSize, externalCallbacks) => 
 					externalCallbacks.error(new parser.SyntaxError("Top level custom rules must be definitions", ":", "", line.value.location))
 				if (!line.value.value.type == Types.identifier)
 					externalCallbacks.error(new parser.SyntaxError("Should be impossible: Unknown custom rule name type", Types.identifier, line.value.value.type, line.value.value.location))
-				externalCallbacks.addCustomRuleDefinition(line.value.value.value, line, Types, null, (hsCustomRule, beforeGameStartsAbility) => {
+				const customRuleName = line.value.value.value
+				externalCallbacks.addCustomRuleDefinition(customRuleName, line, Types, null, (hsCustomRule, beforeGameStartsAbility) => {
 					stateStack.push({
 						level: StateLevels.inObjectOrCustomRule,
 						object: hsCustomRule,
