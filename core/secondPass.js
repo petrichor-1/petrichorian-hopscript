@@ -123,7 +123,7 @@ module.exports.secondPass = (htnCode, options, stageSize, externalCallbacks) => 
 				}()
 				if (object.name.type != Types.identifier)
 					externalCallbacks.error("Should be impossible: Invalid object name type")
-				const { hsObject, ability } = externalCallbacks.addHsObjectAndBeforeGameStartsAbility(objectType, object, objectAttributes, validScopes)
+				const { hsObject, ability } = externalCallbacks.addHsObjectAndBeforeGameStartsAbility(objectType, object.name.value, objectAttributes, validScopes)
 				stateStack.push({
 					level: StateLevels.inObjectOrCustomRule,
 					object: hsObject,
