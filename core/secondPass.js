@@ -44,8 +44,7 @@ module.exports.secondPass = (htnCode, options, stageSize, externalCallbacks) => 
 		return stateStack[stateStack.length-1]
 	}
 	let latestDiscardedState;
-	for (let i = 0; i < lines.length; i++) {
-		const line = lines[i]
+	lines.forEach(line=> {
 		if (line.type != Types.line) {
 			externalCallbacks.error(new parser.SyntaxError("Should be impossible: Unknown line type " + line.type, Types.line, line.type, line.location))
 		}
@@ -322,7 +321,7 @@ module.exports.secondPass = (htnCode, options, stageSize, externalCallbacks) => 
 			externalCallbacks.error("Unknown state")
 		}
 		currentIndendationLevel = newIndentationLevel
-	}
+	})
 	if (externalCallbacks.hasUndefinedCustomRules())
 		externalCallbacks.error(new parser.SyntaxError("Undefined custom rule", "TODO: undefinedCustomRuleNames", ""))
 	if (externalCallbacks.hasUndefinedCustomBlocks())
