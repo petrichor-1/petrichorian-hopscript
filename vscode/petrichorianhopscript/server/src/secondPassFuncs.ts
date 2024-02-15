@@ -2,7 +2,7 @@ const {parenthesisificateBinaryOperatorBlock} = require("../../../../core/parent
 const { eventParameterPrototypeForIdentifier } = require('../../../../core/eventParameterPrototypeForIdentifier.js')
 const {HSParameterType} = require("../../../../core/HSParameterType.js")
 
-export function addHsObjectAndBeforeGameStartsAbility(objectType: any, object: any, objectAttributes: any, error: any, validScopes: any): any {
+export function addHsObjectAndBeforeGameStartsAbility(objectType: any, object: any, objectAttributes: any, validScopes: any): any {
 	return {hsObject: {block_class: objectType.class}, ability: [objectType,object]}
 }
 

@@ -122,7 +122,7 @@ module.exports.hopscotchify = (htnCode, options) => {
 			return
 		addCustomRuleDefinition(nameAsString, line, Types, line.value.parameters, nextStateIfContainer)
 	}
-	function addHsObjectAndBeforeGameStartsAbility(objectType, object, objectAttributes, error, validScopes) {
+	function addHsObjectAndBeforeGameStartsAbility(objectType, object, objectAttributes, validScopes) {
 		const hsObject = deepCopy(objectType)
 		hsObject.name = unSnakeCase(object.name.value)
 		hsObject.rules = []
@@ -133,8 +133,6 @@ module.exports.hopscotchify = (htnCode, options) => {
 		hsObject.rotation = objectAttributes.rotation.toString()
 		hsObject.text = "" //NEEDED
 		if (objectAttributes.text) {
-			if (hsObject.type != 1) //HSObjectType.Text
-				error(new parser.SyntaxError("Only text objects can have text", "", "text:", object.attributes[0].location)) // location is approximate
 			hsObject.text = objectAttributes.text
 		}
 		const ability = createEmptyAbility()
