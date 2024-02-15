@@ -116,7 +116,7 @@ module.exports.secondPass = (htnCode, options, stageSize, externalCallbacks) => 
 							result.rotation = parseFloat(attribute.value.value)
 							break
 						default:
-							externalCallbacks.error(new parser.SyntaxError(`Unknown object attribute '${attributeName}'`, ["x_position", "y_position", "text"], attributeName, attribute.name.location))
+							externalCallbacks.error(new parser.SyntaxError(`Unknown object attribute '${attributeName}'`, ["x_position", "y_position", "text", "rotation", "resize_scale"], attributeName, attribute.name.location))
 						}
 					})
 					return result
