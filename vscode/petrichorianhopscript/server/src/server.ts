@@ -97,7 +97,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 			diagnostics.push(diagnostic)
 		}
 		resetSecondPassFunctions(errorFunc)
-		secondPass(htnCode, {checkParameterLabels: true}, {width: 1024, height: 768}, errorFunc, addHsObjectAndBeforeGameStartsAbility, addCustomRuleDefinition, log.bind(null,"createCustomBlockAbilityFromDefinition"), log.bind(null,"createElseAbilityFor"), createMethodBlock, log.bind(null,"createAbilityAsControlScriptOf"), createAbilityForRuleFrom, ()=>0, log.bind(null,"addBlockToAbility"), log.bind(null,"hasUndefinedCustomRules"), log.bind(null,"hasUndefinedCustomBlocks"), log.bind(null,"returnValue"), handleCustomRule, (e: any) =>{e?latestParsed=e:null;return e}, linely)
+		secondPass(htnCode, {checkParameterLabels: true}, {width: 1024, height: 768}, {error: errorFunc, addHsObjectAndBeforeGameStartsAbility: addHsObjectAndBeforeGameStartsAbility, addCustomRuleDefinition: addCustomRuleDefinition, createCustomBlockAbilityFromDefinition: log.bind(null,"createCustomBlockAbilityFromDefinition"), createElseAbilityFor: log.bind(null,"createElseAbilityFor"), createMethodBlock: createMethodBlock, createAbilityAsControlScriptOf: log.bind(null,"createAbilityAsControlScriptOf"), createAbilityForRuleFrom: createAbilityForRuleFrom, rulesCountForObject: ()=>0, addBlockToAbility: log.bind(null,"addBlockToAbility"), hasUndefinedCustomRules: log.bind(null,"hasUndefinedCustomRules"), hasUndefinedCustomBlocks: log.bind(null,"hasUndefinedCustomBlocks"), returnValue: log.bind(null,"returnValue"), handleCustomRule: handleCustomRule, transformParsed: (e: any) =>{e?latestParsed=e:null;return e}, linely: linely})
 	} catch (error: any) {
 		if (!error.location) {
 			log(error)

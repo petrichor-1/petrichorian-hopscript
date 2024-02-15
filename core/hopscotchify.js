@@ -50,7 +50,7 @@ module.exports.hopscotchify = (htnCode, options) => {
 		customBlockDefinitionCallbacks[name] = customBlockDefinitionCallbacks[name] || []
 		customBlockDefinitionCallbacks[name].push(callback)
 	}
-	return secondPass(htnCode, options, project.stageSize, (e)=>{throw e},addHsObjectAndBeforeGameStartsAbility, addCustomRuleDefinition, createCustomBlockAbilityFromDefinition, createElseAbilityFor, createMethodBlock, createAbilityAsControlScriptOf, createAbilityForRuleFrom, o=>o.rules.length, addBlockToAbility, hasUndefinedCustomRules, hasUndefinedCustomBlocks, ()=>project, handleCustomRule, e=>e, ()=>{})
+	return secondPass(htnCode, options, project.stageSize, {error: (e)=>{throw e},addHsObjectAndBeforeGameStartsAbility: addHsObjectAndBeforeGameStartsAbility,addCustomRuleDefinition: addCustomRuleDefinition,createCustomBlockAbilityFromDefinition: createCustomBlockAbilityFromDefinition,createElseAbilityFor: createElseAbilityFor,createMethodBlock: createMethodBlock,createAbilityAsControlScriptOf: createAbilityAsControlScriptOf,createAbilityForRuleFrom: createAbilityForRuleFrom,rulesCountForObject: o=>o.rules.length,addBlockToAbility: addBlockToAbility,hasUndefinedCustomRules: hasUndefinedCustomRules,hasUndefinedCustomBlocks: hasUndefinedCustomBlocks,returnValue: ()=>project,handleCustomRule: handleCustomRule,transformParsed: e=>e,linely:  ()=>{}})
 	function createCustomBlockAbilityFromDefinition(definition, Types) {
 		const name = unSnakeCase(definition.value.value)
 		const customBlockAbility = createEmptyAbility()
