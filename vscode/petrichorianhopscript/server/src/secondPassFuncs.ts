@@ -19,24 +19,21 @@ export function resetSecondPassFunctions(newError: any) {
 export function isThereAlreadyADefinedCustomRuleNamed(nameAsString: string): boolean {
 	return !!customRules[nameAsString]
 }
-export function addCustomRuleDefinition(nameAsString: any, Types: any, maybeParameters: any, transitionStateWith: any) {
-	maybeParameters?.forEach((parameterValue: any) => {
-		if (parameterValue.type != Types.parameterValue)
-			error({message:"Should be impossible: Unknow parameter value type", expected:Types.parameterValue, found:parameterValue.type, location:parameterValue.location})
-		if (parameterValue.label.type != Types.identifier)
-			error({message:"Should be impossible: Unknown parameter label type", expected:Types.identifier, found:parameterValue.label.type, location:parameterValue.label.location})
-	})
+export function addCustomRuleDefinitionAndReturnParameterly(nameAsString: any): any {
 	customRules[nameAsString] = true
-	transitionStateWith({}, {})
+	return {
+		parameterly: () => {},
+		hsCustomRule: {},
+		beforeGameStartsAbility: {}
+	}
 }
 
-export function handleCustomRule(customRule: any, line: any, Types: any, object: any, nextStateIfContainer: any) {
-	if (customRule.value.type != Types.identifier)
-		error("Should be impossible: Non-identifier custom rules name")
-	const nameAsString = customRule.value.value
-	if (!customRule.doesHaveContainer)
-		return
-	addCustomRuleDefinition(nameAsString, Types, line.value.parameters, nextStateIfContainer)
+export function handleCustomRule(nameAsString: string, hsObjectOrCustomRule: any, hasContainer: boolean, callbackForWhenRuleIsDefined: (parameterCount: number, getExpectedNameForParameter: (i: number) => string, addNewParameter: (i: number, value: number) => void) => void) {
+	//FIXME: Doesn't ever call callbackForWhenRuleIsDefined, this is needed to validate argument labels.
+	if (!hasContainer)
+		return {}
+	addCustomRuleDefinitionAndReturnParameterly(nameAsString)
+	return {}
 }
 
 export function createAbilityForRuleFrom(whenBlock: any, Types: any, parsed: any, validScopes: any, options: any, currentObject: any): any {

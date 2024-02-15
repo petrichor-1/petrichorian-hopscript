@@ -141,12 +141,11 @@ module.exports.secondPass = (htnCode, options, stageSize, externalCallbacks) => 
 				const customRuleName = line.value.value.value
 				if (externalCallbacks.isThereAlreadyADefinedCustomRuleNamed(customRuleName))
 					throw new parser.SyntaxError("Duplicate custom rule definition", "", customRuleName, line.location)
-				externalCallbacks.addCustomRuleDefinition(customRuleName, line, Types, null, (hsCustomRule, beforeGameStartsAbility) => {
-					stateStack.push({
-						level: StateLevels.inObjectOrCustomRule,
-						object: hsCustomRule,
-						beforeGameStartsAbility: beforeGameStartsAbility
-					})
+				const {hsCustomRule, beforeGameStartsAbility} = externalCallbacks.addCustomRuleDefinitionAndReturnParameterly(customRuleName)
+				stateStack.push({
+					level: StateLevels.inObjectOrCustomRule,
+					object: hsCustomRule,
+					beforeGameStartsAbility: beforeGameStartsAbility
 				})
 				break
 			case Types.customAbilityReference:
@@ -171,12 +170,26 @@ module.exports.secondPass = (htnCode, options, stageSize, externalCallbacks) => 
 						externalCallbacks.error(new parser.SyntaxError("Top level custom rules must be definitions", ":", "", line.value.location))
 					parenthesisBlock.value = line.value.name.value
 					parenthesisBlock.type = Types.customRule
-					externalCallbacks.addCustomRuleDefinition(parenthesisBlock.value.value, Types, parenthesisBlock.parameters, (hsCustomRule, beforeGameStartsAbility) => {
-						stateStack.push({
-							level: StateLevels.inObjectOrCustomRule,
-							object: hsCustomRule,
-							beforeGameStartsAbility: beforeGameStartsAbility
-						})
+					const {parameterly, hsCustomRule, beforeGameStartsAbility} = externalCallbacks.addCustomRuleDefinitionAndReturnParameterly(parenthesisBlock.value.value)
+					parenthesisBlock.parameters?.forEach(parameterValue => {
+						if (parameterValue.type != Types.parameterValue)
+							externalCallbacks.error(new parser.SyntaxError("Should be impossible: Unknow parameter value type", Types.parameterValue, parameterValue.type, parameterValue.location))
+						if (parameterValue.label.type != Types.identifier)
+							externalCallbacks.error(new parser.SyntaxError("Should be impossible: Unknown parameter label type", Types.identifier, parameterValue.label.type, parameterValue.label.location))
+						const key = parameterValue.label.value
+						switch (parameterValue.value.type) {
+						case Types.string:
+						case Types.number:
+							parameterly(key, parameterValue.value.value)
+							break
+						default:
+							externalCallbacks.error(new parser.SyntaxError("Should be impossible: Unknown parameer value value type", [Types.string, Types.number], parameterValue.value.type, parameterValue.value.location))
+						}
+					})
+					stateStack.push({
+						level: StateLevels.inObjectOrCustomRule,
+						object: hsCustomRule,
+						beforeGameStartsAbility: beforeGameStartsAbility
 					})
 					break
 				}
@@ -222,7 +235,7 @@ module.exports.secondPass = (htnCode, options, stageSize, externalCallbacks) => 
 						doesHaveContainer: line.value.doesHaveContainer,
 						parameters: line.value.parameters
 					}
-					externalCallbacks.handleCustomRule(customRule, line, Types, currentState().object, (hsCustomRule, beforeGameStartsAbility) => {
+					handleCustomRule(externalCallbacks, customRule, Types, currentState().object, options, (hsCustomRule, beforeGameStartsAbility) => {
 						stateStack.push({
 							level: StateLevels.inObjectOrCustomRule,
 							object: hsCustomRule,
@@ -273,7 +286,7 @@ module.exports.secondPass = (htnCode, options, stageSize, externalCallbacks) => 
 				break
 			case Types.customRule:
 				const customRule = line.value
-				externalCallbacks.handleCustomRule(customRule, line, Types, currentState().object,(hsCustomRule, beforeGameStartsAbility) => {
+				handleCustomRule(externalCallbacks, customRule, Types, currentState().object, options, (hsCustomRule, beforeGameStartsAbility) => {
 					stateStack.push({
 						level: StateLevels.inObjectOrCustomRule,
 						object: hsCustomRule,
@@ -353,6 +366,41 @@ function handleWhenBlock(whenBlock, Types, parsed, validScopes, options, current
 		level: StateLevels.inAbility,
 		ability: ability
 	})
+}
+
+function handleCustomRule(externalCallbacks, customRule, Types, hsObjectOrCustomRule, options, transitionStateIfContainerExists) {
+	if (customRule.value.type != Types.identifier)
+		throw "Should be impossible: Non-identifier custom rules name"
+	const nameAsString = customRule.value.value
+	const {hsCustomRule, beforeGameStartsAbility} = externalCallbacks.handleCustomRule(nameAsString, hsObjectOrCustomRule, customRule.doesHaveContainer, (hsParametersCount, getExpectedNameForParameter, addNewParameter) => {
+		if (hsParametersCount <= 0)
+			return
+		if (hsParametersCount != (customRule.parameters?.length || 0))
+			throw new parser.SyntaxError("Wrong amount of parameters", hsParametersCount, parameters?.length || 0, customRule.location)
+		for (let i = 0; i < hsParametersCount; i++) {
+			const parameter = customRule.parameters[i]
+			if (parameter.type != Types.parameterValue)
+				throw new parser.SyntaxError("Should be impossible: Unknown parameyer type", Types.parameterValue, parameter.type, parameter.location)
+			if (options.checkParameterLabels) {
+				const label = parameter.label
+				if (label.type != Types.identifier)
+					throw new parser.SyntaxError("Should be impossible: Non-identifier parameter label for custom rule instance", Types.identifier, label.type, label.location)
+				const expectedLabel = getExpectedNameForParameter(i)
+				if (unSnakeCase(label.value) != expectedLabel)
+					throw new parser.SyntaxError("Incorrect parameter label", expectedLabel, unSnakeCase(label.value), label.location)
+			}
+			switch (parameter.value.type) {
+			case Types.string:
+			case Types.number:
+				addNewParameter(i,parameter.value.value)
+				break
+			default:
+				throw new parser.SyntaxError("Should be impossible; Unknown custom rule parameter value type", [Types.string, Types.number], parameter.value.type, parameter.value.location)
+			}
+		}
+	})
+	if (customRule.doesHaveContainer)
+		transitionStateIfContainerExists(hsCustomRule, beforeGameStartsAbility)
 }
 
 function deepCopy(object) {

@@ -50,7 +50,7 @@ module.exports.hopscotchify = (htnCode, options) => {
 		customBlockDefinitionCallbacks[name] = customBlockDefinitionCallbacks[name] || []
 		customBlockDefinitionCallbacks[name].push(callback)
 	}
-	return secondPass(htnCode, options, project.stageSize, {error: (e)=>{throw e},addHsObjectAndBeforeGameStartsAbility: addHsObjectAndBeforeGameStartsAbility,addCustomRuleDefinition: addCustomRuleDefinition,createCustomBlockAbilityFromDefinition: createCustomBlockAbilityFromDefinition,createElseAbilityFor: createElseAbilityFor,createMethodBlock: createMethodBlock,createAbilityAsControlScriptOf: createAbilityAsControlScriptOf,createAbilityForRuleFrom: createAbilityForRuleFrom,rulesCountForObject: o=>o.rules.length,addBlockToAbility: addBlockToAbility,hasUndefinedCustomRules: hasUndefinedCustomRules,hasUndefinedCustomBlocks: hasUndefinedCustomBlocks,returnValue: ()=>project,handleCustomRule: handleCustomRule,transformParsed: e=>e,linely:  ()=>{}, isThereAlreadyADefinedCustomRuleNamed: isThereAlreadyADefinedCustomRuleNamed})
+	return secondPass(htnCode, options, project.stageSize, {error: (e)=>{throw e},addHsObjectAndBeforeGameStartsAbility: addHsObjectAndBeforeGameStartsAbility, addCustomRuleDefinitionAndReturnParameterly: addCustomRuleDefinitionAndReturnParameterly,createCustomBlockAbilityFromDefinition: createCustomBlockAbilityFromDefinition,createElseAbilityFor: createElseAbilityFor,createMethodBlock: createMethodBlock,createAbilityAsControlScriptOf: createAbilityAsControlScriptOf,createAbilityForRuleFrom: createAbilityForRuleFrom,rulesCountForObject: o=>o.rules.length,addBlockToAbility: addBlockToAbility,hasUndefinedCustomRules: hasUndefinedCustomRules,hasUndefinedCustomBlocks: hasUndefinedCustomBlocks,returnValue: ()=>project,handleCustomRule: handleCustomRule,transformParsed: e=>e,linely:  ()=>{}, isThereAlreadyADefinedCustomRuleNamed: isThereAlreadyADefinedCustomRuleNamed})
 	function createCustomBlockAbilityFromDefinition(definition, Types) {
 		const name = unSnakeCase(definition.value.value)
 		const customBlockAbility = createEmptyAbility()
@@ -103,24 +103,22 @@ module.exports.hopscotchify = (htnCode, options) => {
 		}
 		return hsBlock
 	}
-	function handleCustomRule(customRule, line, Types, object, nextStateIfContainer) {
-		if (customRule.value.type != Types.identifier)
-			throw "Should be impossible: Non-identifier custom rules name"
-		const nameAsString = customRule.value.value
-		const rulesList = object.rules
+	// Returns hsCustomRule, beforeGameStartsAbility
+	function handleCustomRule(nameAsString, hsObjectOrCustomRule, hasContainer, callbackForWhenRuleIsDefined) {
+		const rulesList = hsObjectOrCustomRule.rules
 		const tempid = "TEMP" + randomUUID()
 		rulesList.push(tempid)
 		onDefinitionOfCustomRuleNamed(nameAsString, hsCustomRule => {
-			const hsCustomRuleInstance = createCustomRuleInstanceFor(hsCustomRule, customRule.parameters, customRule.location, Types, options)
+			const hsCustomRuleInstance = createCustomRuleInstanceFor(hsCustomRule, callbackForWhenRuleIsDefined)
 			project.customRuleInstances.push(hsCustomRuleInstance)
 			const index = rulesList.findIndex(e => e == tempid)
 			if (index < 0)
 				throw "Should be imposssible: Placeholder rule removed"
 			rulesList[index] = hsCustomRuleInstance.id
 		})
-		if (!customRule.doesHaveContainer)
-			return
-		addCustomRuleDefinition(nameAsString, Types, line.value.parameters, nextStateIfContainer)
+		if (!hasContainer)
+			return {hsCustomRule: null, beforeGameStartsAbility: null}
+		return addCustomRuleDefinitionAndReturnParameterly(nameAsString)
 	}
 	function addHsObjectAndBeforeGameStartsAbility(objectType, desiredObjectName, objectAttributes, validScopes) {
 		const hsObject = deepCopy(objectType)
@@ -161,7 +159,7 @@ module.exports.hopscotchify = (htnCode, options) => {
 	function isThereAlreadyADefinedCustomRuleNamed(nameAsString) {
 		return !!customRules[nameAsString]
 	}
-	function addCustomRuleDefinition(nameAsString, Types, maybeParameters, transitionStateWith) {
+	function addCustomRuleDefinitionAndReturnParameterly(nameAsString) {
 		const beforeGameStartsAbility = createEmptyAbility()
 		project.abilities.push(beforeGameStartsAbility)
 		const hsCustomRule = {
@@ -171,29 +169,21 @@ module.exports.hopscotchify = (htnCode, options) => {
 			parameters: [], //TODO
 			rules: []
 		}
-		maybeParameters?.forEach(parameterValue => {
-			const parameter = {}
-			if (parameterValue.type != Types.parameterValue)
-				throw new parser.SyntaxError("Should be impossible: Unknow parameter value type", Types.parameterValue, parameterValue.type, parameterValue.location)
-			if (parameterValue.label.type != Types.identifier)
-				throw new parser.SyntaxError("Should be impossible: Unknown parameter label type", Types.identifier, parameterValue.label.type, parameterValue.label.location)
-			parameter.key = unSnakeCase(parameterValue.label.value)
-			switch (parameterValue.value.type) {
-			case Types.string:
-			case Types.number:
-				parameter.defaultValue = parameterValue.value.value
-				parameter.value = parameterValue.value.value
-				break
-			default:
-				throw new parser.SyntaxError("Should be impossible: Unknown parameer value value type", [Types.string, Types.number], parameterValue.value.type, parameterValue.value.location)
-			}
-			hsCustomRule.parameters.push(parameter)
-		})
 		project.customRules.push(hsCustomRule)
 		customRuleDefinitionCallbacks[nameAsString]?.forEach(callback => callback(hsCustomRule))
 		customRuleDefinitionCallbacks[nameAsString] = null
 		customRules[nameAsString] = hsCustomRule
-		transitionStateWith(hsCustomRule, beforeGameStartsAbility)
+		return {
+			parameterly: (key, parameterValue) => {
+				const parameter = {}
+				parameter.key = unSnakeCase(key)
+				parameter.defaultValue = parameterValue
+				parameter.value = parameterValue
+				hsCustomRule.parameters.push(parameter)
+			},
+			hsCustomRule: hsCustomRule,
+			beforeGameStartsAbility: beforeGameStartsAbility
+		}
 	}
 
 	function createAbilityForRuleFrom(whenBlock, Types, parsed, validScopes, options, currentObject) {
@@ -596,39 +586,20 @@ function createHsCommentFrom(comment, addBreakpointLines) {
 	return result
 }
 
-function createCustomRuleInstanceFor(hsCustomRule, parameters, location, Types, options) {
-	const {checkParameterLabels} = options
+function createCustomRuleInstanceFor(hsCustomRule, callbackForWhenRuleIsDefined) {
 	const result = {
 		id: randomUUID(),
 		customRuleID: hsCustomRule.id,
 		parameters: []
 	}
-	if (hsCustomRule.parameters.length > 0) {
-		if (hsCustomRule.parameters.length != (parameters?.length || 0))
-			throw new parser.SyntaxError("Wrong amount of parameters", hsCustomRule.parameters.length, parameters?.length || 0, location)
-		for (let i = 0; i < hsCustomRule.parameters.length; i++) {
-			const hsParameter = hsCustomRule.parameters[i]
-			const parameter = parameters[i]
-			if (parameter.type != Types.parameterValue)
-				throw new parser.SyntaxError("Should be impossible: Unknown parameyer type", Types.parameterValue, parameter.type, parameter.location)
-			if (checkParameterLabels) {
-				const label = parameter.label
-				if (label.type != Types.identifier)
-					throw new parser.SyntaxError("Should be impossible: Non-identifier parameter label for custom rule instance", Types.identifier, label.type, label.location)
-				if (unSnakeCase(label.value) != hsParameter.key)
-					throw new parser.SyntaxError("Incorrect parameter label", hsParameter.key, unSnakeCase(label.value), label.location)
-			}
-			const newHsParameter = deepCopy(hsParameter)
-			switch (parameter.value.type) {
-			case Types.string:
-			case Types.number:
-				newHsParameter.value = parameter.value.value
-				break
-			default:
-				throw new parser.SyntaxError("Should be impossible; Unknown custom rule parameter value type", [Types.string, Types.number], parameter.value.type, parameter.value.location)
-			}
-			result.parameters.push(newHsParameter)
-		}
-	}
+	callbackForWhenRuleIsDefined(hsCustomRule.parameters.length, (i) => {
+		const hsParameter = hsCustomRule.parameters[i]
+		return hsParameter.key
+	}, (i, value) => {
+		const hsParameter = hsCustomRule.parameters[i]
+		const newHsParameter = deepCopy(hsParameter)
+		newHsParameter.value = value
+		result.parameters.push(newHsParameter)
+	})
 	return result
 }
