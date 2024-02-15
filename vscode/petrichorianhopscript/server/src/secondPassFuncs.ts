@@ -16,9 +16,10 @@ export function resetSecondPassFunctions(newError: any) {
 	customRules = {}
 	error = newError
 }
-export function addCustomRuleDefinition(nameAsString: any, line: any, Types: any, maybeParameters: any, transitionStateWith: any) {
-	if (customRules[nameAsString])
-		error({message:"Duplicate custom rule definition", expected:"", found:nameAsString, location:line.location})
+export function isThereAlreadyADefinedCustomRuleNamed(nameAsString: string): boolean {
+	return !!customRules[nameAsString]
+}
+export function addCustomRuleDefinition(nameAsString: any, Types: any, maybeParameters: any, transitionStateWith: any) {
 	maybeParameters?.forEach((parameterValue: any) => {
 		if (parameterValue.type != Types.parameterValue)
 			error({message:"Should be impossible: Unknow parameter value type", expected:Types.parameterValue, found:parameterValue.type, location:parameterValue.location})
@@ -35,7 +36,7 @@ export function handleCustomRule(customRule: any, line: any, Types: any, object:
 	const nameAsString = customRule.value.value
 	if (!customRule.doesHaveContainer)
 		return
-	addCustomRuleDefinition(nameAsString, line, Types, line.value.parameters, nextStateIfContainer)
+	addCustomRuleDefinition(nameAsString, Types, line.value.parameters, nextStateIfContainer)
 }
 
 export function createAbilityForRuleFrom(whenBlock: any, Types: any, parsed: any, validScopes: any, options: any, currentObject: any): any {

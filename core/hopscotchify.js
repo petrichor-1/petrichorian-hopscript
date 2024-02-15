@@ -50,7 +50,7 @@ module.exports.hopscotchify = (htnCode, options) => {
 		customBlockDefinitionCallbacks[name] = customBlockDefinitionCallbacks[name] || []
 		customBlockDefinitionCallbacks[name].push(callback)
 	}
-	return secondPass(htnCode, options, project.stageSize, {error: (e)=>{throw e},addHsObjectAndBeforeGameStartsAbility: addHsObjectAndBeforeGameStartsAbility,addCustomRuleDefinition: addCustomRuleDefinition,createCustomBlockAbilityFromDefinition: createCustomBlockAbilityFromDefinition,createElseAbilityFor: createElseAbilityFor,createMethodBlock: createMethodBlock,createAbilityAsControlScriptOf: createAbilityAsControlScriptOf,createAbilityForRuleFrom: createAbilityForRuleFrom,rulesCountForObject: o=>o.rules.length,addBlockToAbility: addBlockToAbility,hasUndefinedCustomRules: hasUndefinedCustomRules,hasUndefinedCustomBlocks: hasUndefinedCustomBlocks,returnValue: ()=>project,handleCustomRule: handleCustomRule,transformParsed: e=>e,linely:  ()=>{}})
+	return secondPass(htnCode, options, project.stageSize, {error: (e)=>{throw e},addHsObjectAndBeforeGameStartsAbility: addHsObjectAndBeforeGameStartsAbility,addCustomRuleDefinition: addCustomRuleDefinition,createCustomBlockAbilityFromDefinition: createCustomBlockAbilityFromDefinition,createElseAbilityFor: createElseAbilityFor,createMethodBlock: createMethodBlock,createAbilityAsControlScriptOf: createAbilityAsControlScriptOf,createAbilityForRuleFrom: createAbilityForRuleFrom,rulesCountForObject: o=>o.rules.length,addBlockToAbility: addBlockToAbility,hasUndefinedCustomRules: hasUndefinedCustomRules,hasUndefinedCustomBlocks: hasUndefinedCustomBlocks,returnValue: ()=>project,handleCustomRule: handleCustomRule,transformParsed: e=>e,linely:  ()=>{}, isThereAlreadyADefinedCustomRuleNamed: isThereAlreadyADefinedCustomRuleNamed})
 	function createCustomBlockAbilityFromDefinition(definition, Types) {
 		const name = unSnakeCase(definition.value.value)
 		const customBlockAbility = createEmptyAbility()
@@ -120,7 +120,7 @@ module.exports.hopscotchify = (htnCode, options) => {
 		})
 		if (!customRule.doesHaveContainer)
 			return
-		addCustomRuleDefinition(nameAsString, line, Types, line.value.parameters, nextStateIfContainer)
+		addCustomRuleDefinition(nameAsString, Types, line.value.parameters, nextStateIfContainer)
 	}
 	function addHsObjectAndBeforeGameStartsAbility(objectType, desiredObjectName, objectAttributes, validScopes) {
 		const hsObject = deepCopy(objectType)
@@ -158,9 +158,10 @@ module.exports.hopscotchify = (htnCode, options) => {
 		const hasUndefinedCustomRules = undefinedCustomRuleNames.length > 0
 		return hasUndefinedCustomRules
 	}
-	function addCustomRuleDefinition(nameAsString, line, Types, maybeParameters, transitionStateWith) {
-		if (customRules[nameAsString])
-			throw new parser.SyntaxError("Duplicate custom rule definition", "", nameAsString, line.location)
+	function isThereAlreadyADefinedCustomRuleNamed(nameAsString) {
+		return !!customRules[nameAsString]
+	}
+	function addCustomRuleDefinition(nameAsString, Types, maybeParameters, transitionStateWith) {
 		const beforeGameStartsAbility = createEmptyAbility()
 		project.abilities.push(beforeGameStartsAbility)
 		const hsCustomRule = {

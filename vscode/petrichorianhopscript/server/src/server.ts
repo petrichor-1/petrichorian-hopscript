@@ -18,7 +18,7 @@ import {
 } from 'vscode-languageserver/node';
 const {secondPass} = require("../../../../core/secondPass.js")
 const preludeify = require("../../../../core/preludeify.js")
-import { addCustomRuleDefinition, addHsObjectAndBeforeGameStartsAbility, createMethodBlock, handleCustomRule, resetSecondPassFunctions, createAbilityForRuleFrom } from "./secondPassFuncs";
+import { addCustomRuleDefinition, addHsObjectAndBeforeGameStartsAbility, createMethodBlock, handleCustomRule, resetSecondPassFunctions, createAbilityForRuleFrom, isThereAlreadyADefinedCustomRuleNamed } from "./secondPassFuncs";
 
 import {
 	TextDocument
@@ -97,7 +97,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 			diagnostics.push(diagnostic)
 		}
 		resetSecondPassFunctions(errorFunc)
-		secondPass(htnCode, {checkParameterLabels: true}, {width: 1024, height: 768}, {error: errorFunc, addHsObjectAndBeforeGameStartsAbility: addHsObjectAndBeforeGameStartsAbility, addCustomRuleDefinition: addCustomRuleDefinition, createCustomBlockAbilityFromDefinition: log.bind(null,"createCustomBlockAbilityFromDefinition"), createElseAbilityFor: log.bind(null,"createElseAbilityFor"), createMethodBlock: createMethodBlock, createAbilityAsControlScriptOf: log.bind(null,"createAbilityAsControlScriptOf"), createAbilityForRuleFrom: createAbilityForRuleFrom, rulesCountForObject: ()=>0, addBlockToAbility: log.bind(null,"addBlockToAbility"), hasUndefinedCustomRules: log.bind(null,"hasUndefinedCustomRules"), hasUndefinedCustomBlocks: log.bind(null,"hasUndefinedCustomBlocks"), returnValue: log.bind(null,"returnValue"), handleCustomRule: handleCustomRule, transformParsed: (e: any) =>{e?latestParsed=e:null;return e}, linely: linely})
+		secondPass(htnCode, {checkParameterLabels: true}, {width: 1024, height: 768}, {isThereAlreadyADefinedCustomRuleNamed: isThereAlreadyADefinedCustomRuleNamed, error: errorFunc, addHsObjectAndBeforeGameStartsAbility: addHsObjectAndBeforeGameStartsAbility, addCustomRuleDefinition: addCustomRuleDefinition, createCustomBlockAbilityFromDefinition: log.bind(null,"createCustomBlockAbilityFromDefinition"), createElseAbilityFor: log.bind(null,"createElseAbilityFor"), createMethodBlock: createMethodBlock, createAbilityAsControlScriptOf: log.bind(null,"createAbilityAsControlScriptOf"), createAbilityForRuleFrom: createAbilityForRuleFrom, rulesCountForObject: ()=>0, addBlockToAbility: log.bind(null,"addBlockToAbility"), hasUndefinedCustomRules: log.bind(null,"hasUndefinedCustomRules"), hasUndefinedCustomBlocks: log.bind(null,"hasUndefinedCustomBlocks"), returnValue: log.bind(null,"returnValue"), handleCustomRule: handleCustomRule, transformParsed: (e: any) =>{e?latestParsed=e:null;return e}, linely: linely})
 	} catch (error: any) {
 		if (!error.location) {
 			log(error)
