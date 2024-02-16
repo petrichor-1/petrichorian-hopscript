@@ -322,7 +322,7 @@ module.exports.secondPass = (htnCode, options, stageSize, externalCallbacks) => 
 				if (!line.value.doesHaveContainer) {
 					if (line.value.type == Types.customAbilityReference || line.value.name?.type == Types.customAbilityReference)
 						break
-						externalCallbacks.error(new parser.SyntaxError("Empty control block", ":", "", line.value.location))
+					externalCallbacks.error(new parser.SyntaxError("Empty control block", ":", "", line.value.location))
 				}
 				const ability = externalCallbacks.createAbilityAsControlScriptOf(hsBlock)
 				stateStack.push({
