@@ -373,7 +373,7 @@ function handleWhenBlock(whenBlock, Types, parsed, validScopes, options, current
 }
 
 function addBeforeGameStartsBlockToAbility(externalCallbacks, line, Types, parsed, validScopes, options, ability) {
-	const hsMethodBlock = externalCallbacks.createMethodBlock(createBlockOfClasses.bind(null,externalCallbacks,options,line.value,Types,parsed.blockTypes,parsed.binaryOperatorBlockTypes,parsed.traitTypes,validScopes), ability)
+	externalCallbacks.createMethodBlock(createBlockOfClasses.bind(null,externalCallbacks,options,line.value,Types,parsed.blockTypes,parsed.binaryOperatorBlockTypes,parsed.traitTypes,validScopes), ability)
 }
 
 function createBlockOfClasses(externalCallbacks, options, block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, allowedBlockClasses, blockCreationFunctions) {
