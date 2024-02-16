@@ -1,7 +1,6 @@
 const { randomUUID } = require('crypto')
 const {secondPass} = require('./secondPass.js')
 const {HSParameterType} = require('./HSParameterType.js')
-const parser = require('./htn.js')
 
 const BREAKPOINT_POSITION_KEY = "PETRICHOR_BREAKPOINT_POSITION"
 
@@ -212,16 +211,6 @@ function deepCopy(object) {
 	return JSON.parse(JSON.stringify(object))
 }
 
-function arrayStartsWith(big, small) {
-	if (big.length < small.length)
-		return false
-	for (let i = 0; i < small.length; i++) {
-		if (big[i] != small[i])
-			return false
-	}
-	return true
-}
-
 function unSnakeCase(snakeCaseString) {
 	const words = snakeCaseString.split("_")
 		.map(e=>e[0].toUpperCase()+e.substring(1,e.length))
@@ -264,8 +253,26 @@ function createBlockCreationFunctionsFor(project, parametersKey) {
 		addEventParameter: ((project, hsEventParameter) => project.eventParameters.push(hsEventParameter)).bind(null, project),
 		setParameterDatum: ((hsParameter, innerBlock) => hsParameter.datum = innerBlock),
 		addParameter: ((parametersKey, result, hsParameter) => result[parametersKey].push(hsParameter)).bind(null, parametersKey),
-		createBlockFromUndefinedType: createBlockFromUndefinedType.bind(null, project),
-		createOperatorBlockUsing: createOperatorBlockFrom.bind(null,project)
+		createOperatorBlockUsing: createOperatorBlockFrom.bind(null,project),
+		undefinedTypeFunctions: {
+			getOrAddObjectVariableNamed: getOrAddObjectVariableNamed.bind(null,project),
+			createSelfTrait: createSelfTrait,
+			createGameTrait: createGameTrait,
+			getOrAddGameVariableNamed: getOrAddGameVariableNamed.bind(null,project),
+			createLocalVariableNamed: createLocalVariableNamed,
+			createOriginalObjectTrait: createOriginalObjectTrait,
+			createObjectTrait: createObjectTrait,
+			setObjectTraitObjectToReferTo: ((hsTrait, hsObject) => hsTrait.HSTraitObjectIDKey = hsObject.objectID),
+			createObjectVariableReferenceTo: (hsVariable => {
+				const hsDatum = {
+					type: 8000, //HSBlockType.Object
+					variable: hsVariable.objectIdString,
+					description: "Variable", // Correct
+					object: "PETRICHOR__TEMPOBJECTID"
+				}
+				return hsObject => {hsDatum.object = hsObject.objectID}
+			})
+		}
 	}
 }
 
@@ -296,98 +303,6 @@ function createCustomBlockReferenceFrom(snakeCaseName) {
 		}
 	}
 	return hsBlock
-}
-
-function createBlockFromUndefinedType(project, block, Types, BlockTypes, TraitTypes, validScopes) {
-	switch (block.type) {
-	case Types.identifier:
-		const variableDescription = getVariableDescriptionFromPath(block.value, validScopes)
-		if (!variableDescription)
-			throw new parser.SyntaxError("Undefined symbol", ["Block", "Variable"], JSON.stringify(block), block.location)
-		const maybeTraits = TraitTypes[variableDescription.name]
-		switch (variableDescription.scope) {
-		case "Original_object":
-			if (maybeTraits) {
-				const trait = maybeTraits["Object"]
-				if (trait)
-					return createOriginalObjectTrait(trait)
-			}
-			const ooHsVariable = getOrAddObjectVariableNamed(variableDescription.name, project)
-			return {
-				type: 8005, //HSBlockType.OriginalObject
-				variable: ooHsVariable.objectIdString,
-				description: "Variable" // Correct
-			}
-		case "Self":
-			if (maybeTraits) {
-				const trait = maybeTraits["Object"]
-				if (trait)
-					return createSelfTrait(trait)
-			}
-			const hsVariable = getOrAddObjectVariableNamed(variableDescription.name, project)
-			return {
-				type: 8004, //HSBlockType.Self
-				variable: hsVariable.objectIdString,
-				description: "Variable" // Correct
-			}
-		case "Game":
-			if (maybeTraits) {
-				const trait = maybeTraits["Game"]
-				if (trait)
-					return createGameTrait(trait)
-			}
-			const gameHsVariable = getOrAddGameVariableNamed(variableDescription.name, project)
-			return {
-				type: 8003, //HSBlockType.Game
-				variable: gameHsVariable.objectIdString,
-				description: "Variable", // Correct
-			}
-		case "Local":
-			return createLocalVariableFrom(block)
-		case "Object":
-			if (maybeTraits) {
-				const trait = maybeTraits["Object"]
-				if (trait) {
-					const hsTrait = createObjectTrait(trait)
-					variableDescription.fullScopeObject.whenDefined(hsObject => {
-						hsTrait.HSTraitObjectIDKey = hsObject.objectID
-					})
-					return hsTrait
-				}
-			}
-			const objectHsVariable = getOrAddObjectVariableNamed(variableDescription.name, project)
-			const hsDatum = {
-				type: 8000, //HSBlockType.Object
-				variable: objectHsVariable.objectIdString,
-				description: "Variable", // Correct
-				object: "PETRICHOR__TEMPOBJECTIDFOR" + variableDescription.path
-			}
-			variableDescription.fullScopeObject.whenDefined(hsObject => {hsDatum.object = hsObject.objectID})
-			return hsDatum
-		default:
-			throw new parser.SyntaxError("Should be impossible: Unknown variable scope", validScopes.map(e=>e.path), variableDescription.scope, block.location)
-		}
-		break
-	case Types.parenthesisBlock:
-		let blockName = block.name.value
-		//Intentionally fall through
-	default:
-		blockName = blockName ?? JSON.stringify(block)
-		throw new parser.SyntaxError("Undefined block", Object.getOwnPropertyNames(BlockTypes), blockName, block.location)
-	}
-}
-
-function getVariableDescriptionFromPath(variablePath, validScopes) {
-	const fullVariablePath = variablePath.split('.')
-	if (fullVariablePath.length == 1)
-		return {scope: "Local", name:fullVariablePath[0]}
-	// Determine which scope this refers to
-	for (let i = 0; i < validScopes.length; i++) {
-		const objectPath = validScopes[i].path.split('.')
-		if (arrayStartsWith(fullVariablePath, objectPath))
-			return {scope: validScopes[i].scope, name: fullVariablePath.slice(objectPath.length).join('.'), fullScopeObject: validScopes[i]}
-	}
-	return null
 }
 
 function createOriginalObjectTrait(trait) {
@@ -426,8 +341,8 @@ function createObjectTrait(trait) {
 	}
 }
 
-function createLocalVariableFrom(block) {
-	const name = unSnakeCase(block.value)
+function createLocalVariableNamed(snakeCaseName) {
+	const name = unSnakeCase(snakeCaseName)
 	return {
 		name: name,
 		type: 8009, //HSBlockType.Local
@@ -435,7 +350,7 @@ function createLocalVariableFrom(block) {
 	}
 }
 
-function getOrAddObjectVariableNamed(name, project) {
+function getOrAddObjectVariableNamed(project, name) {
 	const hsName = unSnakeCase(name)
 	const maybeExistingVariable = project.variables.find(variable=>variable.name == hsName)
 	if (maybeExistingVariable)
@@ -449,7 +364,7 @@ function getOrAddObjectVariableNamed(name, project) {
 	return hsVariable
 }
 
-function getOrAddGameVariableNamed(name, project) {
+function getOrAddGameVariableNamed(project, name) {
 	const hsName = unSnakeCase(name)
 	const maybeExistingVariable = project.variables.find(variable=>variable.name == hsName)
 	if (maybeExistingVariable)

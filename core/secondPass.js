@@ -426,7 +426,7 @@ function createBlockOfClasses(externalCallbacks, options, block, Types, BlockTyp
 	}
 	const blockType = BlockTypes[blockName]
 	if (!blockType)
-		return blockCreationFunctions.createBlockFromUndefinedType(block, Types, BlockTypes, TraitTypes, validScopes)
+		return createBlockFromUndefinedType(block, Types, BlockTypes, TraitTypes, validScopes, blockCreationFunctions.undefinedTypeFunctions, externalCallbacks)
 	if (!allowedBlockClasses.includes(blockType.class.class))
 		externalCallbacks.error(new parser.SyntaxError("Invalid block class", allowedBlockClasses, blockType.class.class, block.location))
 	blockCreationFunctions.setType(result, blockType.type, blockType.description, blockType.class.class)
@@ -487,6 +487,94 @@ function createEventParameterUsing(prototype) {
 	return prototype
 }
 
+function createBlockFromUndefinedType(block, Types, BlockTypes, TraitTypes, validScopes, undefinedTypeFunctions, externalCallbacks) {
+	switch (block.type) {
+	case Types.identifier:
+		const variableDescription = getVariableDescriptionFromPath(block.value, validScopes)
+		if (!variableDescription)
+			externalCallbacks.error(new parser.SyntaxError("Undefined symbol", ["Block", "Variable"], JSON.stringify(block), block.location))
+		const maybeTraits = TraitTypes[variableDescription.name]
+		switch (variableDescription.scope) {
+		case "Original_object":
+			if (maybeTraits) {
+				const trait = maybeTraits["Object"]
+				if (trait)
+					return undefinedTypeFunctions.createOriginalObjectTrait(trait)
+			}
+			const ooHsVariable = undefinedTypeFunctions.getOrAddObjectVariableNamed(variableDescription.name)
+			return {
+				type: 8005, //HSBlockType.OriginalObject
+				variable: ooHsVariable.objectIdString,
+				description: "Variable" // Correct
+			}
+		case "Self":
+			if (maybeTraits) {
+				const trait = maybeTraits["Object"]
+				if (trait)
+					return undefinedTypeFunctions.createSelfTrait(trait)
+			}
+			const hsVariable = undefinedTypeFunctions.getOrAddObjectVariableNamed(variableDescription.name, project)
+			return {
+				type: 8004, //HSBlockType.Self
+				variable: hsVariable.objectIdString,
+				description: "Variable" // Correct
+			}
+		case "Game":
+			if (maybeTraits) {
+				const trait = maybeTraits["Game"]
+				if (trait)
+					return undefinedTypeFunctions.createGameTrait(trait)
+			}
+			const gameHsVariable = undefinedTypeFunctions.getOrAddGameVariableNamed(variableDescription.name)
+			return {
+				type: 8003, //HSBlockType.Game
+				variable: gameHsVariable.objectIdString,
+				description: "Variable", // Correct
+			}
+		case "Local":
+			const name = block.value
+			return undefinedTypeFunctions.createLocalVariableNamed(name)
+		case "Object":
+			if (maybeTraits) {
+				const trait = maybeTraits["Object"]
+				if (trait) {
+					const hsTrait = undefinedTypeFunctions.createObjectTrait(trait)
+					variableDescription.fullScopeObject.whenDefined(hsObject => {
+						undefinedTypeFunctions.setObjectTraitObjectToReferTo(hsTrait, hsObject)
+					})
+					return hsTrait
+				}
+			}
+			const objectHsVariable = undefinedTypeFunctions.getOrAddObjectVariableNamed(variableDescription.name)
+			const objectDefinitionCallback = undefinedTypeFunctions.createObjectVariableReferenceTo(objectHsVariable)
+			variableDescription.fullScopeObject.whenDefined(objectDefinitionCallback)
+			return hsDatum
+		default:
+			externalCallbacks.error(new parser.SyntaxError("Should be impossible: Unknown variable scope", validScopes.map(e=>e.path), variableDescription.scope, block.location))
+		}
+		break
+	case Types.parenthesisBlock:
+		let blockName = block.name.value
+		//Intentionally fall through
+	default:
+		blockName = blockName ?? JSON.stringify(block)
+		externalCallbacks.error(new parser.SyntaxError("Undefined block", Object.getOwnPropertyNames(BlockTypes), blockName, block.location))
+	}
+}
+
+function getVariableDescriptionFromPath(variablePath, validScopes) {
+	const fullVariablePath = variablePath.split('.')
+	if (fullVariablePath.length == 1)
+		return {scope: "Local", name:fullVariablePath[0]}
+	// Determine which scope this refers to
+	for (let i = 0; i < validScopes.length; i++) {
+		const objectPath = validScopes[i].path.split('.')
+		if (arrayStartsWith(fullVariablePath, objectPath))
+			return {scope: validScopes[i].scope, name: fullVariablePath.slice(objectPath.length).join('.'), fullScopeObject: validScopes[i]}
+	}
+	return null
+}
+
 function handleCustomRule(externalCallbacks, customRule, Types, hsObjectOrCustomRule, options, transitionStateIfContainerExists) {
 	if (customRule.value.type != Types.identifier)
 		throw "Should be impossible: Non-identifier custom rules name"
@@ -524,4 +612,14 @@ function handleCustomRule(externalCallbacks, customRule, Types, hsObjectOrCustom
 
 function deepCopy(object) {
 	return JSON.parse(JSON.stringify(object))
+}
+
+function arrayStartsWith(big, small) {
+	if (big.length < small.length)
+		return false
+	for (let i = 0; i < small.length; i++) {
+		if (big[i] != small[i])
+			return false
+	}
+	return true
 }
