@@ -267,16 +267,12 @@ function createBlockCreationFunctionsFor(project, parametersKey) {
 	}
 }
 
-function createOperatorBlockFrom(project, createBlockOfClasses, guard) {
-	if (guard)
-		throw "TODO: Change call to `createOperatorBlockFrom"
+function createOperatorBlockFrom(project, createBlockOfClasses) {
 	const blockCreationFunctions = createBlockCreationFunctionsFor(project, "params")
 	return createBlockOfClasses(["operator","conditionalOperator"], blockCreationFunctions)
 }
 
-function createMethodBlockFrom(project, createBlockOfClasses, guard) {
-	if (guard)
-		throw "TODO: Change call to `createMethodBlockFrom"
+function createMethodBlockFrom(project, createBlockOfClasses) {
 	const blockCreationFunctions = createBlockCreationFunctionsFor(project, "parameters")
 	return createBlockOfClasses(["method", "control", "conditionalControl"], blockCreationFunctions)
 }
