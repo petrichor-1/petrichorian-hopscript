@@ -254,7 +254,7 @@ module.exports.secondPass = (htnCode, options, stageSize, externalCallbacks) => 
 				handleWhenBlock(line.value, Types, parsed, validScopes, options, currentState, stateStack, StateLevels, externalCallbacks)
 				break
 			case Types.comment:
-				if ((currentState().object?.rules?.length || 0) != 0)
+				if (externalCallbacks.rulesCountForObject(currentState().object) != 0)
 					break // Not in the initial before-game-starts ability
 				currentState().beforeGameStartsAbility.blocks.push(externalCallbacks.createHsCommentFrom(line.value))
 				break
