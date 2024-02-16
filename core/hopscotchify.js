@@ -55,7 +55,6 @@ module.exports.hopscotchify = (htnCode, options) => {
 		return elseAbility
 	}
 	function createMethodBlock(createBlockOfClasses, ability) {
-		// const hsBlock = createMethodBlockFrom(line.value, Types, parsed.blockTypes, parsed.binaryOperatorBlockTypes, parsed.traitTypes, validScopes, project)
 		const hsBlock = createMethodBlockFrom(project, createBlockOfClasses)
 		ability.blocks.push(hsBlock)
 		if (hsBlock.type == 123) { //HSBlockType.ability
@@ -273,7 +272,6 @@ function createOperatorBlockFrom(project, createBlockOfClasses, guard) {
 		throw "TODO: Change call to `createOperatorBlockFrom"
 	const blockCreationFunctions = createBlockCreationFunctionsFor(project, "params")
 	return createBlockOfClasses(["operator","conditionalOperator"], blockCreationFunctions)
-	// return createBlockOfClasses(, "params", block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, project)
 }
 
 function createMethodBlockFrom(project, createBlockOfClasses, guard) {
@@ -281,7 +279,6 @@ function createMethodBlockFrom(project, createBlockOfClasses, guard) {
 		throw "TODO: Change call to `createMethodBlockFrom"
 	const blockCreationFunctions = createBlockCreationFunctionsFor(project, "parameters")
 	return createBlockOfClasses(["method", "control", "conditionalControl"], blockCreationFunctions)
-	// return createBlockOfClasses(["method", "control", "conditionalControl"], "parameters", block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, project)
 }
 
 function createCustomBlockReferenceFrom(snakeCaseName) {
