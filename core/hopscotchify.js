@@ -47,43 +47,7 @@ module.exports.hopscotchify = (htnCode, options) => {
 		customBlockDefinitionCallbacks[name] = customBlockDefinitionCallbacks[name] || []
 		customBlockDefinitionCallbacks[name].push(callback)
 	}
-	return secondPass(htnCode, options, project.stageSize, {createHsCommentFrom: createHsCommentFrom, createCustomBlockReferenceFrom: createCustomBlockReferenceFrom, error: (e)=>{throw e},addHsObjectAndBeforeGameStartsAbility: addHsObjectAndBeforeGameStartsAbility, addCustomRuleDefinitionAndReturnParameterly: addCustomRuleDefinitionAndReturnParameterly,createCustomBlockAbilityFromDefinition: createCustomBlockAbilityFromDefinition,createElseAbilityFor: createElseAbilityFor,createMethodBlock: createMethodBlock,createAbilityAsControlScriptOf: createAbilityAsControlScriptOf,createAbilityForRuleFrom: createAbilityForRuleFrom,rulesCountForObject: o=>o.rules.length,hasUndefinedCustomRules: hasUndefinedCustomRules,hasUndefinedCustomBlocks: hasUndefinedCustomBlocks,returnValue: ()=>project,handleCustomRule: handleCustomRule,transformParsed: e=>e,linely:  ()=>{}, isThereAlreadyADefinedCustomRuleNamed: isThereAlreadyADefinedCustomRuleNamed})
-	function createCustomBlockAbilityFromDefinition(definition, Types) {
-		const name = unSnakeCase(definition.value.value)
-		const customBlockAbility = createEmptyAbility()
-		customBlockAbility.parameters = []
-		if ((definition.parameters?.length || 0) > 0) {
-			for (let i = 0; i < definition.parameters.length; i++) {
-				const parameter = definition.parameters[i]
-				const parameterValue = function () {
-					switch (parameter.value.type) {
-						case Types.string:
-						case Types.number:
-							return parameter.value.value
-						default:
-							throw "Should be impossible: Unknown default value for custom block type" + parameter.value.type
-					}
-				} ()
-				if (parameter.label.type != Types.identifier)
-					throw "Should be impossible; INvalid parameter label type in custom block definition"
-				const hsParameter = {
-					type: 57, //constant
-					defaultValue: parameterValue,
-					value: parameterValue,
-					key: unSnakeCase(parameter.label.value)
-				}
-				customBlockAbility.parameters.push(hsParameter)
-			}
-		}
-		project.abilities.push(customBlockAbility)
-		customBlockDefinitionCallbacks[name]?.forEach(callback => {
-			callback(customBlockAbility)
-		})
-		customBlockDefinitionCallbacks[name] = null
-		customBlocks[name] = customBlockAbility
-		customBlockAbility.name = name
-		return customBlockAbility
-	}
+	return secondPass(htnCode, options, project.stageSize, {customBlockAbilityFunctions: makeCustomBlockAbilityFunctions(), createHsCommentFrom: createHsCommentFrom, createCustomBlockReferenceFrom: createCustomBlockReferenceFrom, error: (e)=>{throw e},addHsObjectAndBeforeGameStartsAbility: addHsObjectAndBeforeGameStartsAbility, addCustomRuleDefinitionAndReturnParameterly: addCustomRuleDefinitionAndReturnParameterly,createElseAbilityFor: createElseAbilityFor,createMethodBlock: createMethodBlock,createAbilityAsControlScriptOf: createAbilityAsControlScriptOf,createAbilityForRuleFrom: createAbilityForRuleFrom,rulesCountForObject: o=>o.rules.length,hasUndefinedCustomRules: hasUndefinedCustomRules,hasUndefinedCustomBlocks: hasUndefinedCustomBlocks,returnValue: ()=>project,handleCustomRule: handleCustomRule,transformParsed: e=>e,linely:  ()=>{}, isThereAlreadyADefinedCustomRuleNamed: isThereAlreadyADefinedCustomRuleNamed})
 	function createElseAbilityFor(checkIfElseBlock) {
 		const elseAbility = createEmptyAbility()
 		project.abilities.push(elseAbility)
@@ -204,6 +168,34 @@ module.exports.hopscotchify = (htnCode, options) => {
 			ability.name = hsBlock.description
 		}
 		return ability
+	}
+
+	function makeCustomBlockAbilityFunctions() {
+		return {
+			begin: () => {
+				const customBlockAbility = createEmptyAbility()
+				customBlockAbility.parameters = []
+				return customBlockAbility
+			},
+			addParameter: (customBlockAbility, key, value) => {
+				const hsParameter = {
+					type: 57, //constant
+					defaultValue: value,
+					value: value,
+					key: key
+				}
+				customBlockAbility.parameters.push(hsParameter)
+			},
+			finish: (customBlockAbility, name) => {
+				project.abilities.push(customBlockAbility)
+				customBlockDefinitionCallbacks[name]?.forEach(callback => {
+					callback(customBlockAbility)
+				})
+				customBlockDefinitionCallbacks[name] = null
+				customBlocks[name] = customBlockAbility
+				customBlockAbility.name = name
+			}
+		}
 	}
 }
 

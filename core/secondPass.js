@@ -376,6 +376,30 @@ function addBeforeGameStartsBlockToAbility(externalCallbacks, line, Types, parse
 	externalCallbacks.createMethodBlock(createBlockOfClasses.bind(null,externalCallbacks,options,line.value,Types,parsed.blockTypes,parsed.binaryOperatorBlockTypes,parsed.traitTypes,validScopes), ability)
 }
 
+function createCustomBlockAbilityFromDefinition(definition, externalCallbacks, Types) {
+	const name = unSnakeCase(definition.value.value)
+	const customBlockAbility = externalCallbacks.customBlockAbilityFunctions.begin(name)
+	if ((definition.parameters?.length || 0) > 0) {
+		for (let i = 0; i < definition.parameters.length; i++) {
+			const parameter = definition.parameters[i]
+			const parameterValue = function () {
+				switch (parameter.value.type) {
+					case Types.string:
+					case Types.number:
+						return parameter.value.value
+					default:
+						throw "Should be impossible: Unknown default value for custom block type" + parameter.value.type
+				}
+			} ()
+			if (parameter.label.type != Types.identifier)
+				throw "Should be impossible; INvalid parameter label type in custom block definition"
+			externalCallbacks.customBlockAbilityFunctions.addParameter(customBlockAbility, unSnakeCase(parameter.label.value), parameterValue)
+		}
+	}
+	externalCallbacks.customBlockAbilityFunctions.finish(customBlockAbility, name)
+	return customBlockAbility
+}
+
 function createBlockOfClasses(externalCallbacks, options, block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, allowedBlockClasses, blockCreationFunctions) {
 	const {checkParameterLabels} = options
 	if (block.type == Types.binaryOperatorBlock)
