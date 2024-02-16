@@ -1,8 +1,6 @@
 const { randomUUID } = require('crypto')
 const {secondPass} = require('./secondPass.js')
 const {HSParameterType} = require('./HSParameterType.js')
-const { parenthesisificateBinaryOperatorBlock } = require('./parenthesisificateBinaryOperatorBlock.js')
-const { eventParameterPrototypeForIdentifier } = require('./eventParameterPrototypeForIdentifier.js')
 const parser = require('./htn.js')
 
 const BREAKPOINT_POSITION_KEY = "PETRICHOR_BREAKPOINT_POSITION"
@@ -50,7 +48,7 @@ module.exports.hopscotchify = (htnCode, options) => {
 		customBlockDefinitionCallbacks[name] = customBlockDefinitionCallbacks[name] || []
 		customBlockDefinitionCallbacks[name].push(callback)
 	}
-	return secondPass(htnCode, options, project.stageSize, {error: (e)=>{throw e},addHsObjectAndBeforeGameStartsAbility: addHsObjectAndBeforeGameStartsAbility, addCustomRuleDefinitionAndReturnParameterly: addCustomRuleDefinitionAndReturnParameterly,createCustomBlockAbilityFromDefinition: createCustomBlockAbilityFromDefinition,createElseAbilityFor: createElseAbilityFor,createMethodBlock: createMethodBlock,createAbilityAsControlScriptOf: createAbilityAsControlScriptOf,createAbilityForRuleFrom: createAbilityForRuleFrom,rulesCountForObject: o=>o.rules.length,addBlockToAbility: addBlockToAbility,hasUndefinedCustomRules: hasUndefinedCustomRules,hasUndefinedCustomBlocks: hasUndefinedCustomBlocks,returnValue: ()=>project,handleCustomRule: handleCustomRule,transformParsed: e=>e,linely:  ()=>{}, isThereAlreadyADefinedCustomRuleNamed: isThereAlreadyADefinedCustomRuleNamed})
+	return secondPass(htnCode, options, project.stageSize, {createHsCommentFrom: createHsCommentFrom, createCustomBlockReferenceFrom: createCustomBlockReferenceFrom, error: (e)=>{throw e},addHsObjectAndBeforeGameStartsAbility: addHsObjectAndBeforeGameStartsAbility, addCustomRuleDefinitionAndReturnParameterly: addCustomRuleDefinitionAndReturnParameterly,createCustomBlockAbilityFromDefinition: createCustomBlockAbilityFromDefinition,createElseAbilityFor: createElseAbilityFor,createMethodBlock: createMethodBlock,createAbilityAsControlScriptOf: createAbilityAsControlScriptOf,createAbilityForRuleFrom: createAbilityForRuleFrom,rulesCountForObject: o=>o.rules.length,hasUndefinedCustomRules: hasUndefinedCustomRules,hasUndefinedCustomBlocks: hasUndefinedCustomBlocks,returnValue: ()=>project,handleCustomRule: handleCustomRule,transformParsed: e=>e,linely:  ()=>{}, isThereAlreadyADefinedCustomRuleNamed: isThereAlreadyADefinedCustomRuleNamed})
 	function createCustomBlockAbilityFromDefinition(definition, Types) {
 		const name = unSnakeCase(definition.value.value)
 		const customBlockAbility = createEmptyAbility()
@@ -93,9 +91,10 @@ module.exports.hopscotchify = (htnCode, options) => {
 		checkIfElseBlock.controlFalseScript = { abilityID: elseAbility.abilityID }
 		return elseAbility
 	}
-	function createMethodBlock(line, Types, parsed, validScopes, options, currentState) {
-		const hsBlock = createMethodBlockFrom(line.value, Types, parsed.blockTypes, parsed.binaryOperatorBlockTypes, parsed.traitTypes, validScopes, project, options)
-		currentState().ability.blocks.push(hsBlock)
+	function createMethodBlock(createBlockOfClasses, ability) {
+		// const hsBlock = createMethodBlockFrom(line.value, Types, parsed.blockTypes, parsed.binaryOperatorBlockTypes, parsed.traitTypes, validScopes, project)
+		const hsBlock = createMethodBlockFrom(project, createBlockOfClasses)
+		ability.blocks.push(hsBlock)
 		if (hsBlock.type == 123) { //HSBlockType.ability
 			onDefinitionOfCustomBlockNamed(hsBlock.description, hsAbility => {
 				hsBlock.controlScript.abilityID = hsAbility.abilityID
@@ -141,10 +140,6 @@ module.exports.hopscotchify = (htnCode, options) => {
 		validScopes.find(e => e.path == desiredObjectName).hasBeenDefinedAs(hsObject)
 		return { hsObject, ability }
 	}
-	function addBlockToAbility(line, Types, parsed, validScopes, options, ability) {
-		const hsMethodBlock = createMethodBlockFrom(line.value, Types, parsed.blockTypes, parsed.binaryOperatorBlockTypes, parsed.traitTypes, validScopes, project, options)
-		ability.blocks.push(hsMethodBlock)
-	}
 	function hasUndefinedCustomBlocks() {
 		const undefinedCustomBlockNames = Object.getOwnPropertyNames(customBlockDefinitionCallbacks).filter(e => !!customBlockDefinitionCallbacks[e])
 		const hasUndefinedCustomBlocks = undefinedCustomBlockNames.length > 0
@@ -186,8 +181,8 @@ module.exports.hopscotchify = (htnCode, options) => {
 		}
 	}
 
-	function createAbilityForRuleFrom(whenBlock, Types, parsed, validScopes, options, currentObject) {
-		const hsBlock = createOperatorBlockFrom(whenBlock.value, Types, parsed.blockTypes, parsed.binaryOperatorBlockTypes, parsed.traitTypes, validScopes, project, options)
+	function createAbilityForRuleFrom(createBlockOfClasses, currentObject) {
+		const hsBlock = createOperatorBlockFrom(project,createBlockOfClasses)
 		const rule = createRuleWith(hsBlock)
 		currentObject.rules.push(rule.id)
 		project.rules.push(rule)
@@ -242,112 +237,52 @@ function createEmptyAbility() {
 	}
 }
 
-function createOperatorBlockFrom(block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, project, options) {
-	return createBlockOfClasses(["operator","conditionalOperator"], "params", block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, project, options)
-}
-
-function createMethodBlockFrom(block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, project, options) {
-	return createBlockOfClasses(["method", "control", "conditionalControl"], "parameters", block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, project, options)
-}
-
-function createBlockOfClasses(allowedBlockClasses, parametersKey, block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, project, options) {
-	const {checkParameterLabels} = options
-	if (block.type == Types.binaryOperatorBlock)
-		block = parenthesisificateBinaryOperatorBlock(block, Types, allowedBlockClasses, BinaryOperatorBlockTypes)
-
-	let result = {}
-	result[parametersKey] = []
-	let blockName
-	let blockParameters
-	switch (block.type) {
-	case Types.identifier:
-		blockName = block.value
-		blockParameters = []
-		break
-	case Types.parenthesisBlock:
-		switch (block.name.type) {
-		case Types.identifier:
-			blockName = block.name.value
-			blockParameters = block.parameters
-			break
-		case Types.customAbilityReference:
-			blockName = block.name.value
-			if (blockName.type != Types.identifier)
-				throw new parser.SyntaxError("Unknown block name type", Types.identifier, blockName.type, blockName.location)
-			const newBlock = deepCopy(block)
-			newBlock.value = blockName
-			return createCustomBlockReferenceFrom(newBlock, Types, options.addBreakpointLines)
-		default:
-			throw new parser.SyntaxError("Unknown block name type " + block.name.type, [Types.identifier, Types.customAbilityReference], block.name.type, block.name.location)
-		}
-		break
-	case Types.comment:
-		return createHsCommentFrom(block, options.addBreakpointLines)
-	case Types.binaryOperatorBlock:
-		throw new parser.SyntaxError("Should be impossible: Unconverted binary operator block", [], "", block.location)
-	case Types.customAbilityReference:
-		return createCustomBlockReferenceFrom(block, Types, options.addBreakpointLines)
-	default:
-		throw new parser.SyntaxError("Should be impossible: Unknown block form", [Types.comment, Types.identifier, Types.comment], block.type, block.location)
-	}
-	const blockType = BlockTypes[blockName]
-	if (!blockType)
-		return createBlockFromUndefinedTypeOfClasses(allowedBlockClasses, parametersKey, block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, project, validScopes, options)
-	if (!allowedBlockClasses.includes(blockType.class.class))
-		throw new parser.SyntaxError("Invalid block class", allowedBlockClasses, blockType.class.class, block.location)
-	result.type = blockType.type
-	result.description = blockType.description
-	result.block_class = blockType.class.class
-	for (let i = 0; i < blockType.parameters.length; i++) {
-		const parameterSchema = blockType.parameters[i]
-		if (blockParameters.length <= i)
-			throw "Not enough parameters"
-		const parameterValue = blockParameters[i]
-		if (!parameterValue.pretendLabelIsValidEvenIfItIsnt && checkParameterLabels && !(!parameterSchema.name && !parameterValue.label)) {
-			const parameterLabel = parameterValue.label
-			if (parameterSchema.name && !parameterLabel)
-				throw new parser.SyntaxError("Missing parameter label", parameterSchema.name, "", parameterValue.location)
-			if (!parameterSchema.name && parameterLabel)
-				throw new parser.SyntaxError("Extra parameter label", "", parameterLabel.value, parameterLabel.location)
-			if (parameterLabel.type != Types.identifier)
-				throw "Unknown parameter label type"
-			if (parameterLabel.value != parameterSchema.name)
-				throw new parser.SyntaxError("Incorrect parameter label", parameterSchema.name, parameterLabel.value, parameterLabel.location)
-		}
-		const hsParameter = {
-			defaultValue: parameterSchema.defaultValue,
-			key: parameterSchema.key,
-			type: parameterSchema.type
-		}
-		if (parameterValue.type != Types.parameterValue)
-			throw "Invalid parameter value type" + parameterValue.type
-		switch (parameterValue.value.type) {
-		case Types.number:
-		case Types.string:
-			hsParameter.value = parameterValue.value.value
-			break
-		case Types.identifier:
-			if (hsParameter.type == HSParameterType.HSObject) {
-				const eventParameterPrototype = eventParameterPrototypeForIdentifier(parameterValue.value, validScopes)
-				if (!eventParameterPrototype)
-					throw new parser.SyntaxError("Cannot make eventParameter from this", ["Screen", "Self"], parameterValue.value.value, parameterValue.location)
-				const hsEventParameter = createEventParameterUsing(eventParameterPrototype)
-				hsParameter.variable = hsEventParameter.id
-				project.eventParameters.push(hsEventParameter)
-				break
+function createBlockCreationFunctionsFor(project, parametersKey) {
+	return {
+		begin: (parametersKey => {
+			const result = {}
+			result[parametersKey] = []
+			return result
+		}).bind(null,parametersKey),
+		setType: (result, hsBlockType, description, blockClass) => {
+			result.type = hsBlockType
+			result.description = description
+			result.block_class = blockClass
+		},
+		createParameter: (defaultValue, key, type) => {
+			return {
+				defaultValue: defaultValue,
+				key: key,
+				type: type
 			}
-		case Types.binaryOperatorBlock:
-		case Types.parenthesisBlock:
-			hsParameter.datum = createOperatorBlockFrom(parameterValue.value, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, project, options)
-			break
-		default:
-			throw new parser.SyntaxError("Should be impossible: Unknown parameter value type", [Types.number, Types.string, Types.identifier, Types.binaryOperatorBlock, Types.parenthesisBlock], parameterValue.value.type, parameterValue.location)
-		}
-		result[parametersKey].push(hsParameter)
+		},
+		setParameterValue: (hsParameter, value) => {
+			hsParameter.value = value
+		},
+		isObjectParameterType: (hsParameter => hsParameter.type == HSParameterType.HSObject),
+		setParameterVariable: ((hsParameter, toId) => hsParameter.variable = toId),
+		addEventParameter: ((project, hsEventParameter) => project.eventParameters.push(hsEventParameter)).bind(null, project),
+		setParameterDatum: ((hsParameter, innerBlock) => hsParameter.datum = innerBlock),
+		addParameter: ((parametersKey, result, hsParameter) => result[parametersKey].push(hsParameter)).bind(null, parametersKey),
+		createBlockFromUndefinedType: createBlockFromUndefinedType.bind(null, project),
+		createOperatorBlockUsing: createOperatorBlockFrom.bind(null,project)
 	}
-	if (options.addBreakpointLines)
-		result[BREAKPOINT_POSITION_KEY] = block.location.start
-	return result
+}
+
+function createOperatorBlockFrom(project, createBlockOfClasses, guard) {
+	if (guard)
+		throw "TODO: Change call to `createOperatorBlockFrom"
+	const blockCreationFunctions = createBlockCreationFunctionsFor(project, "params")
+	return createBlockOfClasses(["operator","conditionalOperator"], blockCreationFunctions)
+	// return createBlockOfClasses(, "params", block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, project)
+}
+
+function createMethodBlockFrom(project, createBlockOfClasses, guard) {
+	if (guard)
+		throw "TODO: Change call to `createMethodBlockFrom"
+	const blockCreationFunctions = createBlockCreationFunctionsFor(project, "parameters")
+	return createBlockOfClasses(["method", "control", "conditionalControl"], blockCreationFunctions)
+	// return createBlockOfClasses(["method", "control", "conditionalControl"], "parameters", block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, project)
 }
 
 function createCustomBlockReferenceFrom(block, Types, addBreakpointLines) {
@@ -367,22 +302,7 @@ function createCustomBlockReferenceFrom(block, Types, addBreakpointLines) {
 	return hsBlock
 }
 
-function createEventParameterUsing(prototype) {
-	// MUTATES PROTOTYPE
-	prototype.id = randomUUID()
-	return prototype
-}
-
-function findIndicesInArray(array, predicate) {
-	let result = []
-	for (let i = 0; i < array.length; i++) {
-		if (predicate(array[i]))
-			result.push(i)
-	}
-	return result
-}
-
-function createBlockFromUndefinedTypeOfClasses(allowedBlockClasses, parametersKey, block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, project, validScopes, options) {
+function createBlockFromUndefinedType(project, block, Types, BlockTypes, TraitTypes, validScopes) {
 	switch (block.type) {
 	case Types.identifier:
 		const variableDescription = getVariableDescriptionFromPath(block.value, validScopes)

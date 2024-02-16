@@ -1,4 +1,7 @@
+const { randomUUID } = require('crypto')
 const parser = require("./htn.js")
+const { parenthesisificateBinaryOperatorBlock } = require('./parenthesisificateBinaryOperatorBlock.js')
+const { eventParameterPrototypeForIdentifier } = require('./eventParameterPrototypeForIdentifier.js')
 
 module.exports.secondPass = (htnCode, options, stageSize, externalCallbacks) => {
 	const parsed = externalCallbacks.transformParsed(parser.parse(htnCode))
@@ -282,7 +285,7 @@ module.exports.secondPass = (htnCode, options, stageSize, externalCallbacks) => 
 				if (externalCallbacks.rulesCountForObject(currentState().object) != 0)
 					externalCallbacks.error(new parser.SyntaxError("Cannot include blocks after the first rule", [Types.whenBlock, Types.parenthesisBlock, Types.comment], line.value.type, line.location))
 				const ability = currentState().beforeGameStartsAbility
-				externalCallbacks.addBlockToAbility(line, Types, parsed, validScopes, options, ability)
+				addBeforeGameStartsBlockToAbility(externalCallbacks, line, Types, parsed, validScopes, options, ability)
 				break
 			case Types.customRule:
 				const customRule = line.value
@@ -314,7 +317,7 @@ module.exports.secondPass = (htnCode, options, stageSize, externalCallbacks) => 
 				})
 				break
 			}
-			const hsBlock = externalCallbacks.createMethodBlock(line, Types, parsed, validScopes, options, currentState)
+			const hsBlock = externalCallbacks.createMethodBlock(createBlockOfClasses.bind(null,externalCallbacks,options,line.value,Types,parsed.blockTypes,parsed.binaryOperatorBlockTypes,parsed.traitTypes,validScopes), currentState().ability)
 			if (["control", "conditionalControl"].includes(hsBlock.block_class)) {
 				if (!line.value.doesHaveContainer) {
 					if (line.value.type == Types.customAbilityReference || line.value.name?.type == Types.customAbilityReference)
@@ -361,11 +364,116 @@ function handleWhenBlock(whenBlock, Types, parsed, validScopes, options, current
 	if (!whenBlock.doesHaveContainer)
 		externalCallbacks.error(new parser.SyntaxError("Empty rule", ":", "", whenBlock.location))
 	const currentObject = currentState().object
-	const ability = externalCallbacks.createAbilityForRuleFrom(whenBlock, Types, parsed, validScopes, options, currentObject)
+	const ability = externalCallbacks.createAbilityForRuleFrom(createBlockOfClasses.bind(null,externalCallbacks,options,whenBlock.value,Types,parsed.blockTypes,parsed.binaryOperatorBlockTypes,parsed.traitTypes,validScopes), currentObject)
 	stateStack.push({
 		level: StateLevels.inAbility,
 		ability: ability
 	})
+}
+
+function addBeforeGameStartsBlockToAbility(externalCallbacks, line, Types, parsed, validScopes, options, ability) {
+	const hsMethodBlock = externalCallbacks.createMethodBlock(createBlockOfClasses.bind(null,externalCallbacks,options,line.value,Types,parsed.blockTypes,parsed.binaryOperatorBlockTypes,parsed.traitTypes,validScopes), ability)
+}
+
+function createBlockOfClasses(externalCallbacks, options, block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, allowedBlockClasses, blockCreationFunctions) {
+	const {checkParameterLabels} = options
+	if (block.type == Types.binaryOperatorBlock)
+		block = parenthesisificateBinaryOperatorBlock(block, Types, allowedBlockClasses, BinaryOperatorBlockTypes)
+	const result = blockCreationFunctions.begin()
+	let blockName
+	let blockParameters
+	switch (block.type) {
+	case Types.identifier:
+		blockName = block.value
+		blockParameters = []
+		break
+	case Types.parenthesisBlock:
+		switch (block.name.type) {
+		case Types.identifier:
+			blockName = block.name.value
+			blockParameters = block.parameters
+			break
+		case Types.customAbilityReference:
+			blockName = block.name.value
+			if (blockName.type != Types.identifier)
+				externalCallbacks.error(new parser.SyntaxError("Unknown block name type", Types.identifier, blockName.type, blockName.location))
+			const newBlock = deepCopy(block)
+			newBlock.value = blockName
+			return externalCallbacks.createCustomBlockReferenceFrom(newBlock, Types, options.addBreakpointLines)
+		default:
+			externalCallbacks.error(new parser.SyntaxError("Unknown block name type " + block.name.type, [Types.identifier, Types.customAbilityReference], block.name.type, block.name.location))
+		}
+		break
+	case Types.comment:
+		return externalCallbacks.createHsCommentFrom(block, options.addBreakpointLines)
+	case Types.binaryOperatorBlock:
+		externalCallbacks.error(new parser.SyntaxError("Should be impossible: Unconverted binary operator block", [], "", block.location))
+	case Types.customAbilityReference:
+		return externalCallbacks.createCustomBlockReferenceFrom(block, Types, options.addBreakpointLines)
+	default:
+		externalCallbacks.error(new parser.SyntaxError("Should be impossible: Unknown block form", [Types.comment, Types.identifier, Types.comment], block.type, block.location))
+	}
+	const blockType = BlockTypes[blockName]
+	if (!blockType)
+		return blockCreationFunctions.createBlockFromUndefinedType(block, Types, BlockTypes, TraitTypes, validScopes)
+	if (!allowedBlockClasses.includes(blockType.class.class))
+		externalCallbacks.error(new parser.SyntaxError("Invalid block class", allowedBlockClasses, blockType.class.class, block.location))
+	blockCreationFunctions.setType(result, blockType.type, blockType.description, blockType.class.class)
+	for (let i = 0; i < blockType.parameters.length; i++) {
+		const parameterSchema = blockType.parameters[i]
+		if (blockParameters.length <= i)
+			externalCallbacks.error(new parser.SyntaxError("Not enough parameters", blockType.parameters.length, blockParameters.length, block.location))
+		const parameterValue = blockParameters[i]
+		if (!parameterValue.pretendLabelIsValidEvenIfItIsnt && checkParameterLabels && !(!parameterSchema.name && !parameterValue.label)) {
+			const parameterLabel = parameterValue.label
+			if (parameterSchema.name && !parameterLabel)
+				externalCallbacks.error(new parser.SyntaxError("Missing parameter label", parameterSchema.name, "", parameterValue.location))
+			if (!parameterSchema.name && parameterLabel)
+				externalCallbacks.error(new parser.SyntaxError("Extra parameter label", "", parameterLabel.value, parameterLabel.location))
+			if (parameterLabel.type != Types.identifier)
+				externalCallbacks.error("Unknown parameter label type")
+			if (parameterLabel.value != parameterSchema.name)
+				externalCallbacks.error(new parser.SyntaxError("Incorrect parameter label", parameterSchema.name, parameterLabel.value, parameterLabel.location))
+		}
+		const hsParameter = blockCreationFunctions.createParameter(parameterSchema.defaultValue, parameterSchema.key, parameterSchema.type)
+		if (parameterValue.type != Types.parameterValue)
+			externalCallbacks.error("Invalid parameter value type" + parameterValue.type)
+		switch (parameterValue.value.type) {
+		case Types.number:
+		case Types.string:
+			blockCreationFunctions.setParameterValue(hsParameter, parameterValue.value.value)
+			break
+		case Types.identifier:
+			if (blockCreationFunctions.isObjectParameterType(hsParameter)) {
+				const eventParameterPrototype = eventParameterPrototypeForIdentifier(parameterValue.value, validScopes)
+				if (!eventParameterPrototype)
+					externalCallbacks.error(new parser.SyntaxError("Cannot make eventParameter from this", ["Screen", "Self"], parameterValue.value.value, parameterValue.location))
+				const hsEventParameter = createEventParameterUsing(eventParameterPrototype)
+				blockCreationFunctions.setParameterVariable(hsParameter, hsEventParameter.id)
+				blockCreationFunctions.addEventParameter(hsEventParameter)
+				break
+			}
+			// Intentionally fall through
+		case Types.binaryOperatorBlock:
+		case Types.parenthesisBlock:
+			const operatorBlockCreator = createBlockOfClasses.bind(null,externalCallbacks,options,parameterValue.value,Types,BlockTypes,BinaryOperatorBlockTypes,TraitTypes,validScopes)
+			const innerBlock = blockCreationFunctions.createOperatorBlockUsing(operatorBlockCreator)
+			blockCreationFunctions.setParameterDatum(hsParameter, innerBlock)
+			break
+		default:
+			externalCallbacks.error(new parser.SyntaxError("Should be impossible: Unknown parameter value type", [Types.number, Types.string, Types.identifier, Types.binaryOperatorBlock, Types.parenthesisBlock], parameterValue.value.type, parameterValue.location))
+		}
+		blockCreationFunctions.addParameter(result, hsParameter)
+	}
+	if (options.addBreakpointLines)
+		result[BREAKPOINT_POSITION_KEY] = block.location.start
+	return result
+}
+
+function createEventParameterUsing(prototype) {
+	// MUTATES PROTOTYPE
+	prototype.id = randomUUID()
+	return prototype
 }
 
 function handleCustomRule(externalCallbacks, customRule, Types, hsObjectOrCustomRule, options, transitionStateIfContainerExists) {
