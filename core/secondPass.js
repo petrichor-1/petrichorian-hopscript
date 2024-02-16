@@ -400,7 +400,12 @@ function createBlockOfClasses(externalCallbacks, options, block, Types, BlockTyp
 				externalCallbacks.error(new parser.SyntaxError("Unknown block name type", Types.identifier, blockName.type, blockName.location))
 			const newBlock = deepCopy(block)
 			newBlock.value = blockName
-			return externalCallbacks.createCustomBlockReferenceFrom(newBlock, Types, options.addBreakpointLines)
+			if (newBlock.value.type != Types.identifier)
+				throw new parser.SyntaxError("Should be impossible: Unknown custom block name form", Types.identifier, newBlock.value.type, newBlock.value.location)
+			const hsBlock = externalCallbacks.createCustomBlockReferenceFrom(newBlock.value.value)
+			if (options.addBreakpointLines)
+				hsBlock[BREAKPOINT_POSITION_KEY] = newBlock.location.start
+			return hsBlock
 		default:
 			externalCallbacks.error(new parser.SyntaxError("Unknown block name type " + block.name.type, [Types.identifier, Types.customAbilityReference], block.name.type, block.name.location))
 		}
@@ -410,7 +415,12 @@ function createBlockOfClasses(externalCallbacks, options, block, Types, BlockTyp
 	case Types.binaryOperatorBlock:
 		externalCallbacks.error(new parser.SyntaxError("Should be impossible: Unconverted binary operator block", [], "", block.location))
 	case Types.customAbilityReference:
-		return externalCallbacks.createCustomBlockReferenceFrom(block, Types, options.addBreakpointLines)
+		if (block.value.type != Types.identifier)
+			throw new parser.SyntaxError("Should be impossible: Unknown custom block name form", Types.identifier, block.value.type, block.value.location)
+		const hsBlock = externalCallbacks.createCustomBlockReferenceFrom(block.value.value)
+		if (options.addBreakpointLines)
+			hsBlock[BREAKPOINT_POSITION_KEY] = block.location.start
+		return hsBlock
 	default:
 		externalCallbacks.error(new parser.SyntaxError("Should be impossible: Unknown block form", [Types.comment, Types.identifier, Types.comment], block.type, block.location))
 	}

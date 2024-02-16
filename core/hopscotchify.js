@@ -285,10 +285,8 @@ function createMethodBlockFrom(project, createBlockOfClasses, guard) {
 	// return createBlockOfClasses(["method", "control", "conditionalControl"], "parameters", block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, project)
 }
 
-function createCustomBlockReferenceFrom(block, Types, addBreakpointLines) {
-	if (block.value.type != Types.identifier)
-		throw new parser.SyntaxError("Should be impossible: Unknown custom block name form", Types.identifier, block.value.type, block.value.location)
-	const name = unSnakeCase(block.value.value)
+function createCustomBlockReferenceFrom(snakeCaseName) {
+	const name = unSnakeCase(snakeCaseName)
 	const hsBlock = {
 		block_class: "control",
 		type: 123, //HSBlockType.Ability
@@ -297,8 +295,6 @@ function createCustomBlockReferenceFrom(block, Types, addBreakpointLines) {
 			abilityID: "PETRICHOR__TEMP"
 		}
 	}
-	if (addBreakpointLines)
-		hsBlock[BREAKPOINT_POSITION_KEY] = block.location.start
 	return hsBlock
 }
 
