@@ -333,7 +333,7 @@ module.exports.secondPass = (htnCode, options, stageSize, externalCallbacks) => 
 						hsBlock : null
 				})
 			} else if (line.value.doesHaveContainer) {
-				externalCallbacks.error("Container on non-control block")
+				externalCallbacks.error(new parser.SyntaxError("Container on non-control block", "", ":", line.value.location))
 			}
 			break
 		default:
@@ -352,7 +352,7 @@ module.exports.secondPass = (htnCode, options, stageSize, externalCallbacks) => 
 			externalCallbacks.error(new parser.SyntaxError("Top level custom blocks must be definitions", ":", "", definition.location))
 		if (!definition.value.type == Types.identifier)
 			externalCallbacks.error(new parser.SyntaxError("Should be impossible: Unknown custom block name type", Types.identifier, definition.value.type, definition.value.location))
-		const customBlockAbility = createCustomBlockAbilityFromDefinition(definition, Types)
+		const customBlockAbility = createCustomBlockAbilityFromDefinition(definition, externalCallbacks, Types)
 		stateStack.push({
 			level: StateLevels.inAbility,
 			ability: customBlockAbility,
@@ -375,7 +375,11 @@ function handleWhenBlock(whenBlock, Types, parsed, validScopes, options, current
 function addBeforeGameStartsBlockToAbility(externalCallbacks, line, Types, parsed, validScopes, options, ability) {
 	externalCallbacks.createMethodBlock(createBlockOfClasses.bind(null,externalCallbacks,options,line.value,Types,parsed.blockTypes,parsed.binaryOperatorBlockTypes,parsed.traitTypes,validScopes), ability)
 }
-
+function unSnakeCase(snakeCaseString) {
+	const words = snakeCaseString.split("_")
+		.map(e=>e[0].toUpperCase()+e.substring(1,e.length))
+	return words.join(" ")
+}
 function createCustomBlockAbilityFromDefinition(definition, externalCallbacks, Types) {
 	const name = unSnakeCase(definition.value.value)
 	const customBlockAbility = externalCallbacks.customBlockAbilityFunctions.begin(name)
@@ -537,7 +541,7 @@ function createBlockFromUndefinedType(block, Types, BlockTypes, TraitTypes, vali
 				if (trait)
 					return undefinedTypeFunctions.createSelfTrait(trait)
 			}
-			const hsVariable = undefinedTypeFunctions.getOrAddObjectVariableNamed(variableDescription.name, project)
+			const hsVariable = undefinedTypeFunctions.getOrAddObjectVariableNamed(variableDescription.name)
 			return {
 				type: 8004, //HSBlockType.Self
 				variable: hsVariable.objectIdString,
@@ -570,7 +574,7 @@ function createBlockFromUndefinedType(block, Types, BlockTypes, TraitTypes, vali
 				}
 			}
 			const objectHsVariable = undefinedTypeFunctions.getOrAddObjectVariableNamed(variableDescription.name)
-			const objectDefinitionCallback = undefinedTypeFunctions.createObjectVariableReferenceTo(objectHsVariable)
+			const {objectDefinitionCallback, hsDatum} = undefinedTypeFunctions.createObjectVariableReferenceTo(objectHsVariable)
 			variableDescription.fullScopeObject.whenDefined(objectDefinitionCallback)
 			return hsDatum
 		default:

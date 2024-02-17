@@ -1,133 +1,187 @@
-const {parenthesisificateBinaryOperatorBlock} = require("../../../../core/parenthesisificateBinaryOperatorBlock.js")
-const { eventParameterPrototypeForIdentifier } = require('../../../../core/eventParameterPrototypeForIdentifier.js')
 const {HSParameterType} = require("../../../../core/HSParameterType.js")
-
-export function addHsObjectAndBeforeGameStartsAbility(objectType: any, desiredObjectName: any, objectAttributes: any, validScopes: any): any {
-	return {hsObject: {block_class: objectType.class}, ability: [objectType,desiredObjectName]}
+let customRules: any = {}
+let customRuleDefinitionCallbacks: any = {}
+function onDefinitionOfCustomRuleNamed(name: string, callback: (hsCustomRule: HSCustomRule) => void) {
+	if (customRules[name])
+		return callback(customRules[name])
+	customRuleDefinitionCallbacks[name] = customRuleDefinitionCallbacks[name] || []
+	customRuleDefinitionCallbacks[name].push(callback)
 }
 
-export function createMethodBlock(line: any, Types: any, parsed: any, validScopes: any, options: any, currentState: any): any {
-	const hsBlock = createMethodBlockFrom(line.value, Types, parsed.blockTypes, parsed.binaryOperatorBlockTypes, parsed.traitTypes, validScopes, null, options)
+let customBlocks: any = {}
+let customBlockDefinitionCallbacks: any = {}
+
+export function resetSecondPassFunctions() {
+	customBlocks = {}
+	customRules = {}
+}
+function nop(){}
+function returnEmptyObject(){return {}}
+const dummyObject = () => {return {hasRules: false}}, dummyAbility = returnEmptyObject, dummyCustomRule = returnEmptyObject, dummyParameter = returnEmptyObject, dummyVariable = returnEmptyObject, dummyTrait = returnEmptyObject
+export const customBlockAbilityFunctions = {
+	begin: () => {
+		return {}
+	},
+	addParameter: nop,
+	finish: nop /*(customBlockAbility: any, name: string) => {
+		customBlockDefinitionCallbacks[name]?.forEach(callback => {
+			callback(customBlockAbility)
+		})
+		customBlockDefinitionCallbacks[name] = null
+		customBlocks[name] = true
+	}*/
+}
+
+export const createHsCommentFrom = returnEmptyObject
+
+export const createCustomBlockReferenceFrom = returnEmptyObject
+
+export function addHsObjectAndBeforeGameStartsAbility(objectType: any, desiredObjectName: string, objectAttributes: any, validScopes: any[]) {
+	validScopes.find(e=>e.path==desiredObjectName).hasBeenDefinedAs({})
+	return {
+		hsObject: dummyObject(),
+		ability: dummyAbility()
+	}
+}
+
+export function addCustomRuleDefinitionAndReturnParameterly(name: string): {hsCustomRule: HSCustomRule, beforeGameStartsAbility: any, parameterly: (key: string, value: string) => void} {
+	const hsCustomRule: HSCustomRule = {
+		parameters: []
+	}
+	customRuleDefinitionCallbacks[name]?.forEach((callback: (hsCustomRule: HSCustomRule) => void) => callback(hsCustomRule))
+	customRuleDefinitionCallbacks[name] = null
+	customRules[name] = true
+	return {
+		hsCustomRule,
+		beforeGameStartsAbility: dummyAbility(),
+		parameterly: (key, value) => hsCustomRule.parameters.push(key)
+	}
+}
+
+export const createElseAbilityFor = dummyAbility
+
+interface BlockCreationFunctions {
+	begin: () => any
+	setType: (result: any, hsBlockType: number, description: string, blockClass: string) => void
+	createParameter: (defaultValue: string, key: string, type: number) => any
+	setParameterValue: (hsParameter: any, value: string) => void
+	isObjectParameterType: (hsParameter: any) => boolean
+	setParameterVariable: (hsParameter: any, toId: string) => void
+	addEventParameter: (hsEventParameter: any) => void
+	setParameterDatum: (hsParameter: any, innerBlock: any) => void
+	addParameter: (result: any, hsParameter: any) => void
+	createOperatorBlockUsing: (createBlockOfClasses: (allowedClasses: string[], blockCreationFunctions: BlockCreationFunctions) => void) => any
+	undefinedTypeFunctions: {
+		getOrAddObjectVariableNamed: (name: string) => any
+		createSelfTrait: (trait: any) => any
+		createGameTrait: (trait: any) => any
+		createOriginalObjectTrait: (trait: any) => any
+		createObjectTrait: (trait: any) => any
+		getOrAddGameVariableNamed: (name: string) => any
+		createLocalVariableNamed: (name: string) => any
+		setObjectTraitObjectToReferTo: (hsTrait: any, hsObject: any) => void
+		createObjectVariableReferenceTo: (hsVariable: any) => {objectDefinitionCallback: (hsObject: any) => void, hsDatum: any}
+	}
+}
+function createBlockCreationFunctions(): BlockCreationFunctions {
+	return {
+		begin: () => {
+			return {}
+		},
+		setType: (result: any, hsBlockType: any, description: string, blockClass: string) => {
+			result.type = hsBlockType
+			result.description = description
+			result.block_class = blockClass
+		},
+		createParameter(defaultValue, key, type) {
+			const parameter = dummyParameter() as any
+			parameter.isObjectParameterType = type == HSParameterType.HSObject
+		},
+		setParameterValue: nop,
+		setParameterDatum: nop,
+		isObjectParameterType(hsParameter) {
+			if (!hsParameter)
+				return false
+			return hsParameter.isObjectParameterType
+		},
+		setParameterVariable: nop,
+		addEventParameter: nop,
+		addParameter: nop,
+		createOperatorBlockUsing: createOperatorBlockUsing,
+		undefinedTypeFunctions: {
+			getOrAddGameVariableNamed: dummyVariable,
+			getOrAddObjectVariableNamed: dummyVariable,
+			createGameTrait: dummyTrait,
+			createLocalVariableNamed: dummyVariable,
+			createObjectTrait: dummyTrait,
+			createObjectVariableReferenceTo: (()=>{return{objectDefinitionCallback:()=>{}}}) as any,
+			createOriginalObjectTrait: dummyTrait,
+			createSelfTrait: dummyTrait,
+			setObjectTraitObjectToReferTo: nop
+		}
+	}
+}
+export function createMethodBlock(createBlockOfClasses: (allowedClasses: string[], blockCreationFunctions: BlockCreationFunctions) => void, ability: any) {
+	const hsBlock = createMethodBlockUsing(createBlockOfClasses)
 	return hsBlock
 }
-let customRules: any = {}
-let error: any
-export function resetSecondPassFunctions(newError: any) {
-	customRules = {}
-	error = newError
-}
-export function isThereAlreadyADefinedCustomRuleNamed(nameAsString: string): boolean {
-	return !!customRules[nameAsString]
-}
-export function addCustomRuleDefinitionAndReturnParameterly(nameAsString: any): any {
-	customRules[nameAsString] = true
-	return {
-		parameterly: () => {},
-		hsCustomRule: {},
-		beforeGameStartsAbility: {}
+
+export function createAbilityAsControlScriptOf(hsBlock: any) {
+	const ability = dummyAbility()
+	if (hsBlock.type == 123) { //HSBlockType.Ability
+		// customBlockDefinitionCallbacks[hsBlock.description]?.forEach(callback => {
+		// 	callback(ability)
+		// })
+		// customBlockDefinitionCallbacks[hsBlock.description] = null
+		// customBlocks[hsBlock.description] = ability
+		// ability.name = hsBlock.description
 	}
+	return ability
 }
 
-export function handleCustomRule(nameAsString: string, hsObjectOrCustomRule: any, hasContainer: boolean, callbackForWhenRuleIsDefined: (parameterCount: number, getExpectedNameForParameter: (i: number) => string, addNewParameter: (i: number, value: number) => void) => void) {
-	//FIXME: Doesn't ever call callbackForWhenRuleIsDefined, this is needed to validate argument labels.
+export function createAbilityForRuleFrom(createBlockOfClasses: (allowedClasses: string[], blockCreationFunctions: BlockCreationFunctions) => void, currentObject: any) {
+	createOperatorBlockUsing(createBlockOfClasses)
+	return dummyAbility()
+}
+
+export function rulesCountForObject(object: any) {
+	return object.hasRules ? Infinity : 0
+}
+
+export function hasUndefinedCustomRules() {
+	const undefinedCustomRuleNames = Object.getOwnPropertyNames(customRuleDefinitionCallbacks).filter(e => !!customRuleDefinitionCallbacks[e])
+	const hasUndefinedCustomRules = undefinedCustomRuleNames.length > 0
+	return hasUndefinedCustomRules
+}
+
+export function hasUndefinedCustomBlocks() {
+	const undefinedCustomBlockNames = Object.getOwnPropertyNames(customBlockDefinitionCallbacks).filter(e => !!customBlockDefinitionCallbacks[e])
+	const hasUndefinedCustomBlocks = undefinedCustomBlockNames.length > 0
+	return hasUndefinedCustomBlocks
+}
+
+export const returnValue = (e:any) => e
+
+export function handleCustomRule(name: string, hsObjectOrCustomRule: any, hasContainer: boolean, callbackForWhenRuleIsDefined: (hsParameterCount: number, hsKeyForParameter: (index: number) => string, addParameter: (index: number, value: string) => void) => void): {hsCustomRule: any, beforeGameStartsAbility: any} {
+	onDefinitionOfCustomRuleNamed(name, (hsCustomRule: HSCustomRule) => {
+		callbackForWhenRuleIsDefined(hsCustomRule.parameters.length, (i => hsCustomRule.parameters[i]), nop)
+	})
 	if (!hasContainer)
-		return {}
-	addCustomRuleDefinitionAndReturnParameterly(nameAsString)
-	return {}
+		return {hsCustomRule: null, beforeGameStartsAbility: null}
+	return addCustomRuleDefinitionAndReturnParameterly(name)
 }
 
-export function createAbilityForRuleFrom(whenBlock: any, Types: any, parsed: any, validScopes: any, options: any, currentObject: any): any {
-	createOperatorBlockFrom(whenBlock.value, Types, parsed.blockTypes, parsed.binaryOperatorBlockTypes, parsed.traitTypes, validScopes, null, options)
-	currentObject.hasRules = true
-	return {}
+export function isThereAlreadyADefinedCustomRuleNamed(name: string) {
+	return !!customRules[name]
 }
 
-function createOperatorBlockFrom(block: any, Types: any, BlockTypes: any, BinaryOperatorBlockTypes: any, TraitTypes: any, validScopes: any, project: any, options: any): any {
-	return createBlockOfClasses(["operator","conditionalOperator"], "params", block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, project, options)
+interface HSCustomRule {
+	parameters: string[]
+}
+function createMethodBlockUsing(createBlockOfClasses: (allowedClasses: string[], blockCreationFunctions: BlockCreationFunctions) => void) {
+	return createBlockOfClasses(["method", "control", "conditionalControl"], createBlockCreationFunctions())
 }
 
-function createMethodBlockFrom(block: any, Types: any, BlockTypes: any, BinaryOperatorBlockTypes: any, TraitTypes: any, validScopes: any, project: any, options: any): any {
-	return createBlockOfClasses(["method", "control", "conditionalControl"], "parameters", block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, project, options)
-}
-
-function createBlockOfClasses(allowedBlockClasses: string | any[], parametersKey: string, block: { type: any; value: any; name: { type: string; value: any; location: any }; parameters: any; location: any }, Types: { binaryOperatorBlock: any; identifier: any; parenthesisBlock: any; customAbilityReference: any; comment: any; parameterValue: any; number: any; string: any }, BlockTypes: { [x: string]: any }, BinaryOperatorBlockTypes: any, TraitTypes: any, validScopes: any, project: { eventParameters: any[] }, options: { checkParameterLabels: any }) {
-	const {checkParameterLabels} = options
-	if (block.type == Types.binaryOperatorBlock)
-		block = parenthesisificateBinaryOperatorBlock(block, Types, allowedBlockClasses, BinaryOperatorBlockTypes)
-	let blockName
-	let blockParameters
-	switch (block.type) {
-	case Types.identifier:
-		blockName = block.value
-		blockParameters = []
-		break
-	case Types.parenthesisBlock:
-		switch (block.name.type) {
-		case Types.identifier:
-			blockName = block.name.value
-			blockParameters = block.parameters
-			break
-		case Types.customAbilityReference:
-			blockName = block.name.value
-			if (blockName.type != Types.identifier)
-				error({message:"Unknown block name type", expected:Types.identifier, found:blockName.type, location:blockName.location})
-			return {block_class: "control"}
-		default:
-			error({message:"Unknown block name type " + block.name.type, expected:[Types.identifier, Types.customAbilityReference], found:block.name.type, location:block.name.location})
-		}
-		break
-	case Types.comment:
-		return {block_class: "method"}
-	case Types.binaryOperatorBlock:
-		error({message:"Should be impossible: Unconverted binary operator block", expected:[],found: "", location:block.location})
-	case Types.customAbilityReference:
-		return {block_class: "control"}
-	default:
-		error({message:"Should be impossible: Unknown block form", expected:[Types.comment, Types.identifier, Types.comment], found:block.type, location:block.location})
-	}
-	const blockType = BlockTypes[blockName]
-	if (!blockType)
-		return null//createBlockFromUndefinedTypeOfClasses(allowedBlockClasses, parametersKey, block, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, project, validScopes, options)
-	if (!allowedBlockClasses.includes(blockType.class.class))
-		error({message:"Invalid block class", expected:allowedBlockClasses, found:blockType.class.class, location:block.location})
-	const result = {block_class: blockType.class.class, type: blockType.type}
-	for (let i = 0; i < blockType.parameters.length; i++) {
-		const parameterSchema = blockType.parameters[i]
-		if (blockParameters.length <= i)
-			error({message: "Not enough parameters", expected:blockType.parameters.length, found:blockParameters.length, location:block.location})
-		const parameterValue = blockParameters[i]
-		if (!parameterValue.pretendLabelIsValidEvenIfItIsnt && checkParameterLabels && !(!parameterSchema.name && !parameterValue.label)) {
-			const parameterLabel = parameterValue.label
-			if (parameterSchema.name && !parameterLabel)
-				error({message:"Missing parameter label", expected:parameterSchema.name, found:"", location:parameterValue.location})
-			if (!parameterSchema.name && parameterLabel)
-				error({message:"Extra parameter label", expected:"", found:parameterLabel.value, location:parameterLabel.location})
-			if (parameterLabel.type != Types.identifier)
-				error("Should be impossible: Unknown parameter label type")
-			if (parameterLabel.value != parameterSchema.name)
-				error({message:"Incorrect parameter label", expected:parameterSchema.name, found:parameterLabel.value, location:parameterLabel.location})
-		}
-		if (parameterValue.type != Types.parameterValue)
-			error("Should be impossible: Invalid parameter value type" + parameterValue.type)
-		switch (parameterValue.value.type) {
-		case Types.number:
-		case Types.string:
-			//This branch intentionally left blank
-			break
-		case Types.identifier:
-			if (parameterSchema.type == HSParameterType.HSObject) {
-				const eventParameterPrototype = eventParameterPrototypeForIdentifier(parameterValue.value, validScopes)
-				if (!eventParameterPrototype)
-					error({message: "Cannot make eventParameter from this", expected: ["Screen", "Self"], found: parameterValue.value.value, location: parameterValue.location})
-				break
-			}
-		case Types.binaryOperatorBlock:
-		case Types.parenthesisBlock:
-			createOperatorBlockFrom(parameterValue.value, Types, BlockTypes, BinaryOperatorBlockTypes, TraitTypes, validScopes, project, options)
-			break
-		default:
-			error({message: "Should be impossible: Unknown parameter value type", expected:[Types.number, Types.string, Types.identifier, Types.binaryOperatorBlock, Types.parenthesisBlock], found:parameterValue.value.type, location:parameterValue.location})
-		}
-	}
-	return result
+function createOperatorBlockUsing(createBlockOfClasses: (allowedClasses: string[], blockCreationFunctions: BlockCreationFunctions) => void) {
+	return createBlockOfClasses(["operator","conditionalOperator"], createBlockCreationFunctions())
 }

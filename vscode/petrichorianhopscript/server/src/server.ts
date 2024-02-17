@@ -18,7 +18,7 @@ import {
 } from 'vscode-languageserver/node';
 const {secondPass} = require("../../../../core/secondPass.js")
 const preludeify = require("../../../../core/preludeify.js")
-import { addCustomRuleDefinitionAndReturnParameterly, addHsObjectAndBeforeGameStartsAbility, createMethodBlock, handleCustomRule, resetSecondPassFunctions, createAbilityForRuleFrom, isThereAlreadyADefinedCustomRuleNamed } from "./secondPassFuncs";
+import * as secondPassFunctions from "./secondPassFuncs";
 
 import {
 	TextDocument
@@ -41,9 +41,6 @@ function unpreludeifyLineNumber(preludeified: number) {
 	return preludeified - latestFileMap[latestFileMap.length-1].starts
 }
 
-function log(...args: any[]) {
-	// console.log(args)
-}
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
 const connection = createConnection(ProposedFeatures.all);
@@ -76,15 +73,18 @@ documents.onDidChangeContent(change => {
 });
 
 async function validateTextDocument(textDocument: TextDocument): Promise<void> {
+	console.log("VALIDATE")
 	// The validator creates diagnostics for all uppercase words length 2 and more
 	const text = textDocument.getText();
 	latestLines = text.split("\n")
 	const {htnCode, fileMap} = preludeify(text, textDocument.uri)
 	latestFileMap = fileMap
 	const diagnostics: Diagnostic[] = [];
-	try { //FIXME: rulesCountForObject is currently just `()=>0` which is wrong
+	try {
 		function errorFunc(error: any) {
-			const expected = error.expected.filter ? error.expected : [error.expected]
+			if (!error.location)
+				return console.log("Unknown error", error)
+			const expected = error.expected?.filter ? error.expected : [error.expected]
 			const diagnostic: Diagnostic ={
 				severity: DiagnosticSeverity.Error,
 				range: {
@@ -96,11 +96,15 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 			}
 			diagnostics.push(diagnostic)
 		}
-		resetSecondPassFunctions(errorFunc)
-		secondPass(htnCode, {checkParameterLabels: true}, {width: 1024, height: 768}, {isThereAlreadyADefinedCustomRuleNamed: isThereAlreadyADefinedCustomRuleNamed, error: errorFunc, addHsObjectAndBeforeGameStartsAbility: addHsObjectAndBeforeGameStartsAbility, addCustomRuleDefinitionAndReturnParameterly: addCustomRuleDefinitionAndReturnParameterly, createCustomBlockAbilityFromDefinition: log.bind(null,"createCustomBlockAbilityFromDefinition"), createElseAbilityFor: log.bind(null,"createElseAbilityFor"), createMethodBlock: createMethodBlock, createAbilityAsControlScriptOf: log.bind(null,"createAbilityAsControlScriptOf"), createAbilityForRuleFrom: createAbilityForRuleFrom, rulesCountForObject: ()=>0, addBlockToAbility: log.bind(null,"addBlockToAbility"), hasUndefinedCustomRules: log.bind(null,"hasUndefinedCustomRules"), hasUndefinedCustomBlocks: log.bind(null,"hasUndefinedCustomBlocks"), returnValue: log.bind(null,"returnValue"), handleCustomRule: handleCustomRule, transformParsed: (e: any) =>{e?latestParsed=e:null;return e}, linely: linely})
+		secondPassFunctions.resetSecondPassFunctions()
+		const secondPassFunctionsAsAny = secondPassFunctions as any
+		secondPassFunctionsAsAny.error = errorFunc
+		secondPassFunctionsAsAny.transformParsed = (e: any) =>{e?latestParsed=e:null;return e}
+		secondPassFunctionsAsAny.linely = linely
+		secondPass(htnCode, {checkParameterLabels: true}, {width: 1024, height: 768}, secondPassFunctionsAsAny)
 	} catch (error: any) {
 		if (!error.location) {
-			log(error)
+			console.log(error)
 		} else {
 			const expected = error.expected.filter ? error.expected : [error.expected]
 			const diagnostic: Diagnostic ={

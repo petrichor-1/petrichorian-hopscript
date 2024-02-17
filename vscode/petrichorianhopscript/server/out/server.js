@@ -7,7 +7,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const node_1 = require("vscode-languageserver/node");
 const { secondPass } = require("../../../../core/secondPass.js");
 const preludeify = require("../../../../core/preludeify.js");
-const secondPassFuncs_1 = require("./secondPassFuncs");
+const secondPassFunctions = require("./secondPassFuncs");
 const vscode_languageserver_textdocument_1 = require("vscode-languageserver-textdocument");
 let latestParsed;
 let latestLines;
@@ -24,9 +24,6 @@ function linely(currentState, newStateLevels, line) {
 function deepCopy(obj) { return JSON.parse(JSON.stringify(obj)); }
 function unpreludeifyLineNumber(preludeified) {
     return preludeified - latestFileMap[latestFileMap.length - 1].starts;
-}
-function log(...args) {
-    // console.log(args)
 }
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -55,15 +52,18 @@ documents.onDidChangeContent(change => {
     validateTextDocument(change.document);
 });
 async function validateTextDocument(textDocument) {
+    console.log("VALIDATE");
     // The validator creates diagnostics for all uppercase words length 2 and more
     const text = textDocument.getText();
     latestLines = text.split("\n");
     const { htnCode, fileMap } = preludeify(text, textDocument.uri);
     latestFileMap = fileMap;
     const diagnostics = [];
-    try { //FIXME: rulesCountForObject is currently just `()=>0` which is wrong
+    try {
         function errorFunc(error) {
-            const expected = error.expected.filter ? error.expected : [error.expected];
+            if (!error.location)
+                return console.log("Unknown error", error);
+            const expected = error.expected?.filter ? error.expected : [error.expected];
             const diagnostic = {
                 severity: node_1.DiagnosticSeverity.Error,
                 range: {
@@ -75,12 +75,16 @@ async function validateTextDocument(textDocument) {
             };
             diagnostics.push(diagnostic);
         }
-        (0, secondPassFuncs_1.resetSecondPassFunctions)(errorFunc);
-        secondPass(htnCode, { checkParameterLabels: true }, { width: 1024, height: 768 }, errorFunc, secondPassFuncs_1.addHsObjectAndBeforeGameStartsAbility, secondPassFuncs_1.addCustomRuleDefinition, log.bind(null, "createCustomBlockAbilityFromDefinition"), log.bind(null, "createElseAbilityFor"), secondPassFuncs_1.createMethodBlock, log.bind(null, "createAbilityAsControlScriptOf"), secondPassFuncs_1.createAbilityForRuleFrom, () => 0, log.bind(null, "addBlockToAbility"), log.bind(null, "hasUndefinedCustomRules"), log.bind(null, "hasUndefinedCustomBlocks"), log.bind(null, "returnValue"), secondPassFuncs_1.handleCustomRule, (e) => { e ? latestParsed = e : null; return e; }, linely);
+        secondPassFunctions.resetSecondPassFunctions();
+        const secondPassFunctionsAsAny = secondPassFunctions;
+        secondPassFunctionsAsAny.error = errorFunc;
+        secondPassFunctionsAsAny.transformParsed = (e) => { e ? latestParsed = e : null; return e; };
+        secondPassFunctionsAsAny.linely = linely;
+        secondPass(htnCode, { checkParameterLabels: true }, { width: 1024, height: 768 }, secondPassFunctionsAsAny);
     }
     catch (error) {
         if (!error.location) {
-            log(error);
+            console.log(error);
         }
         else {
             const expected = error.expected.filter ? error.expected : [error.expected];

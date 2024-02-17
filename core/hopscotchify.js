@@ -261,7 +261,7 @@ function createBlockCreationFunctionsFor(project, parametersKey) {
 					description: "Variable", // Correct
 					object: "PETRICHOR__TEMPOBJECTID"
 				}
-				return hsObject => {hsDatum.object = hsObject.objectID}
+				return {objectDefinitionCallback: hsObject => {hsDatum.object = hsObject.objectID}, hsDatum}
 			})
 		}
 	}
