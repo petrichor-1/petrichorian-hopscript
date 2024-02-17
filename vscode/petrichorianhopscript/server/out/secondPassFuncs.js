@@ -139,7 +139,7 @@ const returnValue = (e) => e;
 exports.returnValue = returnValue;
 function handleCustomRule(name, hsObjectOrCustomRule, hasContainer, callbackForWhenRuleIsDefined) {
     onDefinitionOfCustomRuleNamed(name, (hsCustomRule) => {
-        callbackForWhenRuleIsDefined((hsCustomRule.parameters?.length || 0), (i => hsCustomRule.parameters[i]), nop);
+        callbackForWhenRuleIsDefined(hsCustomRule.parameters.length, (i => hsCustomRule.parameters[i]), nop);
     });
     if (!hasContainer)
         return { hsCustomRule: null, beforeGameStartsAbility: null };

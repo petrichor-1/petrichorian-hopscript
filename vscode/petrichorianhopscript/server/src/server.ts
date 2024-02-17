@@ -326,7 +326,7 @@ connection.onCompletion(
 			return completionsForAbilityLevel(line, _textDocumentPosition.position.character)
 		default:
 			console.log(lineState)
-			return completionsForBlocksOfClasses(["method", "control", "conditional_control"]);
+			return completionsForBlocksOfClasses(["method", "control", "conditionalControl"]);
 		}
 	}
 );
