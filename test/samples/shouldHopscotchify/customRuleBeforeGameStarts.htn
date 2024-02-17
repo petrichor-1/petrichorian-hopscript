@@ -1,0 +1,3 @@
+# Test before game starts ability in custom rules
+custom_rule test:
+	test = "Hello!"

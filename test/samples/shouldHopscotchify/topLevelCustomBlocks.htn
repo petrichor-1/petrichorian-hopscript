@@ -1,0 +1,9 @@
+# Test top level custom blocks
+custom_block custom_block:
+	send_to_back
+	custom_block custom_block
+
+# Test using it
+tetris_line object(x_position: 512, y_position: 384):
+	When game_is_playing:
+		custom_block custom_block

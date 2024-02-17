@@ -1,0 +1,17 @@
+# Test when blocks
+
+text text(x_position: 512, y_position: 384, text: "Test of when blocks for hopscritp"):
+	When game_starts:
+		# game_starts
+	When is_tapped(Self):
+		# is_tapped(Self)
+	When var < 20:
+		# var < 20
+	When (10 < 20):
+		# (10 < 20)
+	When var < 20 and var2 / 3 == 4:
+		# var < 20 and var2 / 3 == 4
+	When is_tapped(text):
+		#is_tapped(text)
+	When Original_object.y_position < 100:
+		#Original_object.y_position < 100

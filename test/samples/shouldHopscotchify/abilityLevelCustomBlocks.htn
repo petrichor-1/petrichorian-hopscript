@@ -1,0 +1,6 @@
+text text(x_position: 512, y_position: 384, text: "Hopscript custom block test"):
+	When game_is_playing:
+		custom_block hello:
+			bring_to_front
+	When game_starts:
+		custom_block hello

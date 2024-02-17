@@ -1,0 +1,10 @@
+# Test arguments to custom rules
+custom_rule one(a: 1, b: 2):
+	When game_starts:
+		show_popup(message: join(a, with: b))
+
+text text(x_position: 512, y_position: 384, text: "Custom rule argument test for hopscript"):
+	custom_rule one(a: "Hello, ", b: "WOrld!")
+	custom_rule two(a: "Second", b: "Rule"):
+		When game_starts:
+			show_popup(message: a)

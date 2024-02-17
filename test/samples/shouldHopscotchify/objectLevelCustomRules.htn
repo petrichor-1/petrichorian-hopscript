@@ -1,0 +1,7 @@
+# Test object level custom rules
+
+monkey monkey:
+	custom_rule hello:
+		When game_starts:
+			show_popup(message: "Hello!")
+	custom_rule hello

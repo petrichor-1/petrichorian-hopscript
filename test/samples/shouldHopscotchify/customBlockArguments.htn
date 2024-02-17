@@ -1,0 +1,9 @@
+# Test custom block arguments
+custom_block one(arg0: 10, arg2: 0):
+	show_popup(message: join(arg0, with: arg2))
+
+text text(x_position: 512, y_position: 384, text: "Custo mblock argument test for hopscript"):
+	When game_starts:
+		custom_block one(arg0: "Hello, ", arg2: "world!")
+		custom_block two(arg0: "Second", arg1: "block"):
+			show_popup(message: join(join("In second", with: arg0), with: arg1))

@@ -1,0 +1,8 @@
+#Test check_if_else
+text text(x_position: 512, y_position: 384, text: "Test for check if else in hopscript"):
+	When game_starts:
+		set_background(color: h(100, s: 100, b: 100))
+		check_if_else(Self.x_position < 10):
+			set_text(to: "Yes", color: h(200, s: 100, b: 100))
+		else:
+			set_text(to: "Nope", color: h(0, s: 100, b: 100))
