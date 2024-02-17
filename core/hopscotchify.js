@@ -47,7 +47,26 @@ module.exports.hopscotchify = (htnCode, options) => {
 		customBlockDefinitionCallbacks[name] = customBlockDefinitionCallbacks[name] || []
 		customBlockDefinitionCallbacks[name].push(callback)
 	}
-	return secondPass(htnCode, options, project.stageSize, {customBlockAbilityFunctions: makeCustomBlockAbilityFunctions(), createHsCommentFrom: createHsCommentFrom, createCustomBlockReferenceFrom: createCustomBlockReferenceFrom, error: (e)=>{throw e},addHsObjectAndBeforeGameStartsAbility: addHsObjectAndBeforeGameStartsAbility, addCustomRuleDefinitionAndReturnParameterly: addCustomRuleDefinitionAndReturnParameterly,createElseAbilityFor: createElseAbilityFor,createMethodBlock: createMethodBlock,createAbilityAsControlScriptOf: createAbilityAsControlScriptOf,createAbilityForRuleFrom: createAbilityForRuleFrom,rulesCountForObject: o=>o.rules.length,hasUndefinedCustomRules: hasUndefinedCustomRules,hasUndefinedCustomBlocks: hasUndefinedCustomBlocks,returnValue: ()=>project,handleCustomRule: handleCustomRule,transformParsed: e=>e,linely:  ()=>{}, isThereAlreadyADefinedCustomRuleNamed: isThereAlreadyADefinedCustomRuleNamed})
+	return secondPass(htnCode, options, project.stageSize, {
+		customBlockAbilityFunctions: makeCustomBlockAbilityFunctions(),
+		createHsCommentFrom: createHsCommentFrom,
+		createCustomBlockReferenceFrom: createCustomBlockReferenceFrom,
+		error: (e)=>{throw e},
+		addHsObjectAndBeforeGameStartsAbility: addHsObjectAndBeforeGameStartsAbility,
+		addCustomRuleDefinitionAndReturnParameterly: addCustomRuleDefinitionAndReturnParameterly,
+		createElseAbilityFor: createElseAbilityFor,
+		createMethodBlock: createMethodBlock,
+		createAbilityAsControlScriptOf: createAbilityAsControlScriptOf,
+		createAbilityForRuleFrom: createAbilityForRuleFrom,
+		rulesCountForObject: o=>o.rules.length,
+		hasUndefinedCustomRules: hasUndefinedCustomRules,
+		hasUndefinedCustomBlocks: hasUndefinedCustomBlocks,
+		returnValue: ()=>project,
+		handleCustomRule: handleCustomRule,
+		transformParsed: e=>e,
+		linely:  ()=>{},
+		isThereAlreadyADefinedCustomRuleNamed: isThereAlreadyADefinedCustomRuleNamed
+	})
 	function createElseAbilityFor(checkIfElseBlock) {
 		const elseAbility = createEmptyAbility()
 		project.abilities.push(elseAbility)
