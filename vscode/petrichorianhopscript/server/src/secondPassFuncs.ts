@@ -34,7 +34,12 @@ export const customBlockAbilityFunctions = {
 
 export const createHsCommentFrom = returnEmptyObject
 
-export const createCustomBlockReferenceFrom = returnEmptyObject
+export const createCustomBlockReferenceFrom = function(snakeCaseName: string): {block_class: string, type: number} {
+	return {
+		block_class: "control",
+		type: 123 //HSBlockType.Ability
+	}
+}
 
 export function addHsObjectAndBeforeGameStartsAbility(objectType: any, desiredObjectName: string, objectAttributes: any, validScopes: any[]) {
 	validScopes.find(e=>e.path==desiredObjectName).hasBeenDefinedAs({})
