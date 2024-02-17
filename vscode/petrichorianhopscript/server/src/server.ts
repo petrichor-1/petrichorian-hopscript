@@ -17,29 +17,24 @@ import {
 	InsertTextFormat
 } from 'vscode-languageserver/node';
 const {secondPass} = require("../../../../core/secondPass.js")
-const preludeify = require("../../../../core/preludeify.js")
 import * as secondPassFunctions from "./secondPassFuncs";
 
 import {
 	TextDocument
 } from 'vscode-languageserver-textdocument';
+import { readFileSync } from 'fs';
 let latestParsed: any
 let latestLines: string[]
-let latestFileMap: any
 let lineStates: any[] = []
 let StateLevels: any
 function linely(currentState: any, newStateLevels: any, line: any) {
 	StateLevels = newStateLevels
-	const lineNumber = unpreludeifyLineNumber(line.location.start.line)-1
+	const lineNumber = line.location.start.line
 	if (lineNumber < 0)
 		return
 	lineStates[lineNumber] = deepCopy(currentState)
 }
 function deepCopy(obj: any): any { return JSON.parse(JSON.stringify(obj))}
-
-function unpreludeifyLineNumber(preludeified: number) {
-	return preludeified - latestFileMap[latestFileMap.length-1].starts
-}
 
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -77,8 +72,8 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 	// The validator creates diagnostics for all uppercase words length 2 and more
 	const text = textDocument.getText();
 	latestLines = text.split("\n")
-	const {htnCode, fileMap} = preludeify(text, textDocument.uri)
-	latestFileMap = fileMap
+	//FIXME: This is incorrect, though it works for everything I've tried so far
+	const filePath = textDocument.uri.substring("file://".length)
 	const diagnostics: Diagnostic[] = [];
 	try {
 		function errorFunc(error: any) {
@@ -88,8 +83,8 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 			const diagnostic: Diagnostic ={
 				severity: DiagnosticSeverity.Error,
 				range: {
-					start: textDocument.positionAt(error.location.start.offset - fileMap[fileMap.length-1].offset-1),
-					end: textDocument.positionAt(error.location.end.offset - fileMap[fileMap.length-1].offset-1)
+					start: textDocument.positionAt(error.location.start.offset-1),
+					end: textDocument.positionAt(error.location.end.offset-1)
 				},
 				message: `Syntax error: ${error.message ? error.message : ""} \n\tExpected '${expected.filter((e: any)=>e.startsWith?!e.startsWith("[internal]"):true).join("', '")}', found '${error.found}'`,
 				source: "phs"
@@ -101,7 +96,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 		secondPassFunctionsAsAny.error = errorFunc
 		secondPassFunctionsAsAny.transformParsed = (e: any) =>{e?latestParsed=e:null;return e}
 		secondPassFunctionsAsAny.linely = linely
-		secondPass(htnCode, {checkParameterLabels: true}, {width: 1024, height: 768}, secondPassFunctionsAsAny)
+		secondPass(filePath, readFileSync(filePath).toString(), {checkParameterLabels: true}, {width: 1024, height: 768}, secondPassFunctionsAsAny)
 	} catch (error: any) {
 		if (!error.location) {
 			console.log(error)
@@ -110,12 +105,13 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 			const diagnostic: Diagnostic ={
 				severity: DiagnosticSeverity.Error,
 				range: {
-					start: textDocument.positionAt(error.location.start.offset - fileMap[fileMap.length-1].offset-1),
-					end: textDocument.positionAt(error.location.end.offset - fileMap[fileMap.length-1].offset-1)
+					start: textDocument.positionAt(error.location.start.offset-1),
+					end: textDocument.positionAt(error.location.end.offset-1)
 				},
 				message: `Syntax error: ${error.message ? error.message : ""} \n\tExpected '${expected.filter((e: any)=>e.startsWith?!e.startsWith("[internal]"):true).join("', '")}', found '${error.found}'`,
 				source: "phs"
 			}
+			console.log(error.location)
 			diagnostics.push(diagnostic)
 		}
 	}

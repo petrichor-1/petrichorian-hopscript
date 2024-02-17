@@ -2,9 +2,22 @@ const { randomUUID } = require('crypto')
 const parser = require("./htn.js")
 const { parenthesisificateBinaryOperatorBlock } = require('./parenthesisificateBinaryOperatorBlock.js')
 const { eventParameterPrototypeForIdentifier } = require('./eventParameterPrototypeForIdentifier.js')
+const {mergeLists, mergeObjects} = require('./mergeLists.js')
 
-module.exports.secondPass = (htnCode, options, stageSize, externalCallbacks) => {
-	const parsed = externalCallbacks.transformParsed(parser.parse(htnCode))
+module.exports.secondPass = (path, htnCode, options, stageSize, externalCallbacks) => {
+	const parsed = externalCallbacks.transformParsed(parser.parse(htnCode, {path: path}))
+	parsed.dependencies.forEach(dependencyPath => {
+		const handleDepenencyResult = externalCallbacks.handleDependency(dependencyPath)
+		if (!handleDepenencyResult)
+			return console.log("Did not handle " + dependencyPath)
+		const {objectTypes, blockTypes, traitTypes, binaryOperatorBlockTypes, objectNames, parameterTypes} = handleDepenencyResult
+		parsed.objectTypes = mergeObjects(parsed.objectTypes, objectTypes)
+		parsed.blockTypes = mergeObjects(parsed.blockTypes, blockTypes)
+		parsed.traitTypes = mergeObjects(parsed.traitTypes, traitTypes)
+		parsed.binaryOperatorBlockTypes = mergeObjects(parsed.binaryOperatorBlockTypes, binaryOperatorBlockTypes)
+		mergeLists(parsed.objectNames, objectNames)
+		parsed.parameterTypes = mergeObjects(parsed.parameterTypes, parameterTypes)
+	})
 	const lines = parsed.lines
 	const Types = parsed.tokenTypes
 

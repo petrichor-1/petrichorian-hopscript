@@ -1,3 +1,5 @@
+_unimport "Hopscotch.htn"
+
 #==========================#
 # Definitions of standard  #
 # characters, blocks, etc. #

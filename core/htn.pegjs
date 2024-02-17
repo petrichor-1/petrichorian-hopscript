@@ -20,6 +20,7 @@
 	let traitTypes = {}
 	let objectNames = []
 	let parameterTypes = {}
+	let dependencies = ["Hopscotch.htn"] // Hopscotch.htn is implicitly imported
 }
 
 file
@@ -34,6 +35,7 @@ file
 			binaryOperatorBlockTypes: binaryOperatorBlockTypes,
 			objectNames: objectNames,
 			parameterTypes: parameterTypes,
+			dependencies: dependencies,
 		}
 	}
 
@@ -45,7 +47,7 @@ line
 		return contents
 	}
 lineContents
-	= indentationWhitespace:nonNewlineWhitespace* block:(object / block / internalDefinition)
+	= indentationWhitespace:nonNewlineWhitespace* block:(importStatement / object / block / internalDefinition)
 	{
 		if (!block)
 			return null
@@ -314,8 +316,20 @@ objectTypeName "object type name"
 	= !"When " !"custom_rule" !"custom_block" value:identifier
 	{ return value }
 
+importStatement
+	= "Import" whitespace+ value:string
+	{
+		dependencies.push(value.value)
+	}
+
 internalDefinition
-	= objectTypeDefinition / blockTypeDefinition / binaryOperatorBlockTypeDefinition / traitTypeDefinition / parameterTypeDefinition
+	= objectTypeDefinition / blockTypeDefinition / binaryOperatorBlockTypeDefinition / traitTypeDefinition / parameterTypeDefinition / unimportStatement
+
+unimportStatement
+	= "_unimport " value:string
+	{
+		dependencies = dependencies.filter(e=>e!=value.value)
+	}
 
 objectTypeDefinition "[internal] object type definition"
 	= "_defineObjectType " name:objectTypeName " " typeId:number " " filename:string " " width:number " " height:number

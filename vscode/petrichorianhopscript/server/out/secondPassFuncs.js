@@ -1,7 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isThereAlreadyADefinedCustomRuleNamed = exports.handleCustomRule = exports.returnValue = exports.hasUndefinedCustomBlocks = exports.hasUndefinedCustomRules = exports.rulesCountForObject = exports.createAbilityForRuleFrom = exports.createAbilityAsControlScriptOf = exports.createMethodBlock = exports.createElseAbilityFor = exports.addCustomRuleDefinitionAndReturnParameterly = exports.addHsObjectAndBeforeGameStartsAbility = exports.createCustomBlockReferenceFrom = exports.createHsCommentFrom = exports.customBlockAbilityFunctions = exports.resetSecondPassFunctions = void 0;
+exports.isThereAlreadyADefinedCustomRuleNamed = exports.handleCustomRule = exports.returnValue = exports.hasUndefinedCustomBlocks = exports.hasUndefinedCustomRules = exports.rulesCountForObject = exports.createAbilityForRuleFrom = exports.createAbilityAsControlScriptOf = exports.createMethodBlock = exports.createElseAbilityFor = exports.addCustomRuleDefinitionAndReturnParameterly = exports.addHsObjectAndBeforeGameStartsAbility = exports.createCustomBlockReferenceFrom = exports.createHsCommentFrom = exports.handleDependency = exports.customBlockAbilityFunctions = exports.resetSecondPassFunctions = void 0;
+const fs_1 = require("fs");
 const { HSParameterType } = require("../../../../core/HSParameterType.js");
+const { hopscotchify } = require("../../../../core/hopscotchify.js");
 let customRules = {};
 let customRuleDefinitionCallbacks = {};
 function onDefinitionOfCustomRuleNamed(name, callback) {
@@ -15,6 +17,7 @@ let customBlockDefinitionCallbacks = {};
 function resetSecondPassFunctions() {
     customBlocks = {};
     customRules = {};
+    alreadyParsedPaths = {};
 }
 exports.resetSecondPassFunctions = resetSecondPassFunctions;
 function nop() { }
@@ -33,6 +36,23 @@ exports.customBlockAbilityFunctions = {
         customBlocks[name] = true
     }*/
 };
+let alreadyParsedPaths;
+function handleDependency(path) {
+    if (alreadyParsedPaths[path])
+        return alreadyParsedPaths[path];
+    const hspreLikeAndOtherInfo = getHspreLikeFrom(path, alreadyParsedPaths);
+    alreadyParsedPaths[path] = hspreLikeAndOtherInfo;
+    hspreLikeAndOtherInfo.hspreLike.customRules?.forEach((hsCustomRule) => {
+        const name = hsCustomRule.name;
+        customRules[name] = true;
+    });
+    hspreLikeAndOtherInfo.hspreLike.abilities?.filter((e) => !!e.name).forEach((hsCustomBlock) => {
+        const name = hsCustomBlock.name;
+        customBlocks[name] = true;
+    });
+    return hspreLikeAndOtherInfo;
+}
+exports.handleDependency = handleDependency;
 exports.createHsCommentFrom = returnEmptyObject;
 const createCustomBlockReferenceFrom = function (snakeCaseName) {
     return {
@@ -161,5 +181,31 @@ function createMethodBlockUsing(createBlockOfClasses) {
 }
 function createOperatorBlockUsing(createBlockOfClasses) {
     return createBlockOfClasses(["operator", "conditionalOperator"], createBlockCreationFunctions());
+}
+function getHspreLikeFrom(path, alreadyParsedPaths) {
+    if (alreadyParsedPaths[path])
+        throw "Wut";
+    if (!/\//.test(path))
+        path = `${__dirname}/../../../../core/prelude/${path}`;
+    if (path.endsWith('.hopscotch') || path.endsWith('.hspre'))
+        return { hspreLike: JSON.parse((0, fs_1.readFileSync)(path).toString()) };
+    //TODO: hsprez
+    const { hopscotchified, objectTypes, blockTypes, traitTypes, binaryOperatorBlockTypes, objectNames, parameterTypes } = hopscotchify(path, { checkParameterLabels: true }, fileFunctions(), alreadyParsedPaths);
+    return {
+        hspreLike: hopscotchified,
+        hopscotchified,
+        objectTypes,
+        blockTypes,
+        traitTypes,
+        binaryOperatorBlockTypes,
+        objectNames,
+        parameterTypes
+    };
+}
+function fileFunctions() {
+    return {
+        read: path => (0, fs_1.readFileSync)(path).toString(),
+        getHspreLike: getHspreLikeFrom,
+    };
 }
 //# sourceMappingURL=secondPassFuncs.js.map

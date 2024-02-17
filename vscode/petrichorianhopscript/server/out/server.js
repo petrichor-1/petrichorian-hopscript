@@ -6,25 +6,21 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * ------------------------------------------------------------------------------------------ */
 const node_1 = require("vscode-languageserver/node");
 const { secondPass } = require("../../../../core/secondPass.js");
-const preludeify = require("../../../../core/preludeify.js");
 const secondPassFunctions = require("./secondPassFuncs");
 const vscode_languageserver_textdocument_1 = require("vscode-languageserver-textdocument");
+const fs_1 = require("fs");
 let latestParsed;
 let latestLines;
-let latestFileMap;
 let lineStates = [];
 let StateLevels;
 function linely(currentState, newStateLevels, line) {
     StateLevels = newStateLevels;
-    const lineNumber = unpreludeifyLineNumber(line.location.start.line) - 1;
+    const lineNumber = line.location.start.line;
     if (lineNumber < 0)
         return;
     lineStates[lineNumber] = deepCopy(currentState);
 }
 function deepCopy(obj) { return JSON.parse(JSON.stringify(obj)); }
-function unpreludeifyLineNumber(preludeified) {
-    return preludeified - latestFileMap[latestFileMap.length - 1].starts;
-}
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
 const connection = (0, node_1.createConnection)(node_1.ProposedFeatures.all);
@@ -56,8 +52,8 @@ async function validateTextDocument(textDocument) {
     // The validator creates diagnostics for all uppercase words length 2 and more
     const text = textDocument.getText();
     latestLines = text.split("\n");
-    const { htnCode, fileMap } = preludeify(text, textDocument.uri);
-    latestFileMap = fileMap;
+    //FIXME: This is incorrect, though it works for everything I've tried so far
+    const filePath = textDocument.uri.substring("file://".length);
     const diagnostics = [];
     try {
         function errorFunc(error) {
@@ -67,8 +63,8 @@ async function validateTextDocument(textDocument) {
             const diagnostic = {
                 severity: node_1.DiagnosticSeverity.Error,
                 range: {
-                    start: textDocument.positionAt(error.location.start.offset - fileMap[fileMap.length - 1].offset - 1),
-                    end: textDocument.positionAt(error.location.end.offset - fileMap[fileMap.length - 1].offset - 1)
+                    start: textDocument.positionAt(error.location.start.offset - 1),
+                    end: textDocument.positionAt(error.location.end.offset - 1)
                 },
                 message: `Syntax error: ${error.message ? error.message : ""} \n\tExpected '${expected.filter((e) => e.startsWith ? !e.startsWith("[internal]") : true).join("', '")}', found '${error.found}'`,
                 source: "phs"
@@ -80,7 +76,7 @@ async function validateTextDocument(textDocument) {
         secondPassFunctionsAsAny.error = errorFunc;
         secondPassFunctionsAsAny.transformParsed = (e) => { e ? latestParsed = e : null; return e; };
         secondPassFunctionsAsAny.linely = linely;
-        secondPass(htnCode, { checkParameterLabels: true }, { width: 1024, height: 768 }, secondPassFunctionsAsAny);
+        secondPass(filePath, (0, fs_1.readFileSync)(filePath).toString(), { checkParameterLabels: true }, { width: 1024, height: 768 }, secondPassFunctionsAsAny);
     }
     catch (error) {
         if (!error.location) {
@@ -91,12 +87,13 @@ async function validateTextDocument(textDocument) {
             const diagnostic = {
                 severity: node_1.DiagnosticSeverity.Error,
                 range: {
-                    start: textDocument.positionAt(error.location.start.offset - fileMap[fileMap.length - 1].offset - 1),
-                    end: textDocument.positionAt(error.location.end.offset - fileMap[fileMap.length - 1].offset - 1)
+                    start: textDocument.positionAt(error.location.start.offset - 1),
+                    end: textDocument.positionAt(error.location.end.offset - 1)
                 },
                 message: `Syntax error: ${error.message ? error.message : ""} \n\tExpected '${expected.filter((e) => e.startsWith ? !e.startsWith("[internal]") : true).join("', '")}', found '${error.found}'`,
                 source: "phs"
             };
+            console.log(error.location);
             diagnostics.push(diagnostic);
         }
     }

@@ -3,7 +3,6 @@
 const fs = require('fs')
 const {parseArgs} = require('node:util')
 const {hopscotchify} = require('./core/hopscotchify.js')
-const preludeify = require("./core/preludeify.js")
 
 if (process.argv.length < 3)
 	return console.error(`Nope! Try ${process.argv[0]} ${process.argv[1]} <file.htn>`)
@@ -24,11 +23,39 @@ if (parsedArgs.positionals.length != 1)
 const inputPath = parsedArgs.positionals[0]
 const ignoreParameterLabels = parsedArgs.values.ignoreParameterLabels || false
 
-const project = fs.readFileSync(inputPath).toString()
-const {htnCode, fileMap} = preludeify(project, inputPath)
-
+const fileFunctions = {
+	read: path => fs.readFileSync(path).toString(),
+	getHspreLikeFrom: (path, alreadyParsedPaths) => {
+		if (alreadyParsedPaths[path])
+			throw "Wut"
+		if (!/\//.test(path))
+			path = `${__dirname}/core/prelude/${path}`
+		if (path.endsWith('.hopscotch') || path.endsWith('.hspre'))
+			return {hspreLike: JSON.parse(fs.readFileSync(path).toString())}
+		//TODO: hsprez
+		const {
+			hopscotchified,
+			objectTypes,
+			blockTypes,
+			traitTypes,
+			binaryOperatorBlockTypes,
+			objectNames,
+			parameterTypes
+		} = hopscotchify(path, {checkParameterLabels: !ignoreParameterLabels}, fileFunctions, alreadyParsedPaths)
+		return {
+			hspreLike: hopscotchified,
+			hopscotchified,
+			objectTypes,
+			blockTypes,
+			traitTypes,
+			binaryOperatorBlockTypes,
+			objectNames,
+			parameterTypes
+		}
+	}
+}
 try {
-	const hopscotchified = hopscotchify(htnCode, {checkParameterLabels: !ignoreParameterLabels})
+	const {hopscotchified} = hopscotchify(inputPath, {checkParameterLabels: !ignoreParameterLabels}, fileFunctions, {})
 	console.log(JSON.stringify(hopscotchified))
 } catch (error) {
 	try {

@@ -1,4 +1,6 @@
+import { readFileSync } from "fs"
 const {HSParameterType} = require("../../../../core/HSParameterType.js")
+const {hopscotchify} = require("../../../../core/hopscotchify.js")
 let customRules: any = {}
 let customRuleDefinitionCallbacks: any = {}
 function onDefinitionOfCustomRuleNamed(name: string, callback: (hsCustomRule: HSCustomRule) => void) {
@@ -14,6 +16,7 @@ let customBlockDefinitionCallbacks: any = {}
 export function resetSecondPassFunctions() {
 	customBlocks = {}
 	customRules = {}
+	alreadyParsedPaths = {}
 }
 function nop(){}
 function returnEmptyObject(){return {}}
@@ -30,6 +33,23 @@ export const customBlockAbilityFunctions = {
 		customBlockDefinitionCallbacks[name] = null
 		customBlocks[name] = true
 	}*/
+}
+
+let alreadyParsedPaths: any;
+export function handleDependency(path: string) {
+	if (alreadyParsedPaths[path])
+		return alreadyParsedPaths[path]
+	const hspreLikeAndOtherInfo = getHspreLikeFrom(path, alreadyParsedPaths)
+	alreadyParsedPaths[path] = hspreLikeAndOtherInfo
+	hspreLikeAndOtherInfo.hspreLike.customRules?.forEach((hsCustomRule: any) => {
+		const name = hsCustomRule.name
+		customRules[name] = true
+	})
+	hspreLikeAndOtherInfo.hspreLike.abilities?.filter((e:any)=>!!e.name).forEach((hsCustomBlock: any) => {
+		const name = hsCustomBlock.name
+		customBlocks[name] = true
+	})
+	return hspreLikeAndOtherInfo
 }
 
 export const createHsCommentFrom = returnEmptyObject
@@ -189,4 +209,40 @@ function createMethodBlockUsing(createBlockOfClasses: (allowedClasses: string[],
 
 function createOperatorBlockUsing(createBlockOfClasses: (allowedClasses: string[], blockCreationFunctions: BlockCreationFunctions) => void) {
 	return createBlockOfClasses(["operator","conditionalOperator"], createBlockCreationFunctions())
+}
+
+function getHspreLikeFrom(path: string, alreadyParsedPaths: any) {
+	if (alreadyParsedPaths[path])
+		throw "Wut"
+	if (!/\//.test(path))
+		path = `${__dirname}/../../../../core/prelude/${path}`
+	if (path.endsWith('.hopscotch') || path.endsWith('.hspre'))
+		return {hspreLike: JSON.parse(readFileSync(path).toString())}
+	//TODO: hsprez
+	const {
+		hopscotchified,
+		objectTypes,
+		blockTypes,
+		traitTypes,
+		binaryOperatorBlockTypes,
+		objectNames,
+		parameterTypes
+	} = hopscotchify(path, {checkParameterLabels: true}, fileFunctions(), alreadyParsedPaths)
+	return {
+		hspreLike: hopscotchified,
+		hopscotchified,
+		objectTypes,
+		blockTypes,
+		traitTypes,
+		binaryOperatorBlockTypes,
+		objectNames,
+		parameterTypes
+	}
+}
+
+function fileFunctions(): {getHspreLike: (path: string, alreadyParsedPaths: any) => void, read: (path: string) => string} {
+	return {
+		read: path => readFileSync(path).toString(),
+		getHspreLike: getHspreLikeFrom,
+	}
 }

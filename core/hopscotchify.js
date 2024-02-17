@@ -1,11 +1,12 @@
 const { randomUUID } = require('crypto')
 const {secondPass} = require('./secondPass.js')
 const {HSParameterType} = require('./HSParameterType.js')
+const {mergeHspreLikes} = require('./mergeHspreLikes.js')
 
 const BREAKPOINT_POSITION_KEY = "PETRICHOR_BREAKPOINT_POSITION"
 
-module.exports.hopscotchify = (htnCode, options) => {
-	let project = {
+module.exports.hopscotchify = (htnPath, options, fileFunctions, alreadyParsedPaths) => {
+	const project = {
 		stageSize: {
 			width: 1024,
 			height: 768,
@@ -47,7 +48,34 @@ module.exports.hopscotchify = (htnCode, options) => {
 		customBlockDefinitionCallbacks[name] = customBlockDefinitionCallbacks[name] || []
 		customBlockDefinitionCallbacks[name].push(callback)
 	}
-	return secondPass(htnCode, options, project.stageSize, {
+	const htnCode = fileFunctions.read(htnPath)
+	let objectTypes;
+	let blockTypes;
+	let traitTypes;
+	let binaryOperatorBlockTypes;
+	let objectNames;
+	let parameterTypes;
+	const hopscotchified = secondPass(htnPath, htnCode, options, project.stageSize, {
+		handleDependency: path => {
+			if (alreadyParsedPaths[path])
+				return alreadyParsedPaths[path]
+			const hspreLikeAndOtherInfo = fileFunctions.getHspreLikeFrom(path, alreadyParsedPaths)
+			mergeHspreLikes(project, hspreLikeAndOtherInfo.hspreLike)
+			alreadyParsedPaths[path] = hspreLikeAndOtherInfo
+			hspreLikeAndOtherInfo.hspreLike.customRules?.forEach(hsCustomRule => {
+				const name = hsCustomRule.name
+				customRuleDefinitionCallbacks[name]?.forEach(callback => callback(hsCustomRule))
+				customRuleDefinitionCallbacks[name] = null
+				customRules[name] = hsCustomRule
+			})
+			hspreLikeAndOtherInfo.hspreLike.abilities?.filter(e=>!!e.name).forEach(hsCustomBlock => {
+				const name = hsCustomBlock.name
+				customBlockDefinitionCallbacks[name]?.forEach(callback => callback(hsCustomBlock))
+				customBlockDefinitionCallbacks[name] = null
+				customBlocks[name] = hsCustomBlock
+			})
+			return hspreLikeAndOtherInfo
+		},
 		customBlockAbilityFunctions: makeCustomBlockAbilityFunctions(),
 		createHsCommentFrom: createHsCommentFrom,
 		createCustomBlockReferenceFrom: createCustomBlockReferenceFrom,
@@ -63,10 +91,27 @@ module.exports.hopscotchify = (htnCode, options) => {
 		hasUndefinedCustomBlocks: hasUndefinedCustomBlocks,
 		returnValue: ()=>project,
 		handleCustomRule: handleCustomRule,
-		transformParsed: e=>e,
+		transformParsed: parsed => {
+			objectTypes = parsed.objectTypes
+			blockTypes = parsed.blockTypes
+			traitTypes = parsed.traitTypes
+			binaryOperatorBlockTypes = parsed.binaryOperatorBlockTypes
+			objectNames = parsed.objectNames
+			parameterTypes = parsed.parameterTypes
+			return parsed
+		},
 		linely:  ()=>{},
 		isThereAlreadyADefinedCustomRuleNamed: isThereAlreadyADefinedCustomRuleNamed
 	})
+	return {
+		hopscotchified,
+		objectTypes,
+		blockTypes,
+		traitTypes,
+		binaryOperatorBlockTypes,
+		objectNames,
+		parameterTypes
+	}
 	function createElseAbilityFor(checkIfElseBlock) {
 		const elseAbility = createEmptyAbility()
 		project.abilities.push(elseAbility)
@@ -88,7 +133,7 @@ module.exports.hopscotchify = (htnCode, options) => {
 		const rulesList = hsObjectOrCustomRule.rules
 		const tempid = "TEMP" + randomUUID()
 		rulesList.push(tempid)
-		onDefinitionOfCustomRuleNamed(nameAsString, hsCustomRule => {
+		onDefinitionOfCustomRuleNamed(unSnakeCase(nameAsString), hsCustomRule => {
 			const hsCustomRuleInstance = createCustomRuleInstanceFor(hsCustomRule, callbackForWhenRuleIsDefined)
 			project.customRuleInstances.push(hsCustomRuleInstance)
 			const index = rulesList.findIndex(e => e == tempid)
@@ -136,12 +181,13 @@ module.exports.hopscotchify = (htnCode, options) => {
 		return !!customRules[nameAsString]
 	}
 	function addCustomRuleDefinitionAndReturnParameterly(nameAsString) {
+		nameAsString = unSnakeCase(nameAsString)
 		const beforeGameStartsAbility = createEmptyAbility()
 		project.abilities.push(beforeGameStartsAbility)
 		const hsCustomRule = {
 			id: randomUUID(),
 			abilityID: beforeGameStartsAbility.abilityID,
-			name: unSnakeCase(nameAsString),
+			name: nameAsString,
 			parameters: [], //TODO
 			rules: []
 		}

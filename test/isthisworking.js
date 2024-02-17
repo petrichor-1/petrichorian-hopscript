@@ -1,18 +1,47 @@
 #!/usr/bin/env node
 const {hopscotchify} = require("../core/hopscotchify.js")
 const {readdirSync, readFileSync} = require('fs')
-const preludeify = require("../core/preludeify.js")
 
 let isWorking = true
 const directoryPath = __dirname+"/samples/shouldHopscotchify"
 const options = {checkParameterLabels: true}
-console.log("Testing " + directoryPath)
+const fileFunctions = {
+	read: path => readFileSync(path).toString(),
+	getHspreLikeFrom: (path, alreadyParsedPaths) => {
+		if (alreadyParsedPaths[path])
+			throw "Wut"
+		if (!/\//.test(path))
+			path = `${__dirname}/../core/prelude/${path}`
+		if (path.endsWith('.hopscotch') || path.endsWith('.hspre'))
+			return {hspreLike: JSON.parse(readFileSync(path).toString())}
+		//TODO: hsprez
+		const {
+			hopscotchified,
+			objectTypes,
+			blockTypes,
+			traitTypes,
+			binaryOperatorBlockTypes,
+			objectNames,
+			parameterTypes
+		} = hopscotchify(path, {checkParameterLabels: true}, fileFunctions, alreadyParsedPaths)
+		return {
+			hspreLike: hopscotchified,
+			hopscotchified,
+			objectTypes,
+			blockTypes,
+			traitTypes,
+			binaryOperatorBlockTypes,
+			objectNames,
+			parameterTypes
+		}
+	}
+}
 readdirSync(directoryPath)
 	.filter(e=>e.endsWith(".htn"))
 	.forEach(filename => {
-		const {htnCode} = preludeify(readFileSync(directoryPath + "/" + filename).toString(), filename)
+		const path = directoryPath + "/" + filename
 		try {
-			hopscotchify(htnCode, options)
+			hopscotchify(path, options, fileFunctions, {})
 		} catch (error) {
 			isWorking = false
 			console.log(`Nope! ${filename} got error: ${error}`)
