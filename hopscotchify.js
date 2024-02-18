@@ -26,10 +26,6 @@ const ignoreParameterLabels = parsedArgs.values.ignoreParameterLabels || false
 const fileFunctions = {
 	read: path => fs.readFileSync(path).toString(),
 	getHspreLikeFrom: (path, alreadyParsedPaths) => {
-		if (alreadyParsedPaths[path])
-			throw "Wut"
-		if (!/\//.test(path))
-			path = `${__dirname}/core/prelude/${path}`
 		if (path.endsWith('.hopscotch') || path.endsWith('.hspre'))
 			return {hspreLike: JSON.parse(fs.readFileSync(path).toString())}
 		//TODO: hsprez

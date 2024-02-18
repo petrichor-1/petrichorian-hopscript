@@ -8,10 +8,6 @@ const options = {checkParameterLabels: true}
 const fileFunctions = {
 	read: path => readFileSync(path).toString(),
 	getHspreLikeFrom: (path, alreadyParsedPaths) => {
-		if (alreadyParsedPaths[path])
-			throw "Wut"
-		if (!/\//.test(path))
-			path = `${__dirname}/../core/prelude/${path}`
 		if (path.endsWith('.hopscotch') || path.endsWith('.hspre'))
 			return {hspreLike: JSON.parse(readFileSync(path).toString())}
 		//TODO: hsprez
@@ -48,5 +44,8 @@ readdirSync(directoryPath)
 		}
 	})
 
-if (isWorking)
+if (isWorking) {
 	console.log("Yep!")
+} else {
+	process.exit(1)
+}

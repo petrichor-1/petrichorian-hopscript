@@ -1,5 +1,5 @@
-function parenthesisificateBinaryOperatorBlock(binaryOperatorBlock, Types, allowedBlockClasses, BinaryOperatorBlockTypes) {
-	const actualBlockName = BinaryOperatorBlockTypes[binaryOperatorBlock.operatorKeyword];
+function parenthesisificateBinaryOperatorBlock(binaryOperatorBlock, Types, allowedBlockClasses, getBinaryOperatorBlockWithKeyword) {
+	const actualBlockName = getBinaryOperatorBlockWithKeyword(binaryOperatorBlock.operatorKeyword);
 	if (!actualBlockName) {
 		if (binaryOperatorBlock.operatorKeyword == "=") {
 			if (allowedBlockClasses.includes("method")) {
@@ -14,16 +14,8 @@ function parenthesisificateBinaryOperatorBlock(binaryOperatorBlock, Types, allow
 				};
 			}
 		}
-		throw new parser.SyntaxError("Undefined binary operator", Object.getOwnPropertyNames(BinaryOperatorBlockTypes), binaryOperatorBlock.operatorKeyword, binaryOperatorBlock.location);
+		throw new parser.SyntaxError("Undefined binary operator", "TODO: Object.getOwnPropertyNames(BinaryOperatorBlockTypes)", binaryOperatorBlock.operatorKeyword, binaryOperatorBlock.location);
 	}
-
-	let leftSide = {
-		type: Types.parameterValue,
-		location: binaryOperatorBlock.leftSide.location,
-		value: binaryOperatorBlock.leftSide,
-		pretendLabelIsValidEvenIfItIsnt: true
-	};
-	const leftSideOperationPriority = binaryOperatorPriority(binaryOperatorBlock.operatorKeyword);
 	if (binaryOperatorBlock.rightSide.length != 1)
 		throw "TODO: Multiple parameters for binary operator blocks";
 	let rightSide = binaryOperatorBlock.rightSide[0];
@@ -46,7 +38,7 @@ function parenthesisificateBinaryOperatorBlock(binaryOperatorBlock, Types, allow
 				continue;
 			if (item.priority < maxPriority)
 				continue;
-			const actualName = BinaryOperatorBlockTypes[item.value];
+			const actualName = getBinaryOperatorBlockWithKeyword(item.value);
 			if (!actualName)
 				throw new parser.SyntaxError("Undefined binary operator block", Object.getOwnPropertyNames(BinaryOperatorBlockTypes), item.value, listOfOperandsAndOperators[i - 1].location); // Location is approximate
 			const newItem = {
