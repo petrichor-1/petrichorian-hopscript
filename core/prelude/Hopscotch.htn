@@ -82,6 +82,16 @@ _defineObjectType elf 68 "elf.png" 150 150
 _defineObjectType sleigh 71 "Sleigh.png" 300 300
 _defineObjectType snow_globe 69 "SnowGlobe.png" 450 450
 _defineObjectType snowflake 74 "snowflake.png" 45 45
+#Halloween
+_defineObjectType zombear 11 "zombear" 150 150
+_defineObjectType ghoulopus 12 "ghoulopus" 150 150
+_defineObjectType bats 13 "bats" 150 150
+_defineObjectType frankenrilla 014 "frankenrilla" 150 150
+_defineObjectType witch_jody 15 "jody-witch" 150 150
+_defineObjectType cauldron 16 "cauldron" 150 150
+_defineObjectType pumpkin 17 "pumpkin" 150 150
+_defineObjectType broom 18 "broom" 150 150
+_defineObjectType lantern 3002 "lanternFullSize" 48 84
 
 
 
