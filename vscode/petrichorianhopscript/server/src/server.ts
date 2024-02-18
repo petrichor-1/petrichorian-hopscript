@@ -90,45 +90,49 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 				message: `Syntax error: ${error.message ? error.message : ""} \n\tExpected '${expected.filter((e: any)=>e.startsWith?!e.startsWith("[internal]"):true).join("', '")}', found '${error.found}'`,
 				source: "phs"
 			}
+			console.log(error)
 			diagnostics.push(diagnostic)
 		}
 		secondPassFunctions.resetSecondPassFunctions()
 		const secondPassFunctionsAsAny = secondPassFunctions as any
 		secondPassFunctionsAsAny.error = errorFunc
-		secondPassFunctionsAsAny.transformParsed = (e: any) =>{e?latestParsed=e:null;return e}
-		secondPassFunctionsAsAny.linely = linely
-		secondPass(filePath, readFileSync(filePath).toString(), {checkParameterLabels: true}, {width: 1024, height: 768}, secondPassFunctionsAsAny)
-		for (const path in secondPassFunctions.alreadyParsedPaths) {
-			if (Object.prototype.hasOwnProperty.call(secondPassFunctions.alreadyParsedPaths, path)) {
-				const contents = secondPassFunctions.alreadyParsedPaths[path];
-				const {
-					objectTypes,
-					blockTypes,
-					traitTypes,
-					binaryOperatorBlockTypes,
-					objectNames,
-					parameterTypes,
-				} = contents
-				if (objectTypes) {
-					mergeObjects(latestParsed.objectTypes,objectTypes)
-				}
-				if (blockTypes) {
-					mergeObjects(latestParsed.blockTypes,blockTypes)
-				}
-				if (traitTypes) {
-					mergeObjects(latestParsed.traitTypes,traitTypes)
-				}
-				if (binaryOperatorBlockTypes) {
-					mergeObjects(latestParsed.binaryOperatorBlockTypes,binaryOperatorBlockTypes)
-				}
-				if (objectNames) {
-					mergeLists(latestParsed.objectNames,objectNames)
-				}
-				if (parameterTypes) {
-					mergeObjects(latestParsed.parameterTypes,parameterTypes)
+		secondPassFunctionsAsAny.afterDependencyResolution = (parsed: any) =>{
+			if (parsed)
+				latestParsed = parsed
+			for (const path in secondPassFunctions.alreadyParsedPaths) {
+				if (Object.prototype.hasOwnProperty.call(secondPassFunctions.alreadyParsedPaths, path)) {
+					const contents = secondPassFunctions.alreadyParsedPaths[path].result;
+					const {
+						objectTypes,
+						blockTypes,
+						traitTypes,
+						binaryOperatorBlockTypes,
+						objectNames,
+						parameterTypes,
+					} = contents
+					if (objectTypes) {
+						parsed.objectTypes = mergeObjects(parsed.objectTypes,objectTypes)
+					}
+					if (blockTypes) {
+						parsed.blockTypes = mergeObjects(parsed.blockTypes,blockTypes)
+					}
+					if (traitTypes) {
+						parsed.traitTypes = mergeObjects(parsed.traitTypes,traitTypes)
+					}
+					if (binaryOperatorBlockTypes) {
+						parsed.binaryOperatorBlockTypes = mergeObjects(parsed.binaryOperatorBlockTypes,binaryOperatorBlockTypes)
+					}
+					if (objectNames) {
+						mergeLists(parsed.objectNames,objectNames)
+					}
+					if (parameterTypes) {
+						parsed.parameterTypes = mergeObjects(parsed.parameterTypes,parameterTypes)
+					}
 				}
 			}
 		}
+		secondPassFunctionsAsAny.linely = linely
+		secondPass(filePath, readFileSync(filePath).toString(), {checkParameterLabels: true}, {width: 1024, height: 768}, secondPassFunctionsAsAny)
 	} catch (error: any) {
 		if (!error.location) {
 			console.log(error)

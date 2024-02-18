@@ -35,7 +35,8 @@ export const customBlockAbilityFunctions = {
 }
 
 export let alreadyParsedPaths: any = {}
-export function handleDependency(path: string) {
+export function handleDependency(path: string): any {
+	const claimedPath = path
 	if (!/\//.test(path))
 		path = `${__dirname}/../../../../core/prelude/${path}`
 	const fileModifiedTime = statSync(path).mtime
@@ -43,7 +44,7 @@ export function handleDependency(path: string) {
 	if (existing && existing.time == fileModifiedTime)
 		return existing.result
 	const hspreLikeAndOtherInfo = getHspreLikeFrom(path, alreadyParsedPaths)
-	alreadyParsedPaths[path] = {result: hspreLikeAndOtherInfo, time: fileModifiedTime}
+	alreadyParsedPaths[path] = {result: hspreLikeAndOtherInfo, time: fileModifiedTime, claimedPath}
 	hspreLikeAndOtherInfo.hspreLike.customRules?.forEach((hsCustomRule: any) => {
 		const name = hsCustomRule.name
 		customRules[name] = true
@@ -214,7 +215,7 @@ function createOperatorBlockUsing(createBlockOfClasses: (allowedClasses: string[
 	return createBlockOfClasses(["operator","conditionalOperator"], createBlockCreationFunctions())
 }
 
-function getHspreLikeFrom(path: string, alreadyParsedPaths: any) {
+function getHspreLikeFrom(path: string, alreadyParsedPaths: any): any {
 	if (path.endsWith('.hopscotch') || path.endsWith('.hspre'))
 		return {hspreLike: JSON.parse(readFileSync(path).toString())}
 	//TODO: hsprez
@@ -226,10 +227,9 @@ function getHspreLikeFrom(path: string, alreadyParsedPaths: any) {
 		binaryOperatorBlockTypes,
 		objectNames,
 		parameterTypes
-	} = hopscotchify(path, {checkParameterLabels: true}, fileFunctions(), alreadyParsedPaths)
+	} = hopscotchify(path, {checkParameterLabels: true}, fileFunctions(), prepAlreadyParsedPathsForHopscotchify())
 	return {
 		hspreLike: hopscotchified,
-		hopscotchified,
 		objectTypes,
 		blockTypes,
 		traitTypes,
@@ -237,6 +237,17 @@ function getHspreLikeFrom(path: string, alreadyParsedPaths: any) {
 		objectNames,
 		parameterTypes
 	}
+}
+
+function prepAlreadyParsedPathsForHopscotchify(): any {
+	const result: any = {}
+	for (const path in alreadyParsedPaths) {
+		if (Object.prototype.hasOwnProperty.call(alreadyParsedPaths, path)) {
+			const element = alreadyParsedPaths[path];
+			result[element.claimedPath] = element.result
+		}
+	}
+	return result
 }
 
 function fileFunctions(): {getHspreLike: (path: string, alreadyParsedPaths: any) => void, read: (path: string) => string} {

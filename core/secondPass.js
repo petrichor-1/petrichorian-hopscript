@@ -5,7 +5,9 @@ const { eventParameterPrototypeForIdentifier } = require('./eventParameterProtot
 const {mergeLists, mergeObjects} = require('./mergeLists.js')
 
 module.exports.secondPass = (path, htnCode, options, stageSize, externalCallbacks) => {
-	const parsed = externalCallbacks.transformParsed(parser.parse(htnCode, {path: path}))
+	let parsed = parser.parse(htnCode, {path: path})
+	if (externalCallbacks.transformParsed)
+		parsed = externalCallbacks.transformParsed(parsed)
 	parsed.dependencies.forEach(dependencyPath => {
 		const handleDepenencyResult = externalCallbacks.handleDependency(dependencyPath)
 		if (!handleDepenencyResult)
@@ -18,6 +20,8 @@ module.exports.secondPass = (path, htnCode, options, stageSize, externalCallback
 		mergeLists(parsed.objectNames, objectNames)
 		parsed.parameterTypes = mergeObjects(parsed.parameterTypes, parameterTypes)
 	})
+	if (externalCallbacks.afterDependencyResolution)
+		externalCallbacks.afterDependencyResolution(parsed)
 	const lines = parsed.lines
 	const Types = parsed.tokenTypes
 

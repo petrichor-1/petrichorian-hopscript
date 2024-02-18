@@ -37,6 +37,7 @@ exports.customBlockAbilityFunctions = {
 };
 exports.alreadyParsedPaths = {};
 function handleDependency(path) {
+    const claimedPath = path;
     if (!/\//.test(path))
         path = `${__dirname}/../../../../core/prelude/${path}`;
     const fileModifiedTime = (0, fs_1.statSync)(path).mtime;
@@ -44,7 +45,7 @@ function handleDependency(path) {
     if (existing && existing.time == fileModifiedTime)
         return existing.result;
     const hspreLikeAndOtherInfo = getHspreLikeFrom(path, exports.alreadyParsedPaths);
-    exports.alreadyParsedPaths[path] = { result: hspreLikeAndOtherInfo, time: fileModifiedTime };
+    exports.alreadyParsedPaths[path] = { result: hspreLikeAndOtherInfo, time: fileModifiedTime, claimedPath };
     hspreLikeAndOtherInfo.hspreLike.customRules?.forEach((hsCustomRule) => {
         const name = hsCustomRule.name;
         customRules[name] = true;
@@ -189,10 +190,9 @@ function getHspreLikeFrom(path, alreadyParsedPaths) {
     if (path.endsWith('.hopscotch') || path.endsWith('.hspre'))
         return { hspreLike: JSON.parse((0, fs_1.readFileSync)(path).toString()) };
     //TODO: hsprez
-    const { hopscotchified, objectTypes, blockTypes, traitTypes, binaryOperatorBlockTypes, objectNames, parameterTypes } = hopscotchify(path, { checkParameterLabels: true }, fileFunctions(), alreadyParsedPaths);
+    const { hopscotchified, objectTypes, blockTypes, traitTypes, binaryOperatorBlockTypes, objectNames, parameterTypes } = hopscotchify(path, { checkParameterLabels: true }, fileFunctions(), prepAlreadyParsedPathsForHopscotchify());
     return {
         hspreLike: hopscotchified,
-        hopscotchified,
         objectTypes,
         blockTypes,
         traitTypes,
@@ -200,6 +200,16 @@ function getHspreLikeFrom(path, alreadyParsedPaths) {
         objectNames,
         parameterTypes
     };
+}
+function prepAlreadyParsedPathsForHopscotchify() {
+    const result = {};
+    for (const path in exports.alreadyParsedPaths) {
+        if (Object.prototype.hasOwnProperty.call(exports.alreadyParsedPaths, path)) {
+            const element = exports.alreadyParsedPaths[path];
+            result[element.claimedPath] = element.result;
+        }
+    }
+    return result;
 }
 function fileFunctions() {
     return {
