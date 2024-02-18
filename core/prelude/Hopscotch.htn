@@ -114,7 +114,6 @@ _defineBlockType method set_color 54 "Set Color" 44 _ "" "HSB(288,57,43)",
 _defineBlockType method set_image 56 "Set Image" 54 _ "" "", 
 _defineBlockType method set_text 40 "Set Text" 53 to "to" "", 44 color "color" "HSB(306,19,20)", 
 _defineBlockType method set_size 51 "Set Size" 42 percent "percent" "110", 
-#TODO: The direct translation from Hopscotch is ambiguous, decide if this is correct
 _defineBlockType method set_width 57 "Set" 42 _ "width" "200", 42 height "height" "200", 
 _defineBlockType method grow_by 48 "Grow by" 42 percent "percent" "50", 
 _defineBlockType method shrink_by 49 "Shrink by" 42 percent "percent" "50", 
@@ -157,6 +156,13 @@ _defineBlockType operator(Event) is_not_pressed 7020 "is Not Pressed" 50 _ "" ""
 _defineBlockType operator(Event) i_get_a_message 7023 "I Get a Message" 53 _ "I get a message" "", 
 _defineBlockType operator(Event) message_matches 7024 "Message Matches" 52 _ "message matches" "", 
 _defineBlockType operator(Event) object_is_cloned 7015 "Object is Cloned"
+#Device rules
+_defineBlockType operator(Event) device_hears_a_loud_noise 7008 "📱 Hears a Loud Noise"
+_defineBlockType operator(Event) device_is_shaken 7008 "📱 is Shaken"
+_defineBlockType operator(Event) is_swiped_right 7011 "is Swiped Right" 50 _ "" "", 
+_defineBlockType operator(Event) is_swiped_left 7012 "is Swiped Left" 50 _ "" "", 
+_defineBlockType operator(Event) is_swiped_up 7013 "is Swiped Up" 50 _ "" "", 
+_defineBlockType operator(Event) is_swiped_down 7014 "is Swiped Down" 50 _ "" "", 
 #Collisions rules
 _defineBlockType operator(Event) bumps 7010 "Bumps" 50 _ "" "", 50 _ "" "", 
 _defineBlockType operator(Event) is_touching 7001 "is Touching" 50 _ "" "", 50 _ "" "", 
