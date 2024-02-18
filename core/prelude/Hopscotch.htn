@@ -14,7 +14,6 @@ _defineObjectType text 1 "text-object.png" 74 55
 #Characters
 _defineObjectType chillanna 29 "chillanna.png" 172.5 172.5
 _defineObjectType cosmic_cody 28 "astro.png" 187.5 187.5
-# TODO: Aliases (I.e Cody) defined in terms of canonical definition
 _defineObjectType star_girl 27 "stargirl.png" 172.5 172.5
 _defineObjectType robo 30 "robo.png" 172.5 172.5
 _defineObjectType monkey 0 "monkey.png" 150 150
@@ -26,9 +25,7 @@ _defineObjectType dino 6 "dino.png" 150 150
 _defineObjectType frog 7 "frog.png" 150 150
 _defineObjectType jody 8 "greenman.png" 150 150
 _defineObjectType mr_moustache 9 "mustache.png" 150 150
-# TODO: Alias
 _defineObjectType space_pod 10 "spacepod.png" 150 150
-# TODO: Alias
 _defineObjectType raccoon 31 "raccoon.png" 172.5 172.5
 _defineObjectType bird 32 "bird.png" 150 150
 _defineObjectType crocodile 3001 "crocodileJaws.png" 288 164
@@ -73,6 +70,18 @@ _defineObjectType rounded_right_triangle 120 "fullSizeRoundedRightTriangle.png" 
 _defineObjectType rounded_arrow 161 "arrowRoundedV3.png" 106 150
 _defineObjectType rounded_square 100 "fullSizeRoundedSquare.png" 150 150
 _defineObjectType tilted_rectangle 110 "fullSizeParallelogramTall.png" 150 150
+#Winter
+_defineObjectType penguin 64 "penguin.png" 150 150
+_defineObjectType reindeer 67 "reindeer.png" 255 255
+_defineObjectType queen_ana 65 "QueenAna.png" 225 225
+_defineObjectType yeti 66 "Yeti.png" 300 300
+_defineObjectType mistle 72 "mistle.png" 129 129
+_defineObjectType polar_bear 70 "PolarBear.png" 300 300
+_defineObjectType gonzalo 73 "snowman.png" 225 225
+_defineObjectType elf 68 "elf.png" 150 150
+_defineObjectType sleigh 71 "Sleigh.png" 300 300
+_defineObjectType snow_globe 69 "SnowGlobe.png" 450 450
+_defineObjectType snowflake 74 "snowflake.png" 45 45
 
 
 
