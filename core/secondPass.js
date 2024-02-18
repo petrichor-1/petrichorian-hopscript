@@ -516,8 +516,12 @@ function createBlockOfClasses(externalCallbacks, options, block, Types, getBlock
 		externalCallbacks.error(new parser.SyntaxError("Should be impossible: Unknown block form", [Types.comment, Types.identifier, Types.comment], block.type, block.location))
 	}
 	const blockType = getBlockTypeNamed(blockName)
-	if (!blockType)
-		return createBlockFromUndefinedType(block, Types, getTraitTypeWithName, validScopes, blockCreationFunctions.undefinedTypeFunctions, externalCallbacks)
+	if (!blockType) {
+		if (allowedBlockClasses.includes("operator"))
+			return maybeCreateVariableFromUndefinedType(block, Types, getTraitTypeWithName, validScopes, blockCreationFunctions.undefinedTypeFunctions, externalCallbacks)
+		blockName = blockName ?? JSON.stringify(block)
+		return externalCallbacks.error(new parser.SyntaxError("Undefined block", "TODO: Object.getOwnPropertyNames(BlockTypes)", blockName, block.location))
+	}
 	if (!allowedBlockClasses.includes(blockType.class.class))
 		externalCallbacks.error(new parser.SyntaxError("Invalid block class", allowedBlockClasses, blockType.class.class, block.location))
 	blockCreationFunctions.setType(result, blockType.type, blockType.description, blockType.class.class)
@@ -578,7 +582,7 @@ function createEventParameterUsing(prototype) {
 	return prototype
 }
 
-function createBlockFromUndefinedType(block, Types, getTraitTypeWithName, validScopes, undefinedTypeFunctions, externalCallbacks) {
+function maybeCreateVariableFromUndefinedType(block, Types, getTraitTypeWithName, validScopes, undefinedTypeFunctions, externalCallbacks) {
 	switch (block.type) {
 	case Types.identifier:
 		const variableDescription = getVariableDescriptionFromPath(block.value, validScopes)
