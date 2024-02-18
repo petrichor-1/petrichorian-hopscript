@@ -5,7 +5,7 @@ const { eventParameterPrototypeForIdentifier } = require('./eventParameterProtot
 const path = require('path')
 
 module.exports.secondPass = (htnPath, htnCode, options, stageSize, externalCallbacks) => {
-	let parsed = parser.parse(htnCode, {path: htnPath})
+	let parsed = parser.parse(htnCode, {grammarSource: htnPath})
 	if (externalCallbacks.transformParsed)
 		parsed = externalCallbacks.transformParsed(parsed)
 	const dependencies = {}
