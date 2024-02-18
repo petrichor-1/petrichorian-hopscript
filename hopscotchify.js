@@ -66,19 +66,11 @@ try {
 				return "end of file"
 			return e
 		}) : [error.expected]
-		const locationFile = function(){
-			for (let i = 0; i < fileMap.length; i++) {
-				let file = fileMap[i]
-				if (file.starts + file.length >= error.location.start.line)
-					return file
-			}
-			return null
-		}()
-		const file = locationFile.file
-		const lineOffset = locationFile.starts
+		const file = inputPath
+		const lineOffset = 0
 		const message = `Syntax error: ${error.message ? error.message : ""} \n\tExpected '${expected.filter(e=>!e.startsWith("[internal]")).join("', '")}', found '${error.found}'\n\tat \x1b[32m${file}:${error.location.start.line-lineOffset}:${error.location.start.column}\x1b[0m`
 		console.log(message)
-		const line = htnCode.split('\n')[error.location.start.line-1]
+		const line = fs.readFileSync(inputPath).toString().split('\n')[error.location.start.line-1]
 		const before = line.substring(0,error.location.start.column-1).replace(/\t/g," ")
 		const problematic = line.substring(error.location.start.column-1,error.location.end.column-1).replace(/\t/g," ")
 		const after = line.substring(error.location.end.column-1, line.length).replace(/\t/g," ")
