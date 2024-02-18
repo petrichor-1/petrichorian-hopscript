@@ -1,8 +1,8 @@
 _unimport "Hopscotch.htn"
-
 #==========================#
 # Definitions of standard  #
 # characters, blocks, etc. #
+#  Non-advanced mode only  #
 #==========================#
 
 #=============
@@ -200,9 +200,7 @@ _defineBlockType operator(String) join 9003 "Join" 57 _ "" "", 57 with "with" ""
 #Color
 #TODO: should be `random` but there is no way to differentiate that and random(_, to:) yet
 _defineBlockType operator(Color) random_color 5000 "Random"
-#TODO: Alias
 _defineBlockType operator(Color) h 5002 "HSB" 42 _ "H" "172", 42 s "S" "86", 42 b "B" "96", 
-#TODO: Alias
 _defineBlockType operator(Color) r 5001 "RGB" 42 _ "R" "34", 42 g "G" "246", 42 b "B" "217", 
 
 
