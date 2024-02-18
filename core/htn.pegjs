@@ -111,6 +111,7 @@ binaryOperatorKeyword
 	/ ">"
 	/ "and"
 	/ "or"
+	/ "%"
 
 binaryOperatorBlockInitialValue
 = number

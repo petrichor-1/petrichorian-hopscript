@@ -91,6 +91,7 @@ function binaryOperatorPriority(operator) {
 		return 2
 	case "/":
 	case "*":
+	case "%":
 		return 3
 	case "^":
 		return 4
