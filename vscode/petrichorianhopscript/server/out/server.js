@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * ------------------------------------------------------------------------------------------ */
 const node_1 = require("vscode-languageserver/node");
 const { secondPass } = require("../../../../core/secondPass.js");
+const { mergeLists, mergeObjects } = require("../../../../core/mergeLists.js");
 const secondPassFunctions = require("./secondPassFuncs");
 const vscode_languageserver_textdocument_1 = require("vscode-languageserver-textdocument");
 const fs_1 = require("fs");
@@ -77,6 +78,30 @@ async function validateTextDocument(textDocument) {
         secondPassFunctionsAsAny.transformParsed = (e) => { e ? latestParsed = e : null; return e; };
         secondPassFunctionsAsAny.linely = linely;
         secondPass(filePath, (0, fs_1.readFileSync)(filePath).toString(), { checkParameterLabels: true }, { width: 1024, height: 768 }, secondPassFunctionsAsAny);
+        for (const path in secondPassFunctions.alreadyParsedPaths) {
+            if (Object.prototype.hasOwnProperty.call(secondPassFunctions.alreadyParsedPaths, path)) {
+                const contents = secondPassFunctions.alreadyParsedPaths[path];
+                const { objectTypes, blockTypes, traitTypes, binaryOperatorBlockTypes, objectNames, parameterTypes, } = contents;
+                if (objectTypes) {
+                    mergeObjects(latestParsed.objectTypes, objectTypes);
+                }
+                if (blockTypes) {
+                    mergeObjects(latestParsed.blockTypes, blockTypes);
+                }
+                if (traitTypes) {
+                    mergeObjects(latestParsed.traitTypes, traitTypes);
+                }
+                if (binaryOperatorBlockTypes) {
+                    mergeObjects(latestParsed.binaryOperatorBlockTypes, binaryOperatorBlockTypes);
+                }
+                if (objectNames) {
+                    mergeLists(latestParsed.objectNames, objectNames);
+                }
+                if (parameterTypes) {
+                    mergeObjects(latestParsed.parameterTypes, parameterTypes);
+                }
+            }
+        }
     }
     catch (error) {
         if (!error.location) {

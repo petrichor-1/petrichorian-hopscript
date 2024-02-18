@@ -17,6 +17,7 @@ import {
 	InsertTextFormat
 } from 'vscode-languageserver/node';
 const {secondPass} = require("../../../../core/secondPass.js")
+const {mergeLists, mergeObjects} = require("../../../../core/mergeLists.js")
 import * as secondPassFunctions from "./secondPassFuncs";
 
 import {
@@ -97,6 +98,37 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 		secondPassFunctionsAsAny.transformParsed = (e: any) =>{e?latestParsed=e:null;return e}
 		secondPassFunctionsAsAny.linely = linely
 		secondPass(filePath, readFileSync(filePath).toString(), {checkParameterLabels: true}, {width: 1024, height: 768}, secondPassFunctionsAsAny)
+		for (const path in secondPassFunctions.alreadyParsedPaths) {
+			if (Object.prototype.hasOwnProperty.call(secondPassFunctions.alreadyParsedPaths, path)) {
+				const contents = secondPassFunctions.alreadyParsedPaths[path];
+				const {
+					objectTypes,
+					blockTypes,
+					traitTypes,
+					binaryOperatorBlockTypes,
+					objectNames,
+					parameterTypes,
+				} = contents
+				if (objectTypes) {
+					mergeObjects(latestParsed.objectTypes,objectTypes)
+				}
+				if (blockTypes) {
+					mergeObjects(latestParsed.blockTypes,blockTypes)
+				}
+				if (traitTypes) {
+					mergeObjects(latestParsed.traitTypes,traitTypes)
+				}
+				if (binaryOperatorBlockTypes) {
+					mergeObjects(latestParsed.binaryOperatorBlockTypes,binaryOperatorBlockTypes)
+				}
+				if (objectNames) {
+					mergeLists(latestParsed.objectNames,objectNames)
+				}
+				if (parameterTypes) {
+					mergeObjects(latestParsed.parameterTypes,parameterTypes)
+				}
+			}
+		}
 	} catch (error: any) {
 		if (!error.location) {
 			console.log(error)

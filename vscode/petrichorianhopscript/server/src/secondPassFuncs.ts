@@ -1,4 +1,4 @@
-import { readFileSync } from "fs"
+import { readFileSync, statSync } from "fs"
 const {HSParameterType} = require("../../../../core/HSParameterType.js")
 const {hopscotchify} = require("../../../../core/hopscotchify.js")
 let customRules: any = {}
@@ -16,7 +16,6 @@ let customBlockDefinitionCallbacks: any = {}
 export function resetSecondPassFunctions() {
 	customBlocks = {}
 	customRules = {}
-	alreadyParsedPaths = {}
 }
 function nop(){}
 function returnEmptyObject(){return {}}
@@ -35,12 +34,16 @@ export const customBlockAbilityFunctions = {
 	}*/
 }
 
-let alreadyParsedPaths: any;
+export let alreadyParsedPaths: any = {}
 export function handleDependency(path: string) {
-	if (alreadyParsedPaths[path])
-		return alreadyParsedPaths[path]
+	if (!/\//.test(path))
+		path = `${__dirname}/../../../../core/prelude/${path}`
+	const fileModifiedTime = statSync(path).mtime
+	const existing = alreadyParsedPaths[path]
+	if (existing && existing.time == fileModifiedTime)
+		return existing.result
 	const hspreLikeAndOtherInfo = getHspreLikeFrom(path, alreadyParsedPaths)
-	alreadyParsedPaths[path] = hspreLikeAndOtherInfo
+	alreadyParsedPaths[path] = {result: hspreLikeAndOtherInfo, time: fileModifiedTime}
 	hspreLikeAndOtherInfo.hspreLike.customRules?.forEach((hsCustomRule: any) => {
 		const name = hsCustomRule.name
 		customRules[name] = true
@@ -212,10 +215,6 @@ function createOperatorBlockUsing(createBlockOfClasses: (allowedClasses: string[
 }
 
 function getHspreLikeFrom(path: string, alreadyParsedPaths: any) {
-	if (alreadyParsedPaths[path])
-		throw "Wut"
-	if (!/\//.test(path))
-		path = `${__dirname}/../../../../core/prelude/${path}`
 	if (path.endsWith('.hopscotch') || path.endsWith('.hspre'))
 		return {hspreLike: JSON.parse(readFileSync(path).toString())}
 	//TODO: hsprez
