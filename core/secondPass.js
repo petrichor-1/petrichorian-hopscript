@@ -18,7 +18,7 @@ module.exports.secondPass = (htnPath, htnCode, options, stageSize, externalCallb
 		dependencies[dependencyPath] = externalCallbacks.handleDependency(dependencyPath)
 	})
 	if (externalCallbacks.afterDependencyResolution)
-		externalCallbacks.afterDependencyResolution(parsed)
+		externalCallbacks.afterDependencyResolution(parsed, dependencies)
 
 	function getBlockTypeNamed(name) {
 		if (parsed.blockTypes[name])

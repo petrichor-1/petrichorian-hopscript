@@ -14,6 +14,10 @@ let latestParsed;
 let latestLines;
 let lineStates = [];
 let StateLevels;
+let latestBinaryOperatorBlockTypes = {};
+let latestBlockTypes = {};
+let latestObjectTypes = {};
+let latestParameterTypes = {};
 function linely(currentState, newStateLevels, line) {
     StateLevels = newStateLevels;
     const lineNumber = line.location.start.line;
@@ -76,31 +80,45 @@ async function validateTextDocument(textDocument) {
         secondPassFunctions.resetSecondPassFunctions();
         const secondPassFunctionsAsAny = secondPassFunctions;
         secondPassFunctionsAsAny.error = errorFunc;
-        secondPassFunctionsAsAny.afterDependencyResolution = (parsed) => {
-            if (parsed)
-                latestParsed = parsed;
-            for (const path in secondPassFunctions.alreadyParsedPaths) {
-                if (Object.prototype.hasOwnProperty.call(secondPassFunctions.alreadyParsedPaths, path)) {
-                    const contents = secondPassFunctions.alreadyParsedPaths[path].result;
-                    const { objectTypes, blockTypes, traitTypes, binaryOperatorBlockTypes, objectNames, parameterTypes, } = contents;
-                    if (objectTypes) {
-                        parsed.objectTypes = mergeObjects(parsed.objectTypes, objectTypes);
+        secondPassFunctionsAsAny.afterDependencyResolution = (parsed, dependencies) => {
+            if (!parsed)
+                return;
+            latestParsed = parsed;
+            latestBinaryOperatorBlockTypes = {};
+            latestBlockTypes = {};
+            latestObjectTypes = {};
+            latestParameterTypes = {};
+            function addFile(fileResults) {
+                for (const binaryOperatorKeyword in fileResults.binaryOperatorBlockTypes) {
+                    if (Object.prototype.hasOwnProperty.call(fileResults.binaryOperatorBlockTypes, binaryOperatorKeyword)) {
+                        const binaryOperatorBlock = fileResults.binaryOperatorBlockTypes[binaryOperatorKeyword];
+                        latestBinaryOperatorBlockTypes[binaryOperatorKeyword] = binaryOperatorBlock;
                     }
-                    if (blockTypes) {
-                        parsed.blockTypes = mergeObjects(parsed.blockTypes, blockTypes);
+                }
+                for (const blockName in fileResults.blockTypes) {
+                    if (Object.prototype.hasOwnProperty.call(fileResults.blockTypes, blockName)) {
+                        const blockType = fileResults.blockTypes[blockName];
+                        latestBlockTypes[blockName] = blockType;
                     }
-                    if (traitTypes) {
-                        parsed.traitTypes = mergeObjects(parsed.traitTypes, traitTypes);
+                }
+                for (const objectName in fileResults.objectTypes) {
+                    if (Object.prototype.hasOwnProperty.call(fileResults.objectTypes, objectName)) {
+                        const objectType = fileResults.objectTypes[objectName];
+                        latestObjectTypes[objectName] = objectType;
                     }
-                    if (binaryOperatorBlockTypes) {
-                        parsed.binaryOperatorBlockTypes = mergeObjects(parsed.binaryOperatorBlockTypes, binaryOperatorBlockTypes);
+                }
+                for (const parameterTypeKey in fileResults.parameterTypes) {
+                    if (Object.prototype.hasOwnProperty.call(fileResults.parameterTypes, parameterTypeKey)) {
+                        const parameterType = fileResults.parameterTypes[parameterTypeKey];
+                        latestParameterTypes[parameterTypeKey] = parameterType;
                     }
-                    if (objectNames) {
-                        mergeLists(parsed.objectNames, objectNames);
-                    }
-                    if (parameterTypes) {
-                        parsed.parameterTypes = mergeObjects(parsed.parameterTypes, parameterTypes);
-                    }
+                }
+            }
+            addFile(parsed);
+            for (const path in dependencies) {
+                if (Object.prototype.hasOwnProperty.call(dependencies, path)) {
+                    const fileResults = dependencies[path];
+                    addFile(fileResults);
                 }
             }
         };
@@ -146,9 +164,9 @@ function completionsForEmptyTopLevelLine() {
     ];
     if (!latestParsed)
         return completions;
-    for (const name in latestParsed.objectTypes) {
-        if (Object.prototype.hasOwnProperty.call(latestParsed.objectTypes, name)) {
-            const objectType = latestParsed.objectTypes[name];
+    for (const name in latestObjectTypes) {
+        if (Object.prototype.hasOwnProperty.call(latestObjectTypes, name)) {
+            const objectType = latestObjectTypes[name];
             completions.push({
                 label: name + ` ${name}:`,
                 kind: node_1.CompletionItemKind.Class,
@@ -255,7 +273,7 @@ function getNameOfFirstUnclosedParenthesisBlockIn(str) {
 function completionsForInsideParenthesisBlockParentheses(line, cursorCharacter) {
     const beforeCursor = line.substring(0, cursorCharacter);
     const { blockName, parameters } = getNameOfFirstUnclosedParenthesisBlockIn(beforeCursor);
-    const maybeBlock = latestParsed.blockTypes[blockName];
+    const maybeBlock = latestBlockTypes[blockName];
     if (!maybeBlock)
         return [];
     if ((maybeBlock.parameters?.length || 0) < parameters.length)
@@ -278,7 +296,7 @@ function completionsForInsideParenthesisBlockParentheses(line, cursorCharacter) 
                 insertText: insertText
             }];
     }
-    const maybeTypes = latestParsed.parameterTypes[relevantParameter.type];
+    const maybeTypes = latestParameterTypes[relevantParameter.type];
     return completionsForBlocksOfClasses(["operator", "conditionalOperator"], maybeTypes);
 }
 function completionsForCustomRules() {
@@ -348,16 +366,16 @@ documents.listen(connection);
 connection.listen();
 function completionsForBlocksOfClasses(classes, restrictToTypes = undefined) {
     const completions = [];
-    for (const name in latestParsed.blockTypes) {
-        if (Object.prototype.hasOwnProperty.call(latestParsed.blockTypes, name)) {
-            const blockType = latestParsed.blockTypes[name];
+    for (const name in latestBlockTypes) {
+        if (Object.prototype.hasOwnProperty.call(latestBlockTypes, name)) {
+            const blockType = latestBlockTypes[name];
             if (!classes.includes(blockType.class.class))
                 continue;
             if (restrictToTypes && !restrictToTypes.includes(blockType.class.dataType.value))
                 continue;
             let label = name;
             let snippet = name;
-            const maybeBinaryOperator = name == "set" ? "=" : Object.getOwnPropertyNames(latestParsed.binaryOperatorBlockTypes).find((e) => latestParsed.binaryOperatorBlockTypes[e] == name);
+            const maybeBinaryOperator = name == "set" ? "=" : Object.getOwnPropertyNames(latestBinaryOperatorBlockTypes).find((e) => latestBinaryOperatorBlockTypes[e] == name);
             if (maybeBinaryOperator) {
                 snippet = `\${1} ${maybeBinaryOperator} \${2}`;
             }
