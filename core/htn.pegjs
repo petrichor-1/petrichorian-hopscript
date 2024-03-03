@@ -328,7 +328,7 @@ importStatement
 	}
 
 internalDefinition
-	= objectTypeDefinition / blockTypeDefinition / binaryOperatorBlockTypeDefinition / traitTypeDefinition / parameterTypeDefinition / unimportStatement / setUserVariablesEnabledStatement / setRequiresBetaEditorStatement
+	= objectTypeDefinition / blockTypeDefinition / binaryOperatorBlockTypeDefinition / traitTypeDefinition / parameterTypeDefinition / unimportStatement / setRequiresBetaEditorStatement
 
 unimportStatement
 	= "_unimport " value:string
@@ -421,10 +421,4 @@ setRequiresBetaEditorStatement
 	= "_setRequiresBetaEditor " value:("true"/"false")
 	{
 		requiresBetaEditor = value == "true"
-	}
-
-setUserVariablesEnabledStatement
-	= "_setUserVariablesEnabled " value:("true"/"false")
-	{
-		userVariablesEnabled = value == "true"
 	}
