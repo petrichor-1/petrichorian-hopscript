@@ -1,4 +1,4 @@
-#include default.htn
+Import "default.htn"
 
 square one(x_position: 512, y_position: 384):
 	outer = "HELLO"
