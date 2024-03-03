@@ -317,7 +317,9 @@ function createBlockCreationFunctionsFor(project, parametersKey) {
 			getOrAddObjectVariableNamed: getOrAddObjectVariableNamed.bind(null,project),
 			createSelfTrait: createSelfTrait,
 			createGameTrait: createGameTrait,
+			createUserTrait: createUserTrait,
 			getOrAddGameVariableNamed: getOrAddGameVariableNamed.bind(null,project),
+			getOrAddUserVariableNamed: getOrAddUserVariableNamed.bind(null,project),
 			createLocalVariableNamed: createLocalVariableNamed,
 			createOriginalObjectTrait: createOriginalObjectTrait,
 			createObjectTrait: createObjectTrait,
@@ -385,6 +387,15 @@ function createGameTrait(trait) {
 	}
 }
 
+function createUserTrait(trait) {
+	return {
+		HSTraitObjectParameterTypeKey: 8007, //HSBlockType.User
+		HSTraitTypeKey: trait.type,
+		description: trait.description,
+		HSTraitIDKey: randomUUID(),
+	}
+}
+
 function createObjectTrait(trait) {
 	return {
 		HSTraitObjectParameterTypeKey: 8000, //HSBlockType.Object
@@ -411,6 +422,20 @@ function getOrAddObjectVariableNamed(project, name) {
 	const hsVariable = {
 		name: hsName,
 		type: 8000, //HSBlockType.Object
+		objectIdString: randomUUID()
+	}
+	project.variables.push(hsVariable)
+	return hsVariable
+}
+
+function getOrAddUserVariableNamed(project, name) {
+	const hsName = unSnakeCase(name)
+	const maybeExistingVariable = project.variables.find(variable=>variable.name == hsName)
+	if (maybeExistingVariable)
+		return maybeExistingVariable
+	const hsVariable = {
+		name: hsName,
+		type: 8007, //HSBlockType.User
 		objectIdString: randomUUID()
 	}
 	project.variables.push(hsVariable)

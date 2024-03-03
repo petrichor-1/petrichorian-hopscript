@@ -436,7 +436,6 @@ function handleWhenBlock(whenBlock, Types, validScopes, options, currentState, s
 		ability: ability
 	})
 }
-
 function addBeforeGameStartsBlockToAbility(externalCallbacks, line, Types, validScopes, options, ability, getBlockTypeNamed, getBinaryOperatorBlockWithKeyword, getTraitTypeWithName) {
 	externalCallbacks.createMethodBlock(createBlockOfClasses.bind(null,externalCallbacks,options,line.value,Types,getBlockTypeNamed,getBinaryOperatorBlockWithKeyword,getTraitTypeWithName,validScopes), ability)
 }
@@ -646,6 +645,19 @@ function maybeCreateVariableFromUndefinedType(block, Types, getTraitTypeWithName
 			const {objectDefinitionCallback, hsDatum} = undefinedTypeFunctions.createObjectVariableReferenceTo(objectHsVariable)
 			variableDescription.fullScopeObject.whenDefined(objectDefinitionCallback)
 			return hsDatum
+		case "User":
+			if (maybeTraits) {
+				const trait = maybeTraits.User
+				if (trait) {
+					return undefinedTypeFunctions.createUserTrait(trait)
+				}
+			}
+			const userHsVariable = undefinedTypeFunctions.getOrAddUserVariableNamed(variableDescription.name)
+			return {
+				type: userHsVariable.type,
+				variable: userHsVariable.objectIdString,
+				description: "Variable", // Correct
+			}
 		default:
 			externalCallbacks.error(new parser.SyntaxError("Should be impossible: Unknown variable scope", validScopes.map(e=>e.path), variableDescription.scope, block.location))
 		}
