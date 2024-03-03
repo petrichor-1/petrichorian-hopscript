@@ -21,6 +21,8 @@
 	let objectNames = []
 	let parameterTypes = {}
 	let dependencies = ["Hopscotch.htn"] // Hopscotch.htn is implicitly imported
+	let userVariablesEnabled = false
+	let requiresBetaEditor
 }
 
 file
@@ -36,6 +38,8 @@ file
 			objectNames: objectNames,
 			parameterTypes: parameterTypes,
 			dependencies: dependencies,
+			userVariablesEnabled: userVariablesEnabled,
+			requiresBetaEditor: requiresBetaEditor,
 		}
 	}
 
@@ -324,7 +328,7 @@ importStatement
 	}
 
 internalDefinition
-	= objectTypeDefinition / blockTypeDefinition / binaryOperatorBlockTypeDefinition / traitTypeDefinition / parameterTypeDefinition / unimportStatement
+	= objectTypeDefinition / blockTypeDefinition / binaryOperatorBlockTypeDefinition / traitTypeDefinition / parameterTypeDefinition / unimportStatement / setUserVariablesEnabledStatement / setRequiresBetaEditorStatement
 
 unimportStatement
 	= "_unimport " value:string
@@ -411,4 +415,16 @@ blockClass
 	/ "conditionalControl"
 	{
 		return {class:"conditionalControl"}
+	}
+
+setRequiresBetaEditorStatement
+	= "_setRequiresBetaEditor " value:("true"/"false")
+	{
+		requiresBetaEditor = value == "true"
+	}
+
+setUserVariablesEnabledStatement
+	= "_setUserVariablesEnabled " value:("true"/"false")
+	{
+		userVariablesEnabled = value == "true"
 	}
