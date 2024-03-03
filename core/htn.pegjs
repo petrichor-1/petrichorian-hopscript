@@ -13,6 +13,7 @@
 		whenBlock: "whenBlock",
 		object: "object",
 		customRule: "custom_rule",
+		scene: "scene",
 	}
 	let objectTypes = {}
 	let blockTypes = {}
@@ -51,7 +52,7 @@ line
 		return contents
 	}
 lineContents
-	= indentationWhitespace:nonNewlineWhitespace* block:(importStatement / object / block / internalDefinition)
+	= indentationWhitespace:nonNewlineWhitespace* block:(scene / importStatement / object / block / internalDefinition)
 	{
 		if (!block)
 			return null
@@ -300,6 +301,15 @@ object "object"
 			objectType: type,
 			name: name,
 			attributes: attributes
+		}
+	}
+
+scene "Scene"
+	= "Scene" whitespace+ name:identifier whitespace* ":"
+	{
+		return {
+			type: Types.scene,
+			name: name,
 		}
 	}
 

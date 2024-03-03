@@ -1,0 +1,3 @@
+Scene petty's_cool_scene:
+	text text(x_position: 512, y_position: 384, text: "Scenes test for hopscript"):
+		#By Petrichor

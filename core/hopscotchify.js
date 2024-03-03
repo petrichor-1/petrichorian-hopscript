@@ -23,12 +23,7 @@ module.exports.hopscotchify = (htnPath, options, fileFunctions, alreadyParsedPat
 		customRuleInstances: [],
 		rules: [],
 		eventParameters: [],
-		scenes: [
-			{
-				name: "Scene 1",
-				objects: [],
-			},
-		],
+		scenes: [],
 	}
 
 	let customRules = {}
@@ -105,6 +100,7 @@ module.exports.hopscotchify = (htnPath, options, fileFunctions, alreadyParsedPat
 		linely:  ()=>{},
 		isThereAlreadyADefinedCustomRuleNamed: isThereAlreadyADefinedCustomRuleNamed,
 		setRequiresBetaEditor: (value)=>{project.requires_beta_editor = value},
+		createSceneNamed: createScene.bind(null, project),
 	})
 	return {
 		hopscotchified,
@@ -511,4 +507,13 @@ function createCustomRuleInstanceFor(hsCustomRule, callbackForWhenRuleIsDefined)
 		result.parameters.push(newHsParameter)
 	})
 	return result
+}
+
+function createScene(project, sceneName) {
+	const hsScene = {
+		name: unSnakeCase(sceneName),
+		objects: [],
+	}
+	project.scenes.push(hsScene)
+	return hsScene
 }

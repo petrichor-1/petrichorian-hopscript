@@ -101,12 +101,13 @@ module.exports.secondPass = (htnPath, htnCode, options, stageSize, externalCallb
 	let currentIndendationLevel = 0
 
 	const StateLevels = {
+		topLevel: -1,
 		inScene: 0,
 		inObjectOrCustomRule: 1,
 		inAbility: 2,
 	}
 	let stateStack = [{
-		level: StateLevels.inScene
+		level: StateLevels.topLevel
 	}]
 	function currentState() {
 		return stateStack[stateStack.length-1]
@@ -135,6 +136,28 @@ module.exports.secondPass = (htnPath, htnCode, options, stageSize, externalCallb
 		}
 		externalCallbacks.linely(currentState(), StateLevels, line)
 		switch (currentState().level) {
+		case StateLevels.topLevel:
+			switch (line.value.type) {
+			case Types.comment:
+				return; // Don't know what level this is, but no matter what this can't be included in the final result
+			case Types.scene:
+				const sceneName = line.value.name
+				if (sceneName.type != Types.identifier)
+					return externalCallbacks.error(new parser.SyntaxError("Should be impossible: Unknown type for scene name", Types.identifier, sceneName.type, sceneName.location))
+				const hsScene = externalCallbacks.createSceneNamed(sceneName.value)
+				stateStack.push({
+					level: StateLevels.inScene,
+					scene: hsScene
+				})
+				return
+			default:
+				stateStack.push({
+					level: StateLevels.inScene,
+					scene: externalCallbacks.createSceneNamed("Scene 1")
+				})
+				// This means that the top level is actually scene level, so fall through to that case.
+			}
+			// Intentionally fall through
 		case StateLevels.inScene:
 			switch (line.value.type) {
 			case Types.object:
