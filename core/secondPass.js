@@ -6,6 +6,8 @@ const path = require('path')
 
 module.exports.secondPass = (htnPath, htnCode, options, stageSize, externalCallbacks) => {
 	let parsed = parser.parse(htnCode, {grammarSource: htnPath})
+	if (parsed.requiresBetaEditor && externalCallbacks.setRequiresBetaEditor)
+		externalCallbacks.setRequiresBetaEditor(true)
 	if (externalCallbacks.transformParsed)
 		parsed = externalCallbacks.transformParsed(parsed)
 	const dependencies = {}

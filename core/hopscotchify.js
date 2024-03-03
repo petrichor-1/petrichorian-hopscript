@@ -74,6 +74,8 @@ module.exports.hopscotchify = (htnPath, options, fileFunctions, alreadyParsedPat
 				customBlockDefinitionCallbacks[name] = null
 				customBlocks[name] = hsCustomBlock
 			})
+			if (hspreLikeAndOtherInfo.hspreLike.requires_beta_editor !== undefined)
+				project.requires_beta_editor = hspreLikeAndOtherInfo.hspreLike.requires_beta_editor
 			return hspreLikeAndOtherInfo
 		},
 		customBlockAbilityFunctions: makeCustomBlockAbilityFunctions(),
@@ -101,7 +103,8 @@ module.exports.hopscotchify = (htnPath, options, fileFunctions, alreadyParsedPat
 			return parsed
 		},
 		linely:  ()=>{},
-		isThereAlreadyADefinedCustomRuleNamed: isThereAlreadyADefinedCustomRuleNamed
+		isThereAlreadyADefinedCustomRuleNamed: isThereAlreadyADefinedCustomRuleNamed,
+		setRequiresBetaEditor: (value)=>{project.requires_beta_editor = value},
 	})
 	return {
 		hopscotchified,
