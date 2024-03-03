@@ -1,0 +1,10 @@
+Import "Advanced.htn"
+
+text text(x_position: 512, y_position: 384, text: "Advanced mode hopscript test"):
+	When game_starts:
+		increase(User.count, by: 1)
+		show_popup(message: join("This project has been played ", with: join(User.count, with: " times.")))
+		play_note(50, rhythm: 0.25)
+		repeat_forever:
+			set_text(to: join("The current date is: ", with: join(User.month, with: join("/", with: join(User.day, with: join("/", with: User.year % 100))))),
+				color: h(0,s:0,b:0))
