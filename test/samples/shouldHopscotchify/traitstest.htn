@@ -1,0 +1,24 @@
+Import "default.htn"
+
+square one(x_position: 512, y_position: 384):
+	outer = "HELLO"
+	When game_is_playing:
+		Game.pwidth = Self.width
+		Game.pheight = Self.height
+		Game.x = Self.x_position
+		Game.y = Self.y_position
+		Game.twopwidth = two.width
+		Game.twopheight = two.height
+		Game.twox = two.x_position
+		Game.twoy = two.y_position
+		set_background(color: h(100, s: 100, b: 100))
+	When absolute_value(Self.x_position - two.x_position) < ((Self.width + two.width) / 2) and absolute_value(Self.y_position - two.y_position) < (Self.height + two.height) / 2:
+		width = Self.width
+		height = Self.height
+		width = two.width
+		height = two.height
+		set_background(color: h(200, s: 100, b: 100))
+
+square two(x_position: 290, y_position: 159):
+	When game_is_playing:
+		custom_block go_to_finger

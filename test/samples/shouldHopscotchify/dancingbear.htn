@@ -1,0 +1,5 @@
+bear Bear:
+	When game_starts:
+		repeat_forever:
+			change_pose
+			wait(seconds: 0.1)

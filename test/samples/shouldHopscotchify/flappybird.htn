@@ -1,0 +1,102 @@
+square bottom_pipe(x_position: 200, y_position: 200):
+	When game_starts:
+		set_z_index(1)
+		create_a_clone_of_this_object
+		create_a_clone_of_this_object
+		set_width(150, height: 300)
+		set_color(h(119.4, s: 53.6, b: 71))
+		set_background(color: h(211.6, s: 48.7, b: 88.6))
+		speed = 10
+		repeat_forever:
+			check_once_if(bird.lives_count > 0):
+				increase(Game.score, by: 1)
+				increase(speed, by: 0.1)
+			set_position(to_x: Game.width + Self.width / 2, y: random(0, to: Self.height / 2))
+			broadcast_message(named: "Reset pipes")
+			repeat(times: (Self.x_position + Self.width) / speed):
+				set_position(to_x: Self.x_position - speed, y: Self.y_position)
+	When object_is_cloned:
+		set_z_index(1)
+		check_if_else(Self.clone_index == 1):
+			set_width(170, height: 50)
+			set_color(h(119.4, s: 53.6, b: 71))
+			repeat_forever:
+				set_position(to_x: Original_object.x_position, y: Original_object.y_position + Self.height / 2 + Original_object.height / 2)
+		else:
+			set_color(h(100, s: 53.6, b:81))
+			set_width(10, height: 45)
+			repeat_forever:
+				set_position(to_x: Original_object.x_position - 79, y: Original_object.y_position + Self.height / 2 + Original_object.height / 2)
+	custom_rule kill_bird_on_contact:
+		When absolute_value(Self.x_position - bird.x_position) < (Self.width + bird.width) / 2 - 10 and absolute_value(Self.y_position - bird.y_position) < (Self.height + bird.height) / 2 - 10:
+			broadcast_message(named: "Die")
+
+square top_pipe(x_position: 200, y_position: 200):
+	gap_size = "Nonsensical"
+	When game_starts:
+		set_z_index(1)
+		create_a_clone_of_this_object
+		create_a_clone_of_this_object
+		set_width(150, height: 300)
+		set_color(h(119.4, s: 53.6, b: 71))
+		repeat_forever:
+			set_position(to_x: bottom_pipe.x_position, y: max(bottom_pipe.y_position + bottom_pipe.height / 2 + Self.height / 2 + gap_size, Game.height - Self.height/2))
+	When object_is_cloned:
+		set_z_index(1)
+		check_if_else(Self.clone_index == 1):
+			set_width(170, height: 50)
+			set_color(h(119.4, s: 53.6, b: 71))
+			repeat_forever:
+				set_position(to_x: Original_object.x_position, y: Original_object.y_position - Self.height / 2 - Original_object.height / 2)
+		else:
+			set_color(h(100, s: 53.6, b:81))
+			set_width(10, height: 300)
+			repeat_forever:
+				set_position(to_x: Original_object.x_position - 69, y: Original_object.y_position)
+	When i_get_a_message("Reset pipes"):
+		check_once_if(Self.clone_index == 0):
+			gap_size = random(300, to: 500)
+	custom_rule kill_bird_on_contact
+
+bird bird(x_position: 200, y_position: 200):
+	When game_starts:
+		set_z_index(2)
+		Self.lives_count = 4
+		set_position(to_x: 100, y: Game.height * 0.66)
+	When is_tapped(Screen):
+		Self.vertical_velocity = 5
+	When game_is_playing:
+		increase(Self.vertical_velocity, by: -0.5)
+		set_position(to_x: Self.x_position, y: max(0,Self.y_position + Self.vertical_velocity))
+	When game_is_playing:
+		set_angle(max(min(Self.vertical_velocity, 10), -10) * 3)
+	When i_get_a_message("Die"):
+		check_once_if(Self.lives_count > 0):
+			increase(Self.lives_count, by: -1)
+			check_once_if(Self.lives_count <= 0):
+				set_text(to: "Game over!", color: h(0,s:0,b:0))
+				repeat_forever:
+					Self.vertical_velocity = 0
+					set_position(to_x: Game.width / 2, y: Game.height / 2)
+			wait(seconds: 2)
+
+bird lives_display(x_position: 200, y_position: 200):
+	When Self.total_clones < bird.lives_count:
+		create_a_clone_of_this_object
+	When game_is_playing:
+		set_z_index(3)
+		set_size(percent: 50)
+		wait(seconds: 0)
+		set_origin(to_x: 16 + (Self.width + 8) * Self.clone_index, y: Game.height - 64 - Self.height)
+		repeat_forever:
+			check_if_else(bird.lives_count > Self.clone_index):
+				set_invisibility(percent: 5)
+			else:
+				set_invisibility(percent: 100)
+
+monkey score_shower(x_position: 200, y_position: 200):
+	When game_starts:
+		set_z_index(3)
+	When game_is_playing:
+		set_text(to: join("Score: ", with: Game.score), color: h(0,s:0,b:0))
+		set_origin(to_x: Game.width - 8 - Self.width, y: Game.height - 64 - Self.height)
