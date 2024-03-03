@@ -1,0 +1,40 @@
+#==========================#
+# Definitions of advanced  #
+# characters, blocks, etc. #
+#    Advanced mode only    #
+#==========================#
+
+#================
+# Advanced Blocks
+#================
+# Looks and sounds
+_defineBlockType method set_tempo 66 "Set Tempo" 42 _ "" "120", 
+_defineBlockType method set_instrument 67 "Set Instrument" 61 _ "" "ocarina", 
+_defineBlockType method play_note 65 "Play Note" 60 _ "" "60", 59 rhythm "Rhythm" "0.25", 
+# Drawing
+_defineBlockType method set_trail_opacity 73 "Set Trail Opacity" 42 percent "percent" "50", 
+_defineBlockType method set_trail_cap 63 "Set Trail Cap" 63 to "to" "Round", 
+# Game rules
+_defineBlockType operator(Event) touch_ends 7022 "Touch Ends"
+# Collisions rules
+_defineBlockType operator(Event) is_not_touching 7025 "is Not Touching" 50 _ "" "", 50 _ "is not touching" "", 
+
+
+#===============
+# Define traits
+#===============
+# Advanced object traits
+_defineTraitType String text 2015 "Text" [Object, ]
+_defineTraitType Number tempo 2016 "Tempo" [Object, ]
+_defineTraitType Instrument instrment 2017 "Instrument" [Object, ]
+# Advanced user traits
+_defineTraitType String username 2500 "Username" [User, ]
+_defineTraitType Number time 2501 "Time" [User, ]
+_defineTraitType Number year 2502 "Year" [User, ]
+_defineTraitType Number month 2503 "Month" [User, ]
+_defineTraitType Number day 2504 "Day" [User, ]
+_defineTraitType Number hour 2505 "Hour" [User, ]
+_defineTraitType Number minute 2506 "Minute" [User, ]
+_defineTraitType Number second 2507 "Second" [User, ]
+
+_setRequiresBetaEditor true
