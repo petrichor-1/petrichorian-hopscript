@@ -101,12 +101,12 @@ module.exports.secondPass = (htnPath, htnCode, options, stageSize, externalCallb
 	let currentIndendationLevel = 0
 
 	const StateLevels = {
-		topLevel: 0,
+		inScene: 0,
 		inObjectOrCustomRule: 1,
 		inAbility: 2,
 	}
 	let stateStack = [{
-		level: StateLevels.topLevel
+		level: StateLevels.inScene
 	}]
 	function currentState() {
 		return stateStack[stateStack.length-1]
@@ -135,7 +135,7 @@ module.exports.secondPass = (htnPath, htnCode, options, stageSize, externalCallb
 		}
 		externalCallbacks.linely(currentState(), StateLevels, line)
 		switch (currentState().level) {
-		case StateLevels.topLevel:
+		case StateLevels.inScene:
 			switch (line.value.type) {
 			case Types.object:
 				const object = line.value
