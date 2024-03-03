@@ -68,7 +68,7 @@ try {
 		}) : [error.expected]
 		const file = error.location.source
 		const lineOffset = 0
-		const message = `Syntax error: ${error.message ? error.message : ""} \n\tExpected '${expected.filter(e=>!e.startsWith("[internal]")).join("', '")}', found '${error.found}'\n\tat \x1b[32m${file}:${error.location.start.line-lineOffset}:${error.location.start.column}\x1b[0m`
+		const message = `Syntax error: ${error.message ? error.message : ""} \n\tExpected '${expected.filter(e=>!`${e}`.startsWith("[internal]")).join("', '")}', found '${error.found}'\n\tat \x1b[32m${file}:${error.location.start.line-lineOffset}:${error.location.start.column}\x1b[0m`
 		console.log(message)
 		const line = fs.readFileSync(file).toString().split('\n')[error.location.start.line-1]
 		const before = line.substring(0,error.location.start.column-1).replace(/\t/g," ")
