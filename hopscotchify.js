@@ -55,7 +55,7 @@ try {
 	console.log(JSON.stringify(hopscotchified))
 } catch (error) {
 	try {
-		const expected = error.expected.map ? error.expected.map(e => {
+		const expected = error.expected?.map ? error.expected.map(e => {
 			if (e.text)
 				return e.text
 			if (e.description)
