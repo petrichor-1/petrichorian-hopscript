@@ -146,6 +146,7 @@ module.exports.secondPass = (htnPath, htnCode, options, stageSize, externalCallb
 		for (let i = newIndentationLevel; i < currentIndendationLevel; i++) {
 			latestDiscardedState = stateStack.pop()
 		}
+		currentIndendationLevel = newIndentationLevel
 		externalCallbacks.linely(currentState(), StateLevels, line)
 		switch (currentState().level) {
 		case StateLevels.topLevel:
@@ -439,7 +440,6 @@ module.exports.secondPass = (htnPath, htnCode, options, stageSize, externalCallb
 		default:
 			externalCallbacks.error("Unknown state")
 		}
-		currentIndendationLevel = newIndentationLevel
 	})
 	if (externalCallbacks.hasUndefinedCustomRules())
 		externalCallbacks.error(new parser.SyntaxError("Undefined custom rule", "TODO: undefinedCustomRuleNames", ""))
