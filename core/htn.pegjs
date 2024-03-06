@@ -295,7 +295,7 @@ nonNewlineWhitespace "non-newline whitespace"
 	{ return c }
 
 object "object"
-	= type:objectTypeName whitespace+ name:identifier whitespace* attributes:objectAttributes? whitespace* ":"
+	= type:objectTypeName nonNewlineWhitespace+ name:identifier whitespace* attributes:objectAttributes? whitespace* ":"
 	{
 		const maybeExtant = objectNames.find(e=>{
 			return e.location.source == name.location.source
