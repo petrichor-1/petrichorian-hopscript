@@ -307,7 +307,8 @@ object "object"
 			type: Types.object,
 			objectType: type,
 			name: name,
-			attributes: attributes
+			attributes: attributes,
+			location: location(),
 		}
 	}
 
@@ -317,6 +318,7 @@ scene "Scene"
 		return {
 			type: Types.scene,
 			name: name,
+			location: location(),
 		}
 	}
 
@@ -330,7 +332,7 @@ objectAttributes "object attributes"
 objectAttribute "object attribute"
 	= name:identifier whitespace* ":" whitespace* value:(number / string)
 	{
-		return {name:name,value:value}
+		return {name:name,value:value, location: location()}
 	}
 
 objectTypeName "object type name"
