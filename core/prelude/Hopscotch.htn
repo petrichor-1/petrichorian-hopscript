@@ -285,7 +285,7 @@ _defineParameterType 50 Object
 _defineParameterType 51 Sound 
 _defineParameterType 52 Boolean Event 
 _defineParameterType 53 String Number 
-_defineParameterType 54 Object 
+_defineParameterType 54 ObjectType 
 _defineParameterType 55 String 
 _defineParameterType 56 Scene 
 _defineParameterType 57 Number 

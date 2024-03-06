@@ -346,6 +346,7 @@ function createBlockCreationFunctionsFor(project, parametersKey, whenSceneIsDefi
 			createNextSceneBlock: createNextSceneBlock,
 			createPreviousSceneBlock: createPreviousSceneBlock,
 			createReferenceToSceneNamed: createReferenceToSceneNamed.bind(null,whenSceneIsDefinedWithName),
+			createSetImageBlockForHSObjectType: createSetImageBlockForHSObjectType,
 		}
 	}
 }
@@ -566,4 +567,12 @@ function createReferenceToSceneNamed(whenSceneIsDefinedWithName, name) {
 		hsBlock.scene = hsScene.id
 	})
 	return hsBlock
+}
+
+function createSetImageBlockForHSObjectType(type) {
+	return {
+		type: type,
+		name: "", // Both of these should be empty strings
+		description: "",
+	}
 }

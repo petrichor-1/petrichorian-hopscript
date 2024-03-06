@@ -1,0 +1,3 @@
+text text(text: "Set image test for hopscript"):
+	When game_starts:
+		set_image(toucan)
