@@ -20,6 +20,7 @@
 	let binaryOperatorBlockTypes = {}
 	let traitTypes = {}
 	let objectNames = []
+	let sceneNames = []
 	let parameterTypes = {}
 	let dependencies = ["Hopscotch.htn"] // Hopscotch.htn is implicitly imported
 	let userVariablesEnabled = false
@@ -41,6 +42,7 @@ file
 			dependencies: dependencies,
 			userVariablesEnabled: userVariablesEnabled,
 			requiresBetaEditor: requiresBetaEditor,
+			sceneNames: sceneNames,
 		}
 	}
 
@@ -315,6 +317,7 @@ object "object"
 scene "Scene"
 	= "Scene" whitespace+ name:identifier whitespace* ":"
 	{
+		sceneNames.push(name.value)
 		return {
 			type: Types.scene,
 			name: name,

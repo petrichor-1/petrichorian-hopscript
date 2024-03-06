@@ -82,10 +82,22 @@ module.exports.secondPass = (htnPath, htnCode, options, stageSize, externalCallb
 		}
 		return null
 	}
+	function doesSceneExistWithName(name) {
+		if (parsed.sceneNames.includes(name))
+			return true
+		for (const path in dependencies) {
+			if (Object.hasOwnProperty.call(dependencies, path)) {
+				const dependencyData = dependencies[path];
+				if (dependencyData.sceneNames.includes(name))
+					return true
+			}
+		}
+		return false
+	}
 	const lines = parsed.lines
 	const Types = parsed.tokenTypes
 
-	const validScopes = [{path: "Self", scope: "Self"}, {path: "Original_object", scope: "Original_object"}, {path: "Game", scope: "Game"}, {path: "User", scope: "User"}, {path: "Local", scope: "Local"}]
+	const validScopes = [{path: "Self", scope: "Self"}, {path: "Original_object", scope: "Original_object"}, {path: "Game", scope: "Game"}, {path: "User", scope: "User"}, {path: "Local", scope: "Local"}, {path: "Scenes", scope: "Scene"}]
 	parsed.objectNames.forEach(objectName => {
 		if (objectName.type != Types.identifier)
 			externalCallbacks.error("Should be impossible: Non-identifier object name")
@@ -318,7 +330,7 @@ module.exports.secondPass = (htnPath, htnCode, options, stageSize, externalCallb
 						value: block,
 						doesHaveContainer: line.value.doesHaveContainer
 					}
-					handleWhenBlock(whenBlock, Types, validScopes, options, currentState, stateStack, StateLevels, externalCallbacks,getBlockTypeNamed,getBinaryOperatorBlockWithKeyword, getTraitTypeWithName, getDataTypesForParameterType)
+					handleWhenBlock(whenBlock, Types, validScopes, options, currentState, stateStack, StateLevels, externalCallbacks,getBlockTypeNamed,getBinaryOperatorBlockWithKeyword, getTraitTypeWithName, getDataTypesForParameterType, doesSceneExistWithName)
 					break
 				}
 				switch (line.value.name.type) {
@@ -330,7 +342,7 @@ module.exports.secondPass = (htnPath, htnCode, options, stageSize, externalCallb
 						value: modifiedBlock,
 						doesHaveContainer: modifiedBlock.doesHaveContainer
 					}
-					handleWhenBlock(whenBlock, Types, validScopes, options, currentState, stateStack, StateLevels, externalCallbacks,getBlockTypeNamed,getBinaryOperatorBlockWithKeyword, getTraitTypeWithName, getDataTypesForParameterType)
+					handleWhenBlock(whenBlock, Types, validScopes, options, currentState, stateStack, StateLevels, externalCallbacks,getBlockTypeNamed,getBinaryOperatorBlockWithKeyword, getTraitTypeWithName, getDataTypesForParameterType, doesSceneExistWithName)
 					break
 				case Types.customRule:
 					const customRule = {
@@ -352,7 +364,7 @@ module.exports.secondPass = (htnPath, htnCode, options, stageSize, externalCallb
 				}
 				break
 			case Types.whenBlock:
-				handleWhenBlock(line.value, Types, validScopes, options, currentState, stateStack, StateLevels, externalCallbacks,getBlockTypeNamed,getBinaryOperatorBlockWithKeyword, getTraitTypeWithName, getDataTypesForParameterType)
+				handleWhenBlock(line.value, Types, validScopes, options, currentState, stateStack, StateLevels, externalCallbacks,getBlockTypeNamed,getBinaryOperatorBlockWithKeyword, getTraitTypeWithName, getDataTypesForParameterType, doesSceneExistWithName)
 				break
 			case Types.comment:
 				if (externalCallbacks.rulesCountForObject(currentState().object) != 0)
@@ -369,7 +381,7 @@ module.exports.secondPass = (htnPath, htnCode, options, stageSize, externalCallb
 						doesHaveContainer: line.value.doesHaveContainer
 					}
 					whenBlock.value.leftSide.name = leftSide.name.value
-					handleWhenBlock(whenBlock, Types, validScopes, options, currentState, stateStack, StateLevels, externalCallbacks,getBlockTypeNamed,getBinaryOperatorBlockWithKeyword, getTraitTypeWithName, getDataTypesForParameterType)
+					handleWhenBlock(whenBlock, Types, validScopes, options, currentState, stateStack, StateLevels, externalCallbacks,getBlockTypeNamed,getBinaryOperatorBlockWithKeyword, getTraitTypeWithName, getDataTypesForParameterType, doesSceneExistWithName)
 					break
 				}
 				if (leftSide && leftSide.type == Types.whenBlock) {
@@ -380,13 +392,13 @@ module.exports.secondPass = (htnPath, htnCode, options, stageSize, externalCallb
 						doesHaveContainer: line.value.doesHaveContainer
 					}
 					whenBlock.value.leftSide = leftSide.value
-					handleWhenBlock(whenBlock, Types, validScopes, options, currentState, stateStack, StateLevels, externalCallbacks,getBlockTypeNamed,getBinaryOperatorBlockWithKeyword, getTraitTypeWithName, getDataTypesForParameterType)
+					handleWhenBlock(whenBlock, Types, validScopes, options, currentState, stateStack, StateLevels, externalCallbacks,getBlockTypeNamed,getBinaryOperatorBlockWithKeyword, getTraitTypeWithName, getDataTypesForParameterType, doesSceneExistWithName)
 					break
 				}
 				if (externalCallbacks.rulesCountForObject(currentState().object) != 0)
 					externalCallbacks.error(new parser.SyntaxError("Cannot include blocks after the first rule", [Types.whenBlock, Types.parenthesisBlock, Types.comment], line.value.type, line.location))
 				const ability = currentState().beforeGameStartsAbility
-				addBeforeGameStartsBlockToAbility(externalCallbacks, line, Types, validScopes, options, ability, getBlockTypeNamed, getBinaryOperatorBlockWithKeyword, getTraitTypeWithName, getDataTypesForParameterType)
+				addBeforeGameStartsBlockToAbility(externalCallbacks, line, Types, validScopes, options, ability, getBlockTypeNamed, getBinaryOperatorBlockWithKeyword, getTraitTypeWithName, getDataTypesForParameterType, doesSceneExistWithName)
 				break
 			case Types.customRule:
 				const customRule = line.value
@@ -418,7 +430,7 @@ module.exports.secondPass = (htnPath, htnCode, options, stageSize, externalCallb
 				})
 				break
 			}
-			const hsBlock = externalCallbacks.createMethodBlock(createBlockOfClasses.bind(null,externalCallbacks,options,line.value,Types,getBlockTypeNamed,getBinaryOperatorBlockWithKeyword,getTraitTypeWithName,validScopes, getDataTypesForParameterType), currentState().ability)
+			const hsBlock = externalCallbacks.createMethodBlock(createBlockOfClasses.bind(null,externalCallbacks,options,line.value,Types,getBlockTypeNamed,getBinaryOperatorBlockWithKeyword,getTraitTypeWithName,validScopes, getDataTypesForParameterType, doesSceneExistWithName), currentState().ability)
 			if (["control", "conditionalControl"].includes(hsBlock.block_class)) {
 				if (!line.value.doesHaveContainer) {
 					if (line.value.type == Types.customAbilityReference || line.value.name?.type == Types.customAbilityReference)
@@ -461,18 +473,18 @@ module.exports.secondPass = (htnPath, htnCode, options, stageSize, externalCallb
 	}
 }
 
-function handleWhenBlock(whenBlock, Types, validScopes, options, currentState, stateStack, StateLevels, externalCallbacks, getBlockTypeNamed, getBinaryOperatorBlockWithKeyword, getTraitTypeWithName, getDataTypesForParameterType) {
+function handleWhenBlock(whenBlock, Types, validScopes, options, currentState, stateStack, StateLevels, externalCallbacks, getBlockTypeNamed, getBinaryOperatorBlockWithKeyword, getTraitTypeWithName, getDataTypesForParameterType, doesSceneExistWithName) {
 	if (!whenBlock.doesHaveContainer)
 		externalCallbacks.error(new parser.SyntaxError("Empty rule", ":", "", whenBlock.location))
 	const currentObject = currentState().object
-	const ability = externalCallbacks.createAbilityForRuleFrom(createBlockOfClasses.bind(null,externalCallbacks,options,whenBlock.value,Types,getBlockTypeNamed,getBinaryOperatorBlockWithKeyword,getTraitTypeWithName,validScopes, getDataTypesForParameterType), currentObject)
+	const ability = externalCallbacks.createAbilityForRuleFrom(createBlockOfClasses.bind(null,externalCallbacks,options,whenBlock.value,Types,getBlockTypeNamed,getBinaryOperatorBlockWithKeyword,getTraitTypeWithName,validScopes, getDataTypesForParameterType, doesSceneExistWithName), currentObject)
 	stateStack.push({
 		level: StateLevels.inAbility,
 		ability: ability
 	})
 }
-function addBeforeGameStartsBlockToAbility(externalCallbacks, line, Types, validScopes, options, ability, getBlockTypeNamed, getBinaryOperatorBlockWithKeyword, getTraitTypeWithName, getDataTypesForParameterType) {
-	externalCallbacks.createMethodBlock(createBlockOfClasses.bind(null,externalCallbacks,options,line.value,Types,getBlockTypeNamed,getBinaryOperatorBlockWithKeyword,getTraitTypeWithName,validScopes, getDataTypesForParameterType), ability)
+function addBeforeGameStartsBlockToAbility(externalCallbacks, line, Types, validScopes, options, ability, getBlockTypeNamed, getBinaryOperatorBlockWithKeyword, getTraitTypeWithName, getDataTypesForParameterType, doesSceneExistWithName) {
+	externalCallbacks.createMethodBlock(createBlockOfClasses.bind(null,externalCallbacks,options,line.value,Types,getBlockTypeNamed,getBinaryOperatorBlockWithKeyword,getTraitTypeWithName,validScopes, getDataTypesForParameterType, doesSceneExistWithName), ability)
 }
 function unSnakeCase(snakeCaseString) {
 	const words = snakeCaseString.split("_")
@@ -503,7 +515,7 @@ function createCustomBlockAbilityFromDefinition(definition, externalCallbacks, T
 	return customBlockAbility
 }
 
-function createBlockOfClasses(externalCallbacks, options, block, Types, getBlockTypeNamed, getBinaryOperatorBlockWithKeyword, getTraitTypeWithName, validScopes, getDataTypesForParameterType, allowedBlockClasses, blockCreationFunctions, maybeParameterType) {
+function createBlockOfClasses(externalCallbacks, options, block, Types, getBlockTypeNamed, getBinaryOperatorBlockWithKeyword, getTraitTypeWithName, validScopes, getDataTypesForParameterType, doesSceneExistWithName, allowedBlockClasses, blockCreationFunctions, maybeParameterType) {
 	const {checkParameterLabels} = options
 	if (block.type == Types.binaryOperatorBlock)
 		block = parenthesisificateBinaryOperatorBlock(block, Types, allowedBlockClasses, getBinaryOperatorBlockWithKeyword)
@@ -559,7 +571,7 @@ function createBlockOfClasses(externalCallbacks, options, block, Types, getBlock
 					return null
 				return getDataTypesForParameterType(maybeParameterType)
 			}()
-			return maybeCreateVariableFromUndefinedType(block, Types, getTraitTypeWithName, validScopes, blockCreationFunctions.undefinedTypeFunctions, externalCallbacks, desiredTypes)
+			return maybeCreateVariableFromUndefinedType(block, Types, getTraitTypeWithName, validScopes, blockCreationFunctions.undefinedTypeFunctions, externalCallbacks, desiredTypes, doesSceneExistWithName)
 		}
 		blockName = blockName ?? JSON.stringify(block)
 		return externalCallbacks.error(new parser.SyntaxError("Undefined block", "TODO: Object.getOwnPropertyNames(BlockTypes)", blockName, block.location))
@@ -604,7 +616,7 @@ function createBlockOfClasses(externalCallbacks, options, block, Types, getBlock
 			// Intentionally fall through
 		case Types.binaryOperatorBlock:
 		case Types.parenthesisBlock:
-			const operatorBlockCreator = createBlockOfClasses.bind(null,externalCallbacks,options,parameterValue.value,Types,getBlockTypeNamed,getBinaryOperatorBlockWithKeyword,getTraitTypeWithName,validScopes, getDataTypesForParameterType)
+			const operatorBlockCreator = createBlockOfClasses.bind(null,externalCallbacks,options,parameterValue.value,Types,getBlockTypeNamed,getBinaryOperatorBlockWithKeyword,getTraitTypeWithName,validScopes, getDataTypesForParameterType, doesSceneExistWithName)
 			const innerBlock = blockCreationFunctions.createOperatorBlockUsing(operatorBlockCreator, hsParameter.type)
 			blockCreationFunctions.setParameterDatum(hsParameter, innerBlock)
 			break
@@ -624,7 +636,7 @@ function createEventParameterUsing(prototype) {
 	return prototype
 }
 
-function maybeCreateVariableFromUndefinedType(block, Types, getTraitTypeWithName, validScopes, undefinedTypeFunctions, externalCallbacks, maybeDesiredTypes) {
+function maybeCreateVariableFromUndefinedType(block, Types, getTraitTypeWithName, validScopes, undefinedTypeFunctions, externalCallbacks, maybeDesiredTypes, doesSceneExistWithName) {
 	switch (block.type) {
 	case Types.identifier:
 		const variableDescription = getVariableDescriptionFromPath(block.value, validScopes)
@@ -699,6 +711,14 @@ function maybeCreateVariableFromUndefinedType(block, Types, getTraitTypeWithName
 				variable: userHsVariable.objectIdString,
 				description: "Variable", // Correct
 			}
+		case "Scene":
+			if (variableDescription.name == "Next")
+				return undefinedTypeFunctions.createNextSceneBlock()
+			if (variableDescription.name == "Previous")
+				return undefinedTypeFunctions.createPreviousSceneBlock()
+			if (!doesSceneExistWithName(variableDescription.name))
+				externalCallbacks.error(new parser.SyntaxError("Undefined scene name", ["Next", "Previous", "TODO: get scene names"], variableDescription.name, block.location))
+			return undefinedTypeFunctions.createReferenceToSceneNamed(variableDescription.name)
 		default:
 			externalCallbacks.error(new parser.SyntaxError("Should be impossible: Unknown variable scope", validScopes.map(e=>e.path), variableDescription.scope, block.location))
 		}

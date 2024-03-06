@@ -47,6 +47,14 @@ module.exports.hopscotchify = (htnPath, options, fileFunctions, alreadyParsedPat
 		customBlockDefinitionCallbacks[name] = customBlockDefinitionCallbacks[name] || []
 		customBlockDefinitionCallbacks[name].push(callback)
 	}
+	let scenes = {}
+	let sceneDefinitionCallbacks = {}
+	function whenSceneIsDefinedWithName(name, callback) {
+		if (scenes[name])
+			return callback(scenes[name])
+		sceneDefinitionCallbacks[name] = sceneDefinitionCallbacks[name] || []
+		sceneDefinitionCallbacks[name].push(callback)
+	}
 	const htnCode = fileFunctions.read(htnPath)
 	let objectTypes;
 	let blockTypes;
@@ -54,6 +62,7 @@ module.exports.hopscotchify = (htnPath, options, fileFunctions, alreadyParsedPat
 	let binaryOperatorBlockTypes;
 	let objectNames;
 	let parameterTypes;
+	let sceneNames;
 	const hopscotchified = secondPass(htnPath, htnCode, options, project.stageSize, {
 		handleDependency: path => {
 			if (alreadyParsedPaths[path])
@@ -99,12 +108,13 @@ module.exports.hopscotchify = (htnPath, options, fileFunctions, alreadyParsedPat
 			binaryOperatorBlockTypes = parsed.binaryOperatorBlockTypes
 			objectNames = parsed.objectNames
 			parameterTypes = parsed.parameterTypes
+			sceneNames = parsed.sceneNames
 			return parsed
 		},
 		linely:  ()=>{},
 		isThereAlreadyADefinedCustomRuleNamed: isThereAlreadyADefinedCustomRuleNamed,
 		setRequiresBetaEditor: (value)=>{project.requires_beta_editor = value},
-		createSceneNamed: createScene.bind(null, project),
+		createSceneNamed: createScene.bind(null, project, scenes, sceneDefinitionCallbacks),
 	})
 	return {
 		hopscotchified,
@@ -113,7 +123,8 @@ module.exports.hopscotchify = (htnPath, options, fileFunctions, alreadyParsedPat
 		traitTypes,
 		binaryOperatorBlockTypes,
 		objectNames,
-		parameterTypes
+		parameterTypes,
+		sceneNames
 	}
 	function createElseAbilityFor(checkIfElseBlock) {
 		const elseAbility = createEmptyAbility()
@@ -122,7 +133,7 @@ module.exports.hopscotchify = (htnPath, options, fileFunctions, alreadyParsedPat
 		return elseAbility
 	}
 	function createMethodBlock(createBlockOfClasses, ability) {
-		const hsBlock = createMethodBlockFrom(project, createBlockOfClasses)
+		const hsBlock = createMethodBlockFrom(project, whenSceneIsDefinedWithName, createBlockOfClasses)
 		ability.blocks.push(hsBlock)
 		if (hsBlock.type == 123) { //HSBlockType.ability
 			onDefinitionOfCustomBlockNamed(hsBlock.description, hsAbility => {
@@ -212,7 +223,7 @@ module.exports.hopscotchify = (htnPath, options, fileFunctions, alreadyParsedPat
 	}
 
 	function createAbilityForRuleFrom(createBlockOfClasses, currentObject) {
-		const hsBlock = createOperatorBlockFrom(project,createBlockOfClasses, MagicBlockTypes.event)
+		const hsBlock = createOperatorBlockFrom(project,whenSceneIsDefinedWithName, createBlockOfClasses, MagicBlockTypes.event)
 		const rule = createRuleWith(hsBlock)
 		currentObject.rules.push(rule.id)
 		project.rules.push(rule)
@@ -285,7 +296,7 @@ function createEmptyAbility() {
 	}
 }
 
-function createBlockCreationFunctionsFor(project, parametersKey) {
+function createBlockCreationFunctionsFor(project, parametersKey, whenSceneIsDefinedWithName) {
 	return {
 		begin: (parametersKey => {
 			const result = {}
@@ -312,7 +323,7 @@ function createBlockCreationFunctionsFor(project, parametersKey) {
 		addEventParameter: ((project, hsEventParameter) => project.eventParameters.push(hsEventParameter)).bind(null, project),
 		setParameterDatum: ((hsParameter, innerBlock) => hsParameter.datum = innerBlock),
 		addParameter: ((parametersKey, result, hsParameter) => result[parametersKey].push(hsParameter)).bind(null, parametersKey),
-		createOperatorBlockUsing: createOperatorBlockFrom.bind(null,project),
+		createOperatorBlockUsing: createOperatorBlockFrom.bind(null,project, whenSceneIsDefinedWithName),
 		undefinedTypeFunctions: {
 			getOrAddObjectVariableNamed: getOrAddObjectVariableNamed.bind(null,project),
 			createSelfTrait: createSelfTrait,
@@ -335,17 +346,18 @@ function createBlockCreationFunctionsFor(project, parametersKey) {
 			}),
 			createNextSceneBlock: createNextSceneBlock,
 			createPreviousSceneBlock: createPreviousSceneBlock,
+			createReferenceToSceneNamed: createReferenceToSceneNamed.bind(null,whenSceneIsDefinedWithName),
 		}
 	}
 }
 
-function createOperatorBlockFrom(project, createBlockOfClasses, parameterType) {
-	const blockCreationFunctions = createBlockCreationFunctionsFor(project, "params")
+function createOperatorBlockFrom(project, whenSceneIsDefinedWithName, createBlockOfClasses, parameterType) {
+	const blockCreationFunctions = createBlockCreationFunctionsFor(project, "params", whenSceneIsDefinedWithName)
 	return createBlockOfClasses(["operator","conditionalOperator"], blockCreationFunctions, parameterType)
 }
 
-function createMethodBlockFrom(project, createBlockOfClasses) {
-	const blockCreationFunctions = createBlockCreationFunctionsFor(project, "parameters")
+function createMethodBlockFrom(project, whenSceneIsDefinedWithName, createBlockOfClasses) {
+	const blockCreationFunctions = createBlockCreationFunctionsFor(project, "parameters", whenSceneIsDefinedWithName)
 	return createBlockOfClasses(["method", "control", "conditionalControl"], blockCreationFunctions, null)
 }
 
@@ -515,13 +527,15 @@ function createCustomRuleInstanceFor(hsCustomRule, callbackForWhenRuleIsDefined)
 	return result
 }
 
-function createScene(project, sceneName) {
+function createScene(project, scenes, sceneDefinitionCallbacks, sceneName) {
 	const hsScene = {
 		name: unSnakeCase(sceneName),
 		objects: [],
 		id: randomUUID(),
 	}
 	project.scenes.push(hsScene)
+	sceneDefinitionCallbacks[hsScene.name]?.forEach(f=>f(hsScene))
+	scenes[hsScene.name] = hsScene
 	return hsScene
 }
 
@@ -539,4 +553,18 @@ function createPreviousSceneBlock() {
 		description: "Previous Scene",
 		id: randomUUID(), //TODO: Figure out what this is used for and if this is the correct value
 	}
+}
+
+function createReferenceToSceneNamed(whenSceneIsDefinedWithName, name) {
+	const hsName = unSnakeCase(name)
+	const hsBlock = {
+		blockType: 10000, //HSBlockType.SceneReferenceBlock
+		description: "Scene",
+		id: randomUUID(), //TODO: Figure out what this is used for and if this is the correct value
+		scene: "PETRICHOR__PLACEHOLDER__jsdjsfsjajhs if this is still in the final project that is a bug",
+	}
+	whenSceneIsDefinedWithName(hsName, hsScene => {
+		hsBlock.scene = hsScene.id
+	})
+	return hsBlock
 }
