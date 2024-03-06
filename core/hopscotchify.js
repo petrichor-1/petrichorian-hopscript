@@ -5,6 +5,10 @@ const {mergeHspreLikes} = require('./mergeHspreLikes.js')
 
 const BREAKPOINT_POSITION_KEY = "PETRICHOR_BREAKPOINT_POSITION"
 
+const MagicBlockTypes = {
+	event: -10140000,
+}
+
 module.exports.hopscotchify = (htnPath, options, fileFunctions, alreadyParsedPaths) => {
 	const project = {
 		stageSize: {
@@ -208,7 +212,7 @@ module.exports.hopscotchify = (htnPath, options, fileFunctions, alreadyParsedPat
 	}
 
 	function createAbilityForRuleFrom(createBlockOfClasses, currentObject) {
-		const hsBlock = createOperatorBlockFrom(project,createBlockOfClasses)
+		const hsBlock = createOperatorBlockFrom(project,createBlockOfClasses, MagicBlockTypes.event)
 		const rule = createRuleWith(hsBlock)
 		currentObject.rules.push(rule.id)
 		project.rules.push(rule)
@@ -328,19 +332,21 @@ function createBlockCreationFunctionsFor(project, parametersKey) {
 					object: "PETRICHOR__TEMPOBJECTID"
 				}
 				return {objectDefinitionCallback: hsObject => {hsDatum.object = hsObject.objectID}, hsDatum}
-			})
+			}),
+			createNextSceneBlock: createNextSceneBlock,
+			createPreviousSceneBlock: createPreviousSceneBlock,
 		}
 	}
 }
 
-function createOperatorBlockFrom(project, createBlockOfClasses) {
+function createOperatorBlockFrom(project, createBlockOfClasses, parameterType) {
 	const blockCreationFunctions = createBlockCreationFunctionsFor(project, "params")
-	return createBlockOfClasses(["operator","conditionalOperator"], blockCreationFunctions)
+	return createBlockOfClasses(["operator","conditionalOperator"], blockCreationFunctions, parameterType)
 }
 
 function createMethodBlockFrom(project, createBlockOfClasses) {
 	const blockCreationFunctions = createBlockCreationFunctionsFor(project, "parameters")
-	return createBlockOfClasses(["method", "control", "conditionalControl"], blockCreationFunctions)
+	return createBlockOfClasses(["method", "control", "conditionalControl"], blockCreationFunctions, null)
 }
 
 function createCustomBlockReferenceFrom(snakeCaseName) {
