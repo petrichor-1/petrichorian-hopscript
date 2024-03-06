@@ -519,7 +519,24 @@ function createScene(project, sceneName) {
 	const hsScene = {
 		name: unSnakeCase(sceneName),
 		objects: [],
+		id: randomUUID(),
 	}
 	project.scenes.push(hsScene)
 	return hsScene
+}
+
+function createNextSceneBlock() {
+	return {
+		blockType: 10002, //HSBlockType.NextSceneParameter
+		description: "Next Scene",
+		id: randomUUID(), //TODO: Figure out what this is used for and if this is the correct value
+	}
+}
+
+function createPreviousSceneBlock() {
+	return {
+		blockType: 10001, //HSBlockType.PreviousSceneParameter
+		description: "Previous Scene",
+		id: randomUUID(), //TODO: Figure out what this is used for and if this is the correct value
+	}
 }
