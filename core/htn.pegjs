@@ -295,7 +295,14 @@ nonNewlineWhitespace "non-newline whitespace"
 object "object"
 	= type:objectTypeName whitespace+ name:identifier whitespace* attributes:objectAttributes? whitespace* ":"
 	{
-		objectNames.push(name)
+		const maybeExtant = objectNames.find(e=>{
+			return e.location.source == name.location.source
+				&& e.location.start.offset == name.location.start.offset
+				&& e.location.end.offset == name.location.end.offset
+		})
+		// Why the heck is it parsing the same thing twice?
+		if (!maybeExtant)
+			objectNames.push(name)
 		return {
 			type: Types.object,
 			objectType: type,
