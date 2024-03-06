@@ -1,0 +1,10 @@
+Scene first_scene:
+	text text(x_position: 512, y_position: 384, text: "This is the first scene"):
+		When is_tapped(Screen):
+			change_scene(to: Scenes.Next)
+
+Scene second_scene:
+	text text_2(x_position: 512, y_position: 384, text: "this is the second scene"):
+		When is_tapped(Screen):
+			change_scene(to: Scenes.Previous)
+			change_scene(to: Scenes.first_scene)
