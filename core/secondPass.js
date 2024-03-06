@@ -136,6 +136,12 @@ module.exports.secondPass = (htnPath, htnCode, options, stageSize, externalCallb
 	function currentState() {
 		return stateStack[stateStack.length-1]
 	}
+	function latestHsScene() {
+		for (let i = stateStack.length-1; i >= 0; i--) {
+			if (stateStack[i].level == StateLevels.inScene)
+				return stateStack[i].scene
+		}
+	}
 	let latestDiscardedState;
 	lines.forEach(line=> {
 		if (line.type != Types.line) {
@@ -239,7 +245,7 @@ module.exports.secondPass = (htnPath, htnCode, options, stageSize, externalCallb
 				}()
 				if (object.name.type != Types.identifier)
 					externalCallbacks.error("Should be impossible: Invalid object name type")
-				const { hsObject, ability } = externalCallbacks.addHsObjectAndBeforeGameStartsAbility(objectType, object.name.value, objectAttributes)
+				const { hsObject, ability } = externalCallbacks.addHsObjectAndBeforeGameStartsAbility(objectType, object.name.value, objectAttributes, latestHsScene())
 				validScopes.find(e => e.path == object.name.value).hasBeenDefinedAs(hsObject)
 				stateStack.push({
 					level: StateLevels.inObjectOrCustomRule,
