@@ -159,7 +159,7 @@ module.exports.hopscotchify = (htnPath, options, fileFunctions, alreadyParsedPat
 			return {hsCustomRule: null, beforeGameStartsAbility: null}
 		return addCustomRuleDefinitionAndReturnParameterly(nameAsString)
 	}
-	function addHsObjectAndBeforeGameStartsAbility(objectType, desiredObjectName, objectAttributes, validScopes) {
+	function addHsObjectAndBeforeGameStartsAbility(objectType, desiredObjectName, objectAttributes) {
 		const hsObject = deepCopy(objectType)
 		hsObject.name = unSnakeCase(desiredObjectName)
 		hsObject.rules = []
@@ -177,7 +177,6 @@ module.exports.hopscotchify = (htnPath, options, fileFunctions, alreadyParsedPat
 		hsObject.abilityID = ability.abilityID
 		project.objects.push(hsObject)
 		project.scenes[0].objects.push(hsObject.objectID)
-		validScopes.find(e => e.path == desiredObjectName).hasBeenDefinedAs(hsObject)
 		return { hsObject, ability }
 	}
 	function hasUndefinedCustomBlocks() {
