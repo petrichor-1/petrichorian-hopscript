@@ -47,11 +47,14 @@ module.exports.hopscotchify = (htnPath, options, fileFunctions, alreadyParsedPat
 		customBlockDefinitionCallbacks[name] = customBlockDefinitionCallbacks[name] || []
 		customBlockDefinitionCallbacks[name].push(callback)
 	}
-	let scenes = {}
+	function findSceneWithName(name) {
+		return project.scenes.find(s=>s.name==name)
+	}
 	let sceneDefinitionCallbacks = {}
 	function whenSceneIsDefinedWithName(name, callback) {
-		if (scenes[name])
-			return callback(scenes[name])
+		const extant = findSceneWithName(name)
+		if (extant)
+			return callback(extant)
 		sceneDefinitionCallbacks[name] = sceneDefinitionCallbacks[name] || []
 		sceneDefinitionCallbacks[name].push(callback)
 	}
@@ -114,7 +117,7 @@ module.exports.hopscotchify = (htnPath, options, fileFunctions, alreadyParsedPat
 		linely:  ()=>{},
 		isThereAlreadyADefinedCustomRuleNamed: isThereAlreadyADefinedCustomRuleNamed,
 		setRequiresBetaEditor: (value)=>{project.requires_beta_editor = value},
-		createSceneNamed: createScene.bind(null, project, scenes, sceneDefinitionCallbacks),
+		createSceneNamed: createScene.bind(null, project, findSceneWithName, sceneDefinitionCallbacks),
 	})
 	return {
 		hopscotchified,
@@ -527,7 +530,10 @@ function createCustomRuleInstanceFor(hsCustomRule, callbackForWhenRuleIsDefined)
 	return result
 }
 
-function createScene(project, scenes, sceneDefinitionCallbacks, sceneName) {
+function createScene(project, findSceneWithName, sceneDefinitionCallbacks, sceneName) {
+	const extant = findSceneWithName(unSnakeCase(sceneName))
+	if (extant)
+		return extant
 	const hsScene = {
 		name: unSnakeCase(sceneName),
 		objects: [],
@@ -535,7 +541,6 @@ function createScene(project, scenes, sceneDefinitionCallbacks, sceneName) {
 	}
 	project.scenes.push(hsScene)
 	sceneDefinitionCallbacks[hsScene.name]?.forEach(f=>f(hsScene))
-	scenes[hsScene.name] = hsScene
 	return hsScene
 }
 
