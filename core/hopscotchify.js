@@ -66,6 +66,7 @@ module.exports.hopscotchify = (htnPath, options, fileFunctions, alreadyParsedPat
 	let objectNames;
 	let parameterTypes;
 	let sceneNames;
+	let definedCustomBlocks;
 	const hopscotchified = secondPass(htnPath, htnCode, options, project.stageSize, {
 		handleDependency: path => {
 			if (alreadyParsedPaths[path])
@@ -112,6 +113,7 @@ module.exports.hopscotchify = (htnPath, options, fileFunctions, alreadyParsedPat
 			objectNames = parsed.objectNames
 			parameterTypes = parsed.parameterTypes
 			sceneNames = parsed.sceneNames
+			definedCustomBlocks = parsed.definedCustomBlocks
 			return parsed
 		},
 		linely:  ()=>{},
@@ -127,7 +129,8 @@ module.exports.hopscotchify = (htnPath, options, fileFunctions, alreadyParsedPat
 		binaryOperatorBlockTypes,
 		objectNames,
 		parameterTypes,
-		sceneNames
+		sceneNames,
+		definedCustomBlocks
 	}
 	function createElseAbilityFor(checkIfElseBlock) {
 		const elseAbility = createEmptyAbility()

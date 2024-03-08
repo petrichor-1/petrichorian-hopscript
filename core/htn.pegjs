@@ -25,6 +25,7 @@
 	let dependencies = ["Hopscotch.htn"] // Hopscotch.htn is implicitly imported
 	let userVariablesEnabled = false
 	let requiresBetaEditor
+	let definedCustomBlocks = {}
 }
 
 file
@@ -43,6 +44,7 @@ file
 			userVariablesEnabled: userVariablesEnabled,
 			requiresBetaEditor: requiresBetaEditor,
 			sceneNames: sceneNames,
+			definedCustomBlocks: definedCustomBlocks,
 		}
 	}
 
@@ -72,6 +74,17 @@ block "Block"
 	= block:actualBlock container:blockContainer?
 	{
 		block.doesHaveContainer = block.doesHaveContainer || !!container
+		if (block.doesHaveContainer) {
+			if (block.type == Types.customAbilityReference)
+				definedCustomBlocks[block.value.value.value] = []
+			if (block.name?.type == Types.customAbilityReference)
+				definedCustomBlocks[block.name.value.value] = block.parameters.map(parameterValue => {
+					return {
+						label: parameterValue.label.value,
+						defaultValue: parameterValue.value.value
+					}
+				})
+		}
 		return block
 	}
 	/ "(" block:actualBlock ")"
