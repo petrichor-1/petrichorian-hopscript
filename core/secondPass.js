@@ -463,7 +463,21 @@ module.exports.secondPass = (htnPath, htnCode, options, stageSize, externalCallb
 					externalCallbacks.error(new parser.SyntaxError("Empty control block", ":", "", line.value.location))
 					break
 				}
-				const ability = externalCallbacks.createAbilityAsControlScriptOf(hsBlock)
+				let ability;
+				if (line.value.type == Types.customAbilityReference || line.value.name?.type == Types.customAbilityReference) {
+					const definition = function(){
+						if (line.value.type == Types.customAbilityReference)
+							return line.value
+						if (line.value.name?.type !== Types.customAbilityReference)
+							return externalCallbacks.error(new parser.SyntaxError("Incorrect custom block definition form.", Types.customAbilityReference, line.value.type, line.value.location))
+						const result = deepCopy(line.value)
+						result.value = deepCopy(line.value.name.value)
+						return result
+					}()
+					ability = createCustomBlockAbilityFromDefinition(blockCreationHelpers, definition, externalCallbacks, Types)
+				}
+				if (!ability)
+					ability = externalCallbacks.createAbilityAsControlScriptOf(hsBlock)
 				stateStack.push({
 					level: StateLevels.inAbility,
 					ability: ability,
