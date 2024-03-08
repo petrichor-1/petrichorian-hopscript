@@ -95,7 +95,23 @@ module.exports.secondPass = (htnPath, htnCode, options, stageSize, externalCallb
 		return false
 	}
 
-	const blockCreationHelpers = {getBlockTypeNamed, getBinaryOperatorBlockWithKeyword, getTraitTypeWithName, getDataTypesForParameterType, doesSceneExistWithName, getObjectTypeNamed}
+	let definedCustomBlocks = {}
+	let customBlockDefinitionCallbacks = {}
+	function onDefinitionOfCustomBlockNamed(name, callback) {
+		if (definedCustomBlocks[name])
+			return callback(definedCustomBlocks[name])
+		customBlockDefinitionCallbacks[name] = customBlockDefinitionCallbacks[name] || []
+		customBlockDefinitionCallbacks[name].push(callback)
+	}
+
+	function customBlockHasBeenDefinedWithName(name, parameters) {
+		definedCustomBlocks[name] = parameters
+		if (!customBlockDefinitionCallbacks[name])
+			return
+		customBlockDefinitionCallbacks[name].forEach(f=>f(parameters))
+	}
+
+	const blockCreationHelpers = {getBlockTypeNamed, getBinaryOperatorBlockWithKeyword, getTraitTypeWithName, getDataTypesForParameterType, doesSceneExistWithName, getObjectTypeNamed, onDefinitionOfCustomBlockNamed, customBlockHasBeenDefinedWithName}
 	const lines = parsed.lines
 	const Types = parsed.tokenTypes
 
@@ -275,7 +291,7 @@ module.exports.secondPass = (htnPath, htnCode, options, stageSize, externalCallb
 				break
 			case Types.customAbilityReference:
 				const definition = line.value
-				handleCustomBlockDefinition(definition, externalCallbacks, createCustomBlockAbilityFromDefinition)
+				handleCustomBlockDefinition(definition, externalCallbacks, createCustomBlockAbilityFromDefinition.bind(null, blockCreationHelpers))
 				break
 			case Types.parenthesisBlock:
 				if (line.value.name.type == Types.customAbilityReference) {
@@ -284,7 +300,7 @@ module.exports.secondPass = (htnPath, htnCode, options, stageSize, externalCallb
 						externalCallbacks.error(new parser.SyntaxError("Should be impossible: Unknown custom block name type", Types.identifier, line.value.name.value.type, line.value.name.value.location))
 					parenthesisBlock.value = line.value.name.value
 					parenthesisBlock.type = Types.customAbilityReference
-					handleCustomBlockDefinition(parenthesisBlock, externalCallbacks, createCustomBlockAbilityFromDefinition)
+					handleCustomBlockDefinition(parenthesisBlock, externalCallbacks, createCustomBlockAbilityFromDefinition.bind(null, blockCreationHelpers))
 					break
 				}
 				if (line.value.name.type == Types.customRule) {
@@ -500,10 +516,11 @@ function unSnakeCase(snakeCaseString) {
 		.map(e=>e[0].toUpperCase()+e.substring(1,e.length))
 	return words.join(" ")
 }
-function createCustomBlockAbilityFromDefinition(definition, externalCallbacks, Types) {
+function createCustomBlockAbilityFromDefinition(helpers, definition, externalCallbacks, Types) {
 	const name = unSnakeCase(definition.value.value)
 	const customBlockAbility = externalCallbacks.customBlockAbilityFunctions.begin(name)
 	if ((definition.parameters?.length || 0) > 0) {
+		const parameters = []
 		for (let i = 0; i < definition.parameters.length; i++) {
 			const parameter = definition.parameters[i]
 			const parameterValue = function () {
@@ -518,7 +535,9 @@ function createCustomBlockAbilityFromDefinition(definition, externalCallbacks, T
 			if (parameter.label.type != Types.identifier)
 				throw "Should be impossible; INvalid parameter label type in custom block definition"
 			externalCallbacks.customBlockAbilityFunctions.addParameter(customBlockAbility, unSnakeCase(parameter.label.value), parameterValue)
+			parameters.push({label: parameter.label.value, defaultValue: parameterValue})
 		}
+		helpers.customBlockHasBeenDefinedWithName(definition.value.value, parameters)
 	}
 	externalCallbacks.customBlockAbilityFunctions.finish(customBlockAbility, name)
 	return customBlockAbility
@@ -550,7 +569,42 @@ function createBlockOfClasses(externalCallbacks, options, block, Types, validSco
 			newBlock.value = blockName
 			if (newBlock.value.type != Types.identifier)
 				throw new parser.SyntaxError("Should be impossible: Unknown custom block name form", Types.identifier, newBlock.value.type, newBlock.value.location)
-			const hsBlock = externalCallbacks.createCustomBlockReferenceFrom(newBlock.value.value)
+			const {hsBlock, addParameterWithRawValue, addParameterWithChildBlock} = externalCallbacks.createCustomBlockReferenceFrom(newBlock.value.value)
+			helpers.onDefinitionOfCustomBlockNamed(blockName.value, parameters => {
+				const blockParameters = block.parameters
+				if (blockParameters.length != parameters.length)
+					return externalCallbacks.error(new parser.SyntaxError("Wrong amount of arguments to custom block", parameters.length, blockParameters.length, block.location))
+				for (let i = 0; i < blockParameters.length; i++) {
+					const template = parameters[i]
+					const parameterValue = blockParameters[i]
+					if (parameterValue.type != Types.parameterValue)
+						return externalCallbacks.error(new parser.SyntaxError("Should be impossible: Unknown parameter value type for agrument to custom block", Types.parameterValue, parameterValue.type, parameterValue.location))
+					if (options.checkParameterLabels) {
+						const desiredLabel = template.label
+						if (parameterValue.label.type != Types.identifier)
+							return externalCallbacks.error(new parser.SyntaxError("Should be impossible: Unknown type for parameter value label in custom block argument", Types.identifier, parameterValue.label.type, parameterValue.label.location))
+						const actualLabel = parameterValue.label.value
+						if (desiredLabel != actualLabel)
+							externalCallbacks.error(new parser.SyntaxError("Incorrect label for argument to custom block", desiredLabel, actualLabel, parameterValue.label.location))
+					}
+					const value = parameterValue.value
+					switch (value.type) {
+					case Types.string:
+					case Types.number:
+						addParameterWithRawValue(template.label, value.value, template.defaultValue)
+						break
+					case Types.identifier:
+					case Types.binaryOperatorBlock:
+					case Types.parenthesisBlock:
+						const operatorBlockCreator = createBlockOfClasses.bind(null, externalCallbacks, options, value, Types, validScopes, helpers)
+						const innerBlock = blockCreationFunctions.createOperatorBlockUsing(operatorBlockCreator, 57) //HSParameterType.MultiPurposeNumberDefault
+						addParameterWithChildBlock(template.label, innerBlock, template.defaultValue)
+						break
+					default:
+						externalCallbacks.error(new parser.SyntaxError("Should be impossible: Unknown parameter value type", [Types.number, Types.string, Types.identifier, Types.binaryOperatorBlock, Types.parenthesisBlock], parameterValue.value.type, parameterValue.location))
+					}
+				}
+			})
 			if (options.addBreakpointLines)
 				hsBlock[BREAKPOINT_POSITION_KEY] = newBlock.location.start
 			return hsBlock
@@ -565,7 +619,7 @@ function createBlockOfClasses(externalCallbacks, options, block, Types, validSco
 	case Types.customAbilityReference:
 		if (block.value.type != Types.identifier)
 			throw new parser.SyntaxError("Should be impossible: Unknown custom block name form", Types.identifier, block.value.type, block.value.location)
-		const hsBlock = externalCallbacks.createCustomBlockReferenceFrom(block.value.value)
+		const {hsBlock} = externalCallbacks.createCustomBlockReferenceFrom(block.value.value)
 		if (options.addBreakpointLines)
 			hsBlock[BREAKPOINT_POSITION_KEY] = block.location.start
 		return hsBlock

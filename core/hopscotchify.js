@@ -372,9 +372,26 @@ function createCustomBlockReferenceFrom(snakeCaseName) {
 		description: name,
 		controlScript: {
 			abilityID: "PETRICHOR__TEMP"
+		},
+		parameters: [],
+	}
+	return {
+		hsBlock,
+		addParameterWithRawValue: (key, value, defaultValue) => {
+			hsBlock.parameters.push({
+				defaultValue, key, value,
+				type: 57, //HSParameterType.MultiPurposeNumberDefault
+			})
+		},
+		addParameterWithChildBlock: (key, value, defaultValue) => {
+			hsBlock.parameters.push({
+				defaultValue, key,
+				type: 57, //HSParameterType.MultiPurposeNumberDefault
+				value: "",
+				datum: value
+			})
 		}
 	}
-	return hsBlock
 }
 
 function createOriginalObjectTrait(trait) {
