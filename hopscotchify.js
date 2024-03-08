@@ -12,6 +12,9 @@ const argOptions = {
 	options: {
 		ignoreParameterLabels: {
 			type: "boolean"
+		},
+		output: {
+			type: "string"
 		}
 	}
 }
@@ -22,6 +25,7 @@ if (parsedArgs.positionals.length != 1)
 
 const inputPath = parsedArgs.positionals[0]
 const ignoreParameterLabels = parsedArgs.values.ignoreParameterLabels || false
+const outputFilePath = parsedArgs.values.output
 
 const fileFunctions = {
 	read: path => fs.readFileSync(path).toString(),
@@ -36,7 +40,10 @@ const fileFunctions = {
 }
 try {
 	const {hopscotchified} = hopscotchify(inputPath, {checkParameterLabels: !ignoreParameterLabels}, fileFunctions, {})
-	console.log(JSON.stringify(hopscotchified))
+	const result = JSON.stringify(hopscotchified)
+	if (!outputFilePath)
+		return console.log(result)
+	fs.writeFileSync(outputFilePath, result)
 } catch (error) {
 	try {
 		const expected = error.expected?.map ? error.expected.map(e => {
