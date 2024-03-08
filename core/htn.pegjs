@@ -129,8 +129,8 @@ binaryOperatorKeyword
 	/ ">="
 	/ "<"
 	/ ">"
-	/ "and"
-	/ "or"
+	/ "and "
+	/ "or "
 	/ "%"
 
 binaryOperatorBlockInitialValue

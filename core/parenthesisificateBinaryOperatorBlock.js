@@ -73,9 +73,8 @@ function wrapInInfallibleParameterValue(e, Types) {
 }
 function binaryOperatorPriority(operator) {
 	switch (operator) {
-	case "and":
-	case "or":
-	case "not":
+	case "and ":
+	case "or ":
 		return 0
 	case "<":
 	case "<=":
