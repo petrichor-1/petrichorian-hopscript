@@ -379,13 +379,15 @@ function createCustomBlockReferenceFrom(snakeCaseName) {
 		hsBlock,
 		addParameterWithRawValue: (key, value, defaultValue) => {
 			hsBlock.parameters.push({
-				defaultValue, key, value,
+				defaultValue, value,
+				key: unSnakeCase(key),
 				type: 57, //HSParameterType.MultiPurposeNumberDefault
 			})
 		},
 		addParameterWithChildBlock: (key, value, defaultValue) => {
 			hsBlock.parameters.push({
-				defaultValue, key,
+				defaultValue,
+				key: unSnakeCase(key),
 				type: 57, //HSParameterType.MultiPurposeNumberDefault
 				value: "",
 				datum: value
