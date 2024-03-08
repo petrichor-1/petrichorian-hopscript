@@ -29,28 +29,9 @@ const fileFunctions = {
 		if (path.endsWith('.hopscotch') || path.endsWith('.hspre'))
 			return {hspreLike: JSON.parse(fs.readFileSync(path).toString())}
 		//TODO: hsprez
-		//TODO: This shouldn't know/care about the specific properties.
-		const {
-			hopscotchified,
-			objectTypes,
-			blockTypes,
-			traitTypes,
-			binaryOperatorBlockTypes,
-			objectNames,
-			parameterTypes,
-			sceneNames
-		} = hopscotchify(path, {checkParameterLabels: !ignoreParameterLabels}, fileFunctions, alreadyParsedPaths)
-		return {
-			hspreLike: hopscotchified,
-			hopscotchified,
-			objectTypes,
-			blockTypes,
-			traitTypes,
-			binaryOperatorBlockTypes,
-			objectNames,
-			parameterTypes,
-			sceneNames
-		}
+		const info = hopscotchify(path, {checkParameterLabels: !ignoreParameterLabels}, fileFunctions, alreadyParsedPaths)
+		info.hspreLike = info.hopscotchified
+		return info
 	}
 }
 try {
