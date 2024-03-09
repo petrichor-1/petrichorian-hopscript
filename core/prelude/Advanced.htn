@@ -13,7 +13,7 @@ _defineBlockType method set_instrument 67 "Set Instrument" 61 _ "" "ocarina",
 _defineBlockType method play_note 65 "Play Note" 60 _ "" "60", 59 rhythm "Rhythm" "0.25", 
 # Drawing
 _defineBlockType method set_trail_opacity 73 "Set Trail Opacity" 42 percent "percent" "50", 
-_defineBlockType method set_trail_cap 63 "Set Trail Cap" 63 to "to" "Round", 
+_defineBlockType method set_trail_cap 71 "Set Trail Cap" 63 to "to" "Round", 
 # Game rules
 _defineBlockType operator(Event) touch_ends 7022 "Touch Ends"
 # Collisions rules
