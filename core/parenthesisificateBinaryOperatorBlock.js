@@ -1,3 +1,4 @@
+const parser = require('./htn.js')
 function parenthesisificateBinaryOperatorBlock(binaryOperatorBlock, Types, allowedBlockClasses, getBinaryOperatorBlockWithKeyword) {
 	const actualBlockName = getBinaryOperatorBlockWithKeyword(binaryOperatorBlock.operatorKeyword);
 	if (!actualBlockName) {
