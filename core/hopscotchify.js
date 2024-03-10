@@ -28,6 +28,7 @@ module.exports.hopscotchify = (htnPath, options, fileFunctions, alreadyParsedPat
 		rules: [],
 		eventParameters: [],
 		scenes: [],
+		sceneReferences: [],
 	}
 
 	let customRules = {}
@@ -351,7 +352,7 @@ function createBlockCreationFunctionsFor(project, parametersKey, whenSceneIsDefi
 			}),
 			createNextSceneBlock: createNextSceneBlock,
 			createPreviousSceneBlock: createPreviousSceneBlock,
-			createReferenceToSceneNamed: createReferenceToSceneNamed.bind(null,whenSceneIsDefinedWithName),
+			createReferenceToSceneNamed: createReferenceToSceneNamed.bind(null, project, whenSceneIsDefinedWithName),
 			createSetImageBlockForHSObjectType: createSetImageBlockForHSObjectType,
 		}
 	}
@@ -582,7 +583,7 @@ function createPreviousSceneBlock() {
 	}
 }
 
-function createReferenceToSceneNamed(whenSceneIsDefinedWithName, name) {
+function createReferenceToSceneNamed(project, whenSceneIsDefinedWithName, name) {
 	const hsName = unSnakeCase(name)
 	const hsBlock = {
 		blockType: 10000, //HSBlockType.SceneReferenceBlock
@@ -590,6 +591,7 @@ function createReferenceToSceneNamed(whenSceneIsDefinedWithName, name) {
 		id: randomUUID(), //TODO: Figure out what this is used for and if this is the correct value
 		scene: "PETRICHOR__PLACEHOLDER__jsdjsfsjajhs if this is still in the final project that is a bug",
 	}
+	project.sceneReferences.push(hsBlock)
 	whenSceneIsDefinedWithName(hsName, hsScene => {
 		hsBlock.scene = hsScene.id
 	})
