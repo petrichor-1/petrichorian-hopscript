@@ -158,7 +158,7 @@ _defineBlockType operator(Event) message_matches 7024 "Message Matches" 52 _ "me
 _defineBlockType operator(Event) object_is_cloned 7015 "Object is Cloned"
 #Device rules
 _defineBlockType operator(Event) device_hears_a_loud_noise 7008 "📱 Hears a Loud Noise"
-_defineBlockType operator(Event) device_is_shaken 7008 "📱 is Shaken"
+_defineBlockType operator(Event) device_is_shaken 7009 "📱 is Shaken"
 _defineBlockType operator(Event) is_swiped_right 7011 "is Swiped Right" 50 _ "" "", 
 _defineBlockType operator(Event) is_swiped_left 7012 "is Swiped Left" 50 _ "" "", 
 _defineBlockType operator(Event) is_swiped_up 7013 "is Swiped Up" 50 _ "" "", 
