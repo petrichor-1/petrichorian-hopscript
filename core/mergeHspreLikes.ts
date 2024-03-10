@@ -10,6 +10,7 @@ export interface HspreLike {
 	customRuleInstances: any[]
 	variables: any[]
 	scenes: any[]
+	sceneReferences: any[]
 }
 
 // Merge source into target
@@ -21,6 +22,7 @@ export function mergeHspreLikes(target: HspreLike, source: HspreLike) {
 	target.customRules = target.customRules.concat(source.customRules)
 	target.customRuleInstances = target.customRuleInstances.concat(source.customRuleInstances)
 	target.variables = target.variables.concat(source.variables)
+	target.sceneReferences = target.sceneReferences.concat(source.sceneReferences)
 	source.scenes.forEach(scene => {
 		const existingScene = target.scenes.find(e=>e.name==scene.name)
 		if (existingScene)
