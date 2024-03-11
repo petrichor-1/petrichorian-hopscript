@@ -476,7 +476,7 @@ function getOrAddUserVariableNamed(project, name) {
 	const hsVariable = {
 		name: hsName,
 		type: 8007, //HSBlockType.User
-		objectIdString: randomUUID()
+		objectIdString: `phnuv${hsName}`
 	}
 	project.variables.push(hsVariable)
 	return hsVariable
