@@ -28,7 +28,7 @@ module.exports.secondPass = (htnPath, htnCode, options, stageSize, externalCallb
 		for (const path in dependencies) {
 			if (Object.hasOwnProperty.call(dependencies, path)) {
 				const dependencyData = dependencies[path];
-				if (dependencyData.blockTypes[name])
+				if (dependencyData.blockTypes && dependencyData.blockTypes[name])
 					return dependencyData.blockTypes[name]
 			}
 		}
@@ -40,7 +40,7 @@ module.exports.secondPass = (htnPath, htnCode, options, stageSize, externalCallb
 		for (const path in dependencies) {
 			if (Object.hasOwnProperty.call(dependencies, path)) {
 				const dependencyData = dependencies[path];
-				if (dependencyData.objectTypes[name])
+				if (dependencyData.objectTypes && dependencyData.objectTypes[name])
 					return dependencyData.objectTypes[name]
 			}
 		}
@@ -52,7 +52,7 @@ module.exports.secondPass = (htnPath, htnCode, options, stageSize, externalCallb
 		for (const path in dependencies) {
 			if (Object.hasOwnProperty.call(dependencies, path)) {
 				const dependencyData = dependencies[path];
-				if (dependencyData.binaryOperatorBlockTypes[keyword])
+				if (dependencyData.binaryOperatorBlockTypes && dependencyData.binaryOperatorBlockTypes[keyword])
 					return dependencyData.binaryOperatorBlockTypes[keyword]
 			}
 		}
@@ -64,7 +64,7 @@ module.exports.secondPass = (htnPath, htnCode, options, stageSize, externalCallb
 		for (const path in dependencies) {
 			if (Object.hasOwnProperty.call(dependencies, path)) {
 				const dependencyData = dependencies[path];
-				if (dependencyData.parameterTypes[hsType])
+				if (dependencyData.parameterTypes && dependencyData.parameterTypes[hsType])
 					return dependencyData.parameterTypes[hsType]
 			}
 		}
@@ -76,7 +76,7 @@ module.exports.secondPass = (htnPath, htnCode, options, stageSize, externalCallb
 		for (const path in dependencies) {
 			if (Object.hasOwnProperty.call(dependencies, path)) {
 				const dependencyData = dependencies[path];
-				if (dependencyData.traitTypes[name])
+				if (dependencyData.traitTypes && dependencyData.traitTypes[name])
 					return dependencyData.traitTypes[name]
 			}
 		}
@@ -88,7 +88,7 @@ module.exports.secondPass = (htnPath, htnCode, options, stageSize, externalCallb
 		for (const path in dependencies) {
 			if (Object.hasOwnProperty.call(dependencies, path)) {
 				const dependencyData = dependencies[path];
-				if (dependencyData.sceneNames.includes(name))
+				if (dependencyData.sceneNames && dependencyData.sceneNames.includes(name))
 					return true
 			}
 		}
@@ -101,7 +101,7 @@ module.exports.secondPass = (htnPath, htnCode, options, stageSize, externalCallb
 		for (const path in dependencies) {
 			if (Object.hasOwnProperty.call(dependencies, path)) {
 				const dependencyData = dependencies[path];
-				if (dependencyData.definedCustomBlocks[name])
+				if (dependencyData.definedCustomBlocks && dependencyData.definedCustomBlocks[name])
 					return dependencyData.definedCustomBlocks[name]
 			}
 		}
