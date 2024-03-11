@@ -70,11 +70,14 @@ module.exports.hopscotchify = (htnPath, options, fileFunctions, alreadyParsedPat
 	let definedCustomBlocks;
 	const hopscotchified = secondPass(htnPath, htnCode, options, project.stageSize, {
 		handleDependency: path => {
-			if (alreadyParsedPaths[path])
-				return alreadyParsedPaths[path]
-			const hspreLikeAndOtherInfo = fileFunctions.getHspreLikeFrom(path, alreadyParsedPaths)
-			mergeHspreLikes(project, hspreLikeAndOtherInfo.hspreLike)
-			alreadyParsedPaths[path] = hspreLikeAndOtherInfo
+			const hspreLikeAndOtherInfo = function() {
+				if (alreadyParsedPaths[path])
+					return alreadyParsedPaths[path]
+				const hspreLikeAndOtherInfo = fileFunctions.getHspreLikeFrom(path, alreadyParsedPaths)
+				alreadyParsedPaths[path] = hspreLikeAndOtherInfo
+				mergeHspreLikes(project, hspreLikeAndOtherInfo.hspreLike)
+				return hspreLikeAndOtherInfo
+			}()
 			hspreLikeAndOtherInfo.hspreLike.customRules?.forEach(hsCustomRule => {
 				const name = hsCustomRule.name
 				customRuleDefinitionCallbacks[name]?.forEach(callback => callback(hsCustomRule))
