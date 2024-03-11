@@ -23,7 +23,7 @@ export function mergeHspreLikes(target: HspreLike, source: HspreLike) {
 	target.customRuleInstances = target.customRuleInstances.concat(source.customRuleInstances)
 	target.variables = target.variables.concat(source.variables)
 	target.sceneReferences = target.sceneReferences.concat(source.sceneReferences)
-	source.scenes.forEach(scene => {
+	source.scenes?.forEach(scene => {
 		const existingScene = target.scenes.find(e=>e.name==scene.name)
 		if (existingScene)
 			return existingScene.objects = existingScene.objects.concat(scene.objects)
