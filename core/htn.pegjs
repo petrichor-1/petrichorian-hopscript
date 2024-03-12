@@ -283,6 +283,7 @@ string "string"
 	}
 stringContentsCharacter
 	= "\\\""
+	{ return '"' }
 	/ !"\"" c:.
 	{ return c }
 
