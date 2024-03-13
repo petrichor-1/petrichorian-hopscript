@@ -2,15 +2,24 @@
 This is an idea for [hopscript](https://forum.gethopscotch.com/t/hopscript-hopscotch-text-language-concept/61544?u=petrichor) inspired by Tri-Angle's [Hopscotch Textual Notation](https://forum.gethopscotch.com/t/hopscotch-notation-compiler/66230?u=petrichor).
 
 Currently, there are three major elements in this repository:
-`hopscotchify.js` – A program to convert hopscript to a hopscotch project. Just run `node hopscotchify.js <hopscriptfile.htn>` and it will output the hopscotch json (or an error message.)
-`dehopscotchify.js` – A program to convert hopscotch projects to hopscript. Just run `node dehopscotchify.js <hopscotchfile.hopscotch>` and it will output the hopscript code.
-`vscode/petrichorianhopscript` – An extension for visual studio code to provide some basic syntax highlighting and limited completions.
 
-For any of these to work, you first need to run `npm install` to install some dependencies used for parsing the hopscript.
+* `hopscotchify.js` – A program to convert hopscript to a hopscotch project. Just run `node hopscotchify.js <hopscriptfile.htn>` and it will output the hopscotch json (or an error message.) You can add a `--output` option to set a file for the output project to go to – for example, `node hopscotchify.js main.htn --output ~/hsjp/13qd081dr9.hopscotch`.
+
+* `dehopscotchify.js` – An unmaintained program to convert hopscotch projects to hopscript. Just run `node dehopscotchify.js <hopscotchfile.hopscotch>` and it will output the hopscript code. It probably won't work with the current code
+* `vscode/petrichorianhopscript` – An unmaintained extension for visual studio code to provide some basic syntax highlighting and limited completions. It **will not** work currently, I intend to update it later when there are less big changes being made to the language.
+
+For any of these to work, you first need to run `npm install` to install some dependencies used for parsing the hopscript. Then inside of `core` run `tsc` to compile the typescript used there.
+
+## Future plans
+* Convert `core/secondPass.js` and `core/hopscotchify.js` to typescript
+* Re-evaluate certain elements of the language for consistency:
+	* Should `else:` be `Else:`?
+* Add optional type checking
+* Make the vscode extension work
+* Add ways to extend the language
 
 ## A short tutorial
-The examples in `samples/petrichor` should contain examples of pretty much every feature currently supported, if it is not covered here.
-The contents of `samples/tri-angle` are not valid and will not work currently, but were used as a reference to create the language.
+The examples in `test/samples/shouldHopscotchify` should contain examples of pretty much every feature currently supported, if it is not covered here.
 ### Objects
 To create an object, start by specifying the type of object you are creating, followed by its name and a colon:
 ```phopscript
