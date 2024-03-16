@@ -1,6 +1,5 @@
 // import * as vscode from 'vscode'
 import * as fs from 'fs'
-import * as preludeify from '../../../../core/preludeify.js'
 import {hopscotchify} from '../../../../core/hopscotchify.js'
 import * as http from 'http'
 import {WebSocketServer} from 'ws'
@@ -108,12 +107,19 @@ export class PHSDebugServer {
 	}
 }
 async function run(path: string): Promise<any> {
-	// if (!vscode.workspace.isTrusted)
-	// 	return // I don't think this is necessary, but it can't hurt
-	const fullPath = path//vscode.Uri.joinPath(vscode.workspace.workspaceFolders[0].uri, path)
-	const code = fs.readFileSync(fullPath/*.fsPath*/).toString()
-	const {htnCode, fileMap} = preludeify(code)
-	const hsProject = hopscotchify(htnCode, {checkParameterLabels: true, addBreakpointLines: true})
+	const fileFunctions = {
+		read: (path: string) => fs.readFileSync(path).toString(),
+		getHspreLikeFrom: (path: string, alreadyParsedPaths: any) => {
+			if (path.endsWith('.hopscotch') || path.endsWith('.hspre'))
+				return {hspreLike: JSON.parse(fs.readFileSync(path).toString())}
+			//TODO: hsprez
+			const info = hopscotchify(path, {checkParameterLabels: true}, fileFunctions, alreadyParsedPaths)
+			info.hspreLike = info.hopscotchified
+			return info
+		}
+	}
+	const options = {checkParameterLabels: true}
+	const hsProject = hopscotchify(path, options, fileFunctions, {}).hopscotchified
 	const versionInfo = await versionInfoForProject(hsProject)
 	const server = http.createServer(async (message, response) => {
 		response.writeHead(200)
@@ -130,7 +136,7 @@ async function run(path: string): Promise<any> {
 	})
 	server.listen(1337, "localhost")
 	// vscode.commands.executeCommand('js-debug-companion.launch', {browserType: "chrome", URL: "http://localhost:1337"})
-	return {server, offset: fileMap[fileMap.length-1].starts}
+	return {server, offset: 0}//fileMap[fileMap.length-1].starts}
 }
 
 let html: String

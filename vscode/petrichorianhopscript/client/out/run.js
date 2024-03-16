@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.PHSDebugServer = void 0;
 // import * as vscode from 'vscode'
 const fs = require("fs");
-const preludeify = require("../../../../core/preludeify.js");
 const hopscotchify_js_1 = require("../../../../core/hopscotchify.js");
 const http = require("http");
 const ws_1 = require("ws");
@@ -103,12 +102,19 @@ class PHSDebugServer {
 }
 exports.PHSDebugServer = PHSDebugServer;
 async function run(path) {
-    // if (!vscode.workspace.isTrusted)
-    // 	return // I don't think this is necessary, but it can't hurt
-    const fullPath = path; //vscode.Uri.joinPath(vscode.workspace.workspaceFolders[0].uri, path)
-    const code = fs.readFileSync(fullPath /*.fsPath*/).toString();
-    const { htnCode, fileMap } = preludeify(code);
-    const hsProject = (0, hopscotchify_js_1.hopscotchify)(htnCode, { checkParameterLabels: true, addBreakpointLines: true });
+    const fileFunctions = {
+        read: (path) => fs.readFileSync(path).toString(),
+        getHspreLikeFrom: (path, alreadyParsedPaths) => {
+            if (path.endsWith('.hopscotch') || path.endsWith('.hspre'))
+                return { hspreLike: JSON.parse(fs.readFileSync(path).toString()) };
+            //TODO: hsprez
+            const info = (0, hopscotchify_js_1.hopscotchify)(path, { checkParameterLabels: true }, fileFunctions, alreadyParsedPaths);
+            info.hspreLike = info.hopscotchified;
+            return info;
+        }
+    };
+    const options = { checkParameterLabels: true };
+    const hsProject = (0, hopscotchify_js_1.hopscotchify)(path, options, fileFunctions, {}).hopscotchified;
     const versionInfo = await versionInfoForProject(hsProject);
     const server = http.createServer(async (message, response) => {
         response.writeHead(200);
@@ -125,7 +131,7 @@ async function run(path) {
     });
     server.listen(1337, "localhost");
     // vscode.commands.executeCommand('js-debug-companion.launch', {browserType: "chrome", URL: "http://localhost:1337"})
-    return { server, offset: fileMap[fileMap.length - 1].starts };
+    return { server, offset: 0 }; //fileMap[fileMap.length-1].starts}
 }
 let html;
 function htmlOrGetFromFile(versionInfo) {
