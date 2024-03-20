@@ -4,6 +4,8 @@ const { parenthesisificateBinaryOperatorBlock } = require('./parenthesisificateB
 const { eventParameterPrototypeForIdentifier } = require('./eventParameterPrototypeForIdentifier.js')
 const path = require('path')
 
+const BREAKPOINT_POSITION_KEY = "PETRICHOR_BREAKPOINT_POSITION"
+
 module.exports.secondPass = (htnPath, htnCode, options, stageSize, externalCallbacks) => {
 	let parsed = parser.parse(htnCode, {grammarSource: htnPath})
 	if (parsed.requiresBetaEditor && externalCallbacks.setRequiresBetaEditor)
@@ -615,7 +617,7 @@ function createBlockOfClasses(externalCallbacks, options, block, Types, validSco
 				}
 			}
 			if (options.addBreakpointLines)
-				hsBlock[BREAKPOINT_POSITION_KEY] = newBlock.location.start
+				hsBlock[BREAKPOINT_POSITION_KEY] = newBlock.location
 			return hsBlock
 		default:
 			externalCallbacks.error(new parser.SyntaxError("Unknown block name type " + block.name.type, [Types.identifier, Types.customAbilityReference], block.name.type, block.name.location))
@@ -630,7 +632,7 @@ function createBlockOfClasses(externalCallbacks, options, block, Types, validSco
 			throw new parser.SyntaxError("Should be impossible: Unknown custom block name form", Types.identifier, block.value.type, block.value.location)
 		const {hsBlock} = externalCallbacks.createCustomBlockReferenceFrom(block.value.value)
 		if (options.addBreakpointLines)
-			hsBlock[BREAKPOINT_POSITION_KEY] = block.location.start
+			hsBlock[BREAKPOINT_POSITION_KEY] = block.location
 		return hsBlock
 	default:
 		externalCallbacks.error(new parser.SyntaxError("Should be impossible: Unknown block form", [Types.comment, Types.identifier, Types.comment], block.type, block.location))
@@ -698,7 +700,7 @@ function createBlockOfClasses(externalCallbacks, options, block, Types, validSco
 		blockCreationFunctions.addParameter(result, hsParameter)
 	}
 	if (options.addBreakpointLines)
-		result[BREAKPOINT_POSITION_KEY] = block.location.start
+		result[BREAKPOINT_POSITION_KEY] = block.location
 	return result
 }
 

@@ -30,8 +30,8 @@ class PHSDebugServer {
             });
         });
     }
-    setBreakpointsFromNumbers(lines) {
-        return this.setBreakpoints(lines.map(e => { return { line: e + this.offset }; }));
+    setBreakpointsFromNumbers(lines, source) {
+        return this.setBreakpoints(lines.map(e => { return { line: e + this.offset, source: source }; }));
     }
     continue() {
         if (!this.webSocketConnection)
@@ -108,7 +108,7 @@ async function run(path) {
             if (path.endsWith('.hopscotch') || path.endsWith('.hspre'))
                 return { hspreLike: JSON.parse(fs.readFileSync(path).toString()) };
             //TODO: hsprez
-            const info = (0, hopscotchify_js_1.hopscotchify)(path, { checkParameterLabels: true }, fileFunctions, alreadyParsedPaths);
+            const info = (0, hopscotchify_js_1.hopscotchify)(path, { checkParameterLabels: true, addBreakpointLines: true }, fileFunctions, alreadyParsedPaths);
             info.hspreLike = info.hopscotchified;
             return info;
         }
@@ -120,13 +120,28 @@ async function run(path) {
         response.writeHead(200);
         switch (message.url) {
             case "/project":
-                response.end(JSON.stringify(hsProject));
+                try {
+                    response.end(JSON.stringify(hsProject));
+                }
+                catch (error) {
+                    response.end(error.toString());
+                }
                 break;
             case "/player.js":
-                response.end(await playerFor(versionInfo));
+                try {
+                    response.end(await playerFor(versionInfo));
+                }
+                catch (error) {
+                    response.end(error.toString());
+                }
                 break;
             default:
-                response.end(htmlOrGetFromFile(versionInfo));
+                try {
+                    response.end(htmlOrGetFromFile(versionInfo));
+                }
+                catch (error) {
+                    response.end(error.toString());
+                }
         }
     });
     server.listen(1337, "localhost");

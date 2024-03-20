@@ -5,7 +5,8 @@ import * as http from 'http'
 import {WebSocketServer} from 'ws'
 
 interface PHSBreakpointPosition {
-	line: number
+	line: number,
+	source: string
 }
 
 export class PHSDebugServer {
@@ -33,8 +34,8 @@ export class PHSDebugServer {
 			})
 		})
 	}
-	public setBreakpointsFromNumbers(lines: number[]) {
-		return this.setBreakpoints(lines.map(e=>{return {line:e+this.offset}}))
+	public setBreakpointsFromNumbers(lines: number[], source: string) {
+		return this.setBreakpoints(lines.map(e=>{return {line:e+this.offset, source: source}}))
 	}
 	public continue() {
 		if (!this.webSocketConnection)
@@ -113,7 +114,7 @@ async function run(path: string): Promise<any> {
 			if (path.endsWith('.hopscotch') || path.endsWith('.hspre'))
 				return {hspreLike: JSON.parse(fs.readFileSync(path).toString())}
 			//TODO: hsprez
-			const info = hopscotchify(path, {checkParameterLabels: true}, fileFunctions, alreadyParsedPaths)
+			const info = hopscotchify(path, {checkParameterLabels: true, addBreakpointLines: true}, fileFunctions, alreadyParsedPaths)
 			info.hspreLike = info.hopscotchified
 			return info
 		}
@@ -125,13 +126,25 @@ async function run(path: string): Promise<any> {
 		response.writeHead(200)
 		switch (message.url) {
 		case "/project": 
-			response.end(JSON.stringify(hsProject))
+			try {
+				response.end(JSON.stringify(hsProject))
+			} catch(error) {
+				response.end(error.toString())
+			}
 			break
 		case "/player.js":
-			response.end(await playerFor(versionInfo))
+			try {
+				response.end(await playerFor(versionInfo))
+			} catch(error) {
+				response.end(error.toString())
+			}
 			break
 		default:
-			response.end(htmlOrGetFromFile(versionInfo))
+			try {
+				response.end(htmlOrGetFromFile(versionInfo))
+			} catch(error) {
+				response.end(error.toString())
+			}
 		}
 	})
 	server.listen(1337, "localhost")

@@ -76,6 +76,7 @@ export class HopscriptDebugSession extends LoggingDebugSession {
 
 	server: PHSDebugServer | undefined
 	waitingBreakpointLines: number[]
+	waitingBreakpointSource: string
 	latestStateStack: any[]
 	protected program: string
 	protected async launchRequest(response: DebugProtocol.LaunchResponse, args: any) {
@@ -92,19 +93,21 @@ export class HopscriptDebugSession extends LoggingDebugSession {
 				this.sendEvent(new StoppedEvent('breakpoint at ' + line, 1))
 			}
 			if (this.waitingBreakpointLines)
-				this.server.setBreakpointsFromNumbers(this.waitingBreakpointLines)
+				this.server.setBreakpointsFromNumbers(this.waitingBreakpointLines, this.waitingBreakpointSource)
 		} catch(error) {
 			this.sendErrorResponse(response,error.toString())
+			return
 		}
-		
+		// this.sendErrorResponse(response,1)
 		this.sendResponse(response);
 	}
 
 	protected async setBreakPointsRequest(response: DebugProtocol.SetBreakpointsResponse, args: DebugProtocol.SetBreakpointsArguments, request?: DebugProtocol.Request): Promise<void> {
 		if (this.server) {
-			this.server.setBreakpointsFromNumbers(args.lines)
+			this.server.setBreakpointsFromNumbers(args.lines, args.source.path)
 		} else {
 			this.waitingBreakpointLines = args.lines
+			this.waitingBreakpointSource = args.source.path
 		}
 		// pretend to verify breakpoint locations
 		const actualBreakpoints0 = args.lines.map(async l => {
