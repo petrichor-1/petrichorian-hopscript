@@ -61,9 +61,9 @@ class HopscriptDebugSession extends debugadapter_1.LoggingDebugSession {
         console.log("HELLO");
         try {
             this.server = await run_1.PHSDebugServer.run(args.program);
-            this.server.onBreakpointReachedAtLine = (line, stateStack) => {
+            this.server.onBreakpointReachedAtLine = (line, stateStack, source) => {
                 this.latestStateStack = stateStack;
-                this.sendEvent(new debugadapter_1.StoppedEvent('breakpoint at ' + line, 1));
+                this.sendEvent(new debugadapter_1.StoppedEvent('breakpoint at ' + line + ` in ${source}`, 1));
             };
             if (this.waitingBreakpointLines)
                 this.server.setBreakpointsFromNumbers(this.waitingBreakpointLines, this.waitingBreakpointSource);
@@ -141,7 +141,7 @@ class HopscriptDebugSession extends debugadapter_1.LoggingDebugSession {
         }
         response.body = {
             stackFrames: result.map((state, ix) => {
-                return new debugadapter_1.StackFrame(ix, nameForState(state), new debugadapter_1.Source(this.program, this.program), (state.location?.line || 0) - this.server.offset, state.location?.column || 0);
+                return new debugadapter_1.StackFrame(ix, nameForState(state), new debugadapter_1.Source(state.location?.source || "Unknown", state.location?.source || "Unknown"), (state.location?.start?.line || 0) - this.server.offset, state.location?.start?.column || 0);
             }).reverse(),
             totalFrames: result.length
         };

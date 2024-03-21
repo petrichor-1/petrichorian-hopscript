@@ -14,7 +14,7 @@ export class PHSDebugServer {
 	webSocketConnection: any
 	breakpoints: PHSBreakpointPosition[] = []
 	offset: number //Temporary
-	onBreakpointReachedAtLine: ((line: number, stateStack: any[]) => void) | undefined
+	onBreakpointReachedAtLine: ((line: number, stateStack: any[], source: string) => void) | undefined
 	constructor(httpServer: http.Server, wsServer: WebSocketServer, offset: number) {
 		this.httpServer = httpServer
 		this.offset = offset
@@ -25,8 +25,9 @@ export class PHSDebugServer {
 				const data = JSON.parse(messageData.toString())
 				switch (data.type) {
 				case "breakpoint":
-					const line = data.value.location.line-this.offset
-					this.onBreakpointReachedAtLine(line, data.value.stateStack)
+					const line = data.value.location.start.line-this.offset
+					const source = data.value.location.source
+					this.onBreakpointReachedAtLine(line, data.value.stateStack, source)
 					break
 				case "response":
 					this._responseCallbacks[data.id](data.value)
