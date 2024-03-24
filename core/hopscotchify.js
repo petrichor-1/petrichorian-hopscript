@@ -215,9 +215,6 @@ module.exports.hopscotchify = (htnPath, options, fileFunctions, alreadyParsedPat
 			rules: []
 		}
 		project.customRules.push(hsCustomRule)
-		customRuleDefinitionCallbacks[nameAsString]?.forEach(callback => callback(hsCustomRule))
-		customRuleDefinitionCallbacks[nameAsString] = null
-		customRules[nameAsString] = hsCustomRule
 		return {
 			parameterly: (key, parameterValue) => {
 				const parameter = {}
@@ -227,7 +224,12 @@ module.exports.hopscotchify = (htnPath, options, fileFunctions, alreadyParsedPat
 				hsCustomRule.parameters.push(parameter)
 			},
 			hsCustomRule: hsCustomRule,
-			beforeGameStartsAbility: beforeGameStartsAbility
+			beforeGameStartsAbility: beforeGameStartsAbility,
+			finish: () => {
+				customRuleDefinitionCallbacks[nameAsString]?.forEach(callback => callback(hsCustomRule))
+				customRuleDefinitionCallbacks[nameAsString] = null
+				customRules[nameAsString] = hsCustomRule
+			}
 		}
 	}
 

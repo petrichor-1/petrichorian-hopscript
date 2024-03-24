@@ -310,7 +310,7 @@ module.exports.secondPass = (htnPath, htnCode, options, stageSize, externalCallb
 						externalCallbacks.error(new parser.SyntaxError("Top level custom rules must be definitions", ":", "", line.value.location))
 					parenthesisBlock.value = line.value.name.value
 					parenthesisBlock.type = Types.customRule
-					const {parameterly, hsCustomRule, beforeGameStartsAbility} = externalCallbacks.addCustomRuleDefinitionAndReturnParameterly(parenthesisBlock.value.value)
+					const {parameterly, hsCustomRule, beforeGameStartsAbility, finish} = externalCallbacks.addCustomRuleDefinitionAndReturnParameterly(parenthesisBlock.value.value)
 					parenthesisBlock.parameters?.forEach(parameterValue => {
 						if (parameterValue.type != Types.parameterValue)
 							externalCallbacks.error(new parser.SyntaxError("Should be impossible: Unknow parameter value type", Types.parameterValue, parameterValue.type, parameterValue.location))
@@ -326,6 +326,7 @@ module.exports.secondPass = (htnPath, htnCode, options, stageSize, externalCallb
 							externalCallbacks.error(new parser.SyntaxError("Should be impossible: Unknown parameer value value type", [Types.string, Types.number], parameterValue.value.type, parameterValue.value.location))
 						}
 					})
+					finish()
 					stateStack.push({
 						level: StateLevels.inObjectOrCustomRule,
 						object: hsCustomRule,
