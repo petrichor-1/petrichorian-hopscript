@@ -108,7 +108,7 @@ module.exports.hopscotchify = (htnPath, options, fileFunctions, alreadyParsedPat
 		hasUndefinedCustomRules: hasUndefinedCustomRules,
 		hasUndefinedCustomBlocks: hasUndefinedCustomBlocks,
 		returnValue: ()=>project,
-		handleCustomRule: handleCustomRule,
+		handleCustomRule: handleCustomRule.bind(null, project),
 		transformParsed: parsed => {
 			objectTypes = parsed.objectTypes
 			blockTypes = parsed.blockTypes
@@ -153,12 +153,12 @@ module.exports.hopscotchify = (htnPath, options, fileFunctions, alreadyParsedPat
 		return hsBlock
 	}
 	// Returns hsCustomRule, beforeGameStartsAbility
-	function handleCustomRule(nameAsString, hsObjectOrCustomRule, hasContainer, callbackForWhenRuleIsDefined) {
+	function handleCustomRule(project, nameAsString, hsObjectOrCustomRule, hasContainer, callbackForWhenRuleIsDefined) {
 		const rulesList = hsObjectOrCustomRule.rules
 		const tempid = "TEMP" + randomUUID()
 		rulesList.push(tempid)
 		onDefinitionOfCustomRuleNamed(unSnakeCase(nameAsString), hsCustomRule => {
-			const hsCustomRuleInstance = createCustomRuleInstanceFor(hsCustomRule, callbackForWhenRuleIsDefined)
+			const hsCustomRuleInstance = createCustomRuleInstanceFor(project, whenSceneIsDefinedWithName, hsCustomRule, callbackForWhenRuleIsDefined)
 			project.customRuleInstances.push(hsCustomRuleInstance)
 			const index = rulesList.findIndex(e => e == tempid)
 			if (index < 0)
@@ -540,7 +540,7 @@ function createHsCommentFrom(comment, addBreakpointLines) {
 	return result
 }
 
-function createCustomRuleInstanceFor(hsCustomRule, callbackForWhenRuleIsDefined) {
+function createCustomRuleInstanceFor(project, whenSceneIsDefinedWithName, hsCustomRule, callbackForWhenRuleIsDefined) {
 	const result = {
 		id: randomUUID(),
 		customRuleID: hsCustomRule.id,
@@ -553,6 +553,13 @@ function createCustomRuleInstanceFor(hsCustomRule, callbackForWhenRuleIsDefined)
 		const hsParameter = hsCustomRule.parameters[i]
 		const newHsParameter = deepCopy(hsParameter)
 		newHsParameter.value = value
+		result.parameters.push(newHsParameter)
+	}, createOperatorBlockFrom.bind(null,project, whenSceneIsDefinedWithName),
+	(i, childBlock) => {
+		const hsParameter = hsCustomRule.parameters[i]
+		const newHsParameter = deepCopy(hsParameter)
+		newHsParameter.value = newHsParameter.defaultValue
+		newHsParameter.datum = childBlock
 		result.parameters.push(newHsParameter)
 	})
 	return result

@@ -376,7 +376,7 @@ module.exports.secondPass = (htnPath, htnCode, options, stageSize, externalCallb
 						doesHaveContainer: line.value.doesHaveContainer,
 						parameters: line.value.parameters
 					}
-					handleCustomRule(externalCallbacks, customRule, Types, currentState().object, options, (hsCustomRule, beforeGameStartsAbility) => {
+					handleCustomRule(externalCallbacks, customRule, Types, currentState().object, options, validScopes, blockCreationHelpers, (hsCustomRule, beforeGameStartsAbility) => {
 						stateStack.push({
 							level: StateLevels.inObjectOrCustomRule,
 							object: hsCustomRule,
@@ -427,7 +427,7 @@ module.exports.secondPass = (htnPath, htnCode, options, stageSize, externalCallb
 				break
 			case Types.customRule:
 				const customRule = line.value
-				handleCustomRule(externalCallbacks, customRule, Types, currentState().object, options, (hsCustomRule, beforeGameStartsAbility) => {
+				handleCustomRule(externalCallbacks, customRule, Types, currentState().object, options, validScopes, blockCreationHelpers, (hsCustomRule, beforeGameStartsAbility) => {
 					stateStack.push({
 						level: StateLevels.inObjectOrCustomRule,
 						object: hsCustomRule,
@@ -828,11 +828,11 @@ function getVariableDescriptionFromPath(variablePath, validScopes) {
 	return null
 }
 
-function handleCustomRule(externalCallbacks, customRule, Types, hsObjectOrCustomRule, options, transitionStateIfContainerExists) {
+function handleCustomRule(externalCallbacks, customRule, Types, hsObjectOrCustomRule, options, validScopes, blockCreationHelpers, transitionStateIfContainerExists) {
 	if (customRule.value.type != Types.identifier)
 		throw "Should be impossible: Non-identifier custom rules name"
 	const nameAsString = customRule.value.value
-	const {hsCustomRule, beforeGameStartsAbility} = externalCallbacks.handleCustomRule(nameAsString, hsObjectOrCustomRule, customRule.doesHaveContainer, (hsParametersCount, getExpectedNameForParameter, addNewParameter) => {
+	const {hsCustomRule, beforeGameStartsAbility} = externalCallbacks.handleCustomRule(nameAsString, hsObjectOrCustomRule, customRule.doesHaveContainer, (hsParametersCount, getExpectedNameForParameter, addNewParameter, createOperatorBlockUsing, addParameterWithChildBlock) => {
 		if (hsParametersCount <= 0)
 			return
 		if (hsParametersCount != (customRule.parameters?.length || 0))
@@ -854,8 +854,15 @@ function handleCustomRule(externalCallbacks, customRule, Types, hsObjectOrCustom
 			case Types.number:
 				addNewParameter(i,parameter.value.value)
 				break
+			case Types.identifier:
+			case Types.binaryOperatorBlock:
+			case Types.parenthesisBlock:
+				const operatorBlockCreator = createBlockOfClasses.bind(null, externalCallbacks, options, parameter.value, Types, validScopes, blockCreationHelpers)
+				const innerBlock = createOperatorBlockUsing(operatorBlockCreator, 57) //HSParameterType.MultiPurposeNumberDefault
+				addParameterWithChildBlock(i, innerBlock)
+				break
 			default:
-				throw new parser.SyntaxError("Should be impossible; Unknown custom rule parameter value type", [Types.string, Types.number], parameter.value.type, parameter.value.location)
+				throw new parser.SyntaxError("Should be impossible; Unknown custom rule parameter value type", [Types.string, Types.number, Types.identifier, Types.binaryOperatorBlock, Types.parenthesisBlock], parameter.value.type, parameter.value.location)
 			}
 		}
 	})
