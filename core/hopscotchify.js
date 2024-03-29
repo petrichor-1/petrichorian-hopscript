@@ -198,6 +198,8 @@ module.exports.hopscotchify = (htnPath, options, fileFunctions, alreadyParsedPat
 	function hasUndefinedCustomRules() {
 		const undefinedCustomRuleNames = Object.getOwnPropertyNames(customRuleDefinitionCallbacks).filter(e => !!customRuleDefinitionCallbacks[e])
 		const hasUndefinedCustomRules = undefinedCustomRuleNames.length > 0
+		if (hasUndefinedCustomRules)
+			console.log(undefinedCustomRuleNames)
 		return hasUndefinedCustomRules
 	}
 	function isThereAlreadyADefinedCustomRuleNamed(nameAsString) {

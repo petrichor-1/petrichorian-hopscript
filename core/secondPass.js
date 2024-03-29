@@ -281,12 +281,13 @@ module.exports.secondPass = (htnPath, htnCode, options, stageSize, externalCallb
 				const customRuleName = line.value.value.value
 				if (externalCallbacks.isThereAlreadyADefinedCustomRuleNamed(customRuleName))
 					throw new parser.SyntaxError("Duplicate custom rule definition", "", customRuleName, line.location)
-				const {hsCustomRule, beforeGameStartsAbility} = externalCallbacks.addCustomRuleDefinitionAndReturnParameterly(customRuleName)
+				const {hsCustomRule, beforeGameStartsAbility, finish} = externalCallbacks.addCustomRuleDefinitionAndReturnParameterly(customRuleName)
 				stateStack.push({
 					level: StateLevels.inObjectOrCustomRule,
 					object: hsCustomRule,
 					beforeGameStartsAbility: beforeGameStartsAbility
 				})
+				finish()
 				break
 			case Types.customAbilityReference:
 				const definition = line.value
@@ -832,7 +833,8 @@ function handleCustomRule(externalCallbacks, customRule, Types, hsObjectOrCustom
 	if (customRule.value.type != Types.identifier)
 		throw "Should be impossible: Non-identifier custom rules name"
 	const nameAsString = customRule.value.value
-	const {hsCustomRule, beforeGameStartsAbility} = externalCallbacks.handleCustomRule(nameAsString, hsObjectOrCustomRule, customRule.doesHaveContainer, (hsParametersCount, getExpectedNameForParameter, addNewParameter, createOperatorBlockUsing, addParameterWithChildBlock) => {
+	// may not get finish
+	const {hsCustomRule, beforeGameStartsAbility, finish} = externalCallbacks.handleCustomRule(nameAsString, hsObjectOrCustomRule, customRule.doesHaveContainer, (hsParametersCount, getExpectedNameForParameter, addNewParameter, createOperatorBlockUsing, addParameterWithChildBlock) => {
 		if (hsParametersCount <= 0)
 			return
 		if (hsParametersCount != (customRule.parameters?.length || 0))
@@ -866,6 +868,8 @@ function handleCustomRule(externalCallbacks, customRule, Types, hsObjectOrCustom
 			}
 		}
 	})
+	if (finish)
+		finish()
 	if (customRule.doesHaveContainer)
 		transitionStateIfContainerExists(hsCustomRule, beforeGameStartsAbility)
 }
