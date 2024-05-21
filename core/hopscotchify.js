@@ -577,7 +577,7 @@ function createScene(project, findSceneWithName, sceneDefinitionCallbacks, scene
 	const hsScene = {
 		name: unSnakeCase(sceneName),
 		objects: [],
-		id: randomUUID(),
+		id: UUIDforName(sceneName),
 	}
 	project.scenes.push(hsScene)
 	sceneDefinitionCallbacks[hsScene.name]?.forEach(f=>f(hsScene))
@@ -621,4 +621,10 @@ function createSetImageBlockForHSObjectType(type) {
 		name: "", // Both of these should be empty strings
 		description: "",
 	}
+}
+
+function UUIDforName(name) {
+	// TODO: Better fromat
+	// or... even better, don't use this at all.
+	return name
 }
