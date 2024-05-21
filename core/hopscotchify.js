@@ -68,6 +68,7 @@ module.exports.hopscotchify = (htnPath, options, fileFunctions, alreadyParsedPat
 	let parameterTypes;
 	let sceneNames;
 	let definedCustomBlocks;
+	let parsed;
 	const hopscotchified = secondPass(htnPath, htnCode, options, project.stageSize, {
 		handleDependency: path => {
 			const hspreLikeAndOtherInfo = function() {
@@ -109,16 +110,17 @@ module.exports.hopscotchify = (htnPath, options, fileFunctions, alreadyParsedPat
 		hasUndefinedCustomBlocks: hasUndefinedCustomBlocks,
 		returnValue: ()=>project,
 		handleCustomRule: handleCustomRule.bind(null, project),
-		transformParsed: parsed => {
-			objectTypes = parsed.objectTypes
-			blockTypes = parsed.blockTypes
-			traitTypes = parsed.traitTypes
-			binaryOperatorBlockTypes = parsed.binaryOperatorBlockTypes
-			objectNames = parsed.objectNames
-			parameterTypes = parsed.parameterTypes
-			sceneNames = parsed.sceneNames
-			definedCustomBlocks = parsed.definedCustomBlocks
-			return parsed
+		transformParsed: tparsed => {
+			objectTypes = tparsed.objectTypes
+			blockTypes = tparsed.blockTypes
+			traitTypes = tparsed.traitTypes
+			binaryOperatorBlockTypes = tparsed.binaryOperatorBlockTypes
+			objectNames = tparsed.objectNames
+			parameterTypes = tparsed.parameterTypes
+			sceneNames = tparsed.sceneNames
+			definedCustomBlocks = tparsed.definedCustomBlocks
+			parsed = tparsed
+			return tparsed
 		},
 		linely:  ()=>{},
 		isThereAlreadyADefinedCustomRuleNamed: isThereAlreadyADefinedCustomRuleNamed,
@@ -134,7 +136,8 @@ module.exports.hopscotchify = (htnPath, options, fileFunctions, alreadyParsedPat
 		objectNames,
 		parameterTypes,
 		sceneNames,
-		definedCustomBlocks
+		definedCustomBlocks,
+		parsed
 	}
 	function createElseAbilityFor(checkIfElseBlock) {
 		const elseAbility = createEmptyAbility()
@@ -538,7 +541,7 @@ function createHsCommentFrom(comment, addBreakpointLines) {
 		"block_class":"method"
 	}
 	if (addBreakpointLines)
-		result[BREAKPOINT_POSITION_KEY] = comment.location.start
+		result[BREAKPOINT_POSITION_KEY] = comment.location
 	return result
 }
 
