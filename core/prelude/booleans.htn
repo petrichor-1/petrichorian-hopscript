@@ -1,0 +1,6 @@
+text booleans:
+	Game.true = 7 == 7
+	Game.false = not(Game.true)
+	When game_starts:
+		destroy
+		# By the time the game starts, this object has already done everything it needs to.
