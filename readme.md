@@ -98,3 +98,27 @@ Some blocks also have binary operator forms:
 ```phopscript
 72 + Self.scroll_offset
 ```
+
+### Custom images
+To include custom images, just add a `custom_image` type object with the `file` attribute set:
+```phopscript
+custom_image cool_image(file: "coolimage.png"):
+	# ...
+```
+Do note that the filename of the image must be unique, and multiple images with the same filenames will merge even if they are in different directories.
+```phopscript
+custom_image image(file: "coolimage.png"):
+	# ...
+custom_image image_2(file: "subdirectory/coolimage.png"):
+	# `coolimage.png` and `subdirectory/coolimage.png` will 
+	# be the same image in the final project, even though 
+	# they are from different directories.
+```
+
+`hopscotchify.js` can automatically copy all the used images to a directory using the `--customImageDirectory` option. For example:
+
+`hopscotchify.js project.htn --customImageDirectory ~/hopscotchDocuments/custom_images`
+
+Otherwise, you will have to handle this yourself.
+
+If you output the hopscotchified json to a file using the `--output` option, it will print a list of the source path of every image you need to copy.
