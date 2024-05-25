@@ -6,6 +6,7 @@ const fs = require("fs");
 const hopscotchify_js_1 = require("../../../../core/hopscotchify.js");
 const http = require("http");
 const ws_1 = require("ws");
+const path_1 = require("path");
 class PHSDebugServer {
     constructor(httpServer, wsServer, offset) {
         this.breakpoints = [];
@@ -105,6 +106,7 @@ exports.PHSDebugServer = PHSDebugServer;
 async function run(path) {
     const fileFunctions = {
         read: (path) => fs.readFileSync(path).toString(),
+        stat: (path) => fs.statSync(path),
         getHspreLikeFrom: (path, alreadyParsedPaths) => {
             if (path.endsWith('.hopscotch') || path.endsWith('.hspre'))
                 return { hspreLike: JSON.parse(fs.readFileSync(path).toString()) };
@@ -115,7 +117,9 @@ async function run(path) {
         }
     };
     const options = { checkParameterLabels: true };
-    const hsProject = (0, hopscotchify_js_1.hopscotchify)(path, options, fileFunctions, {}).hopscotchified;
+    const hopscotchifyResult = (0, hopscotchify_js_1.hopscotchify)(path, options, fileFunctions, {});
+    const hsProject = hopscotchifyResult.hopscotchified;
+    const { customObjectPaths } = hopscotchifyResult;
     const versionInfo = await versionInfoForProject(hsProject);
     const server = http.createServer(async (message, response) => {
         response.writeHead(200);
@@ -136,12 +140,30 @@ async function run(path) {
                     response.end(error.toString());
                 }
                 break;
-            default:
+            case "/":
                 try {
                     response.end(htmlOrGetFromFile(versionInfo));
                 }
                 catch (error) {
                     response.end(error.toString());
+                }
+                break;
+            default:
+                if (message.url.startsWith("/images/")) {
+                    const name = message.url.split("/")[2].split("?")[0];
+                    for (const pathIndex in customObjectPaths) {
+                        const path = customObjectPaths[pathIndex];
+                        if ((0, path_1.basename)(path) == name) {
+                            const image = fs.readFileSync(path);
+                            response.end(image);
+                            return;
+                        }
+                    }
+                    response.end(message.url);
+                }
+                else {
+                    // Don't store any credentials on this site...
+                    response.end(message.url);
                 }
         }
     });

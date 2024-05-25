@@ -3,6 +3,7 @@ import * as fs from 'fs'
 import {hopscotchify} from '../../../../core/hopscotchify.js'
 import * as http from 'http'
 import {WebSocketServer} from 'ws'
+import { basename } from 'path'
 
 interface PHSBreakpointPosition {
 	line: number,
@@ -111,6 +112,7 @@ export class PHSDebugServer {
 async function run(path: string): Promise<any> {
 	const fileFunctions = {
 		read: (path: string) => fs.readFileSync(path).toString(),
+		stat: (path: string) => fs.statSync(path),
 		getHspreLikeFrom: (path: string, alreadyParsedPaths: any) => {
 			if (path.endsWith('.hopscotch') || path.endsWith('.hspre'))
 				return {hspreLike: JSON.parse(fs.readFileSync(path).toString())}
@@ -121,7 +123,9 @@ async function run(path: string): Promise<any> {
 		}
 	}
 	const options = {checkParameterLabels: true}
-	const hsProject = hopscotchify(path, options, fileFunctions, {}).hopscotchified
+	const hopscotchifyResult = hopscotchify(path, options, fileFunctions, {})
+	const hsProject = hopscotchifyResult.hopscotchified
+	const {customObjectPaths} = hopscotchifyResult
 	const versionInfo = await versionInfoForProject(hsProject)
 	const server = http.createServer(async (message, response) => {
 		response.writeHead(200)
@@ -140,11 +144,28 @@ async function run(path: string): Promise<any> {
 				response.end(error.toString())
 			}
 			break
-		default:
+		case "/":
 			try {
 				response.end(htmlOrGetFromFile(versionInfo))
 			} catch(error) {
 				response.end(error.toString())
+			}
+			break
+		default:
+			if(message.url.startsWith("/images/")) {
+				const name = message.url.split("/")[2].split("?")[0]
+				for (const pathIndex in customObjectPaths) {
+					const path = customObjectPaths[pathIndex]
+					if (basename(path) == name) {
+						const image = fs.readFileSync(path)
+						response.end(image)
+						return
+					}
+				}
+				response.end(message.url)
+			} else {
+				// Don't store any credentials on this site...
+				response.end(message.url)
 			}
 		}
 	})
