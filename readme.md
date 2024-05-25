@@ -122,3 +122,8 @@ custom_image image_2(file: "subdirectory/coolimage.png"):
 Otherwise, you will have to handle this yourself.
 
 If you output the hopscotchified json to a file using the `--output` option, it will print a list of the source path of every image you need to copy.
+
+To set image to a custom image, just put the `file` attribute in parentheses after the `custom_image` type.
+```phopscript
+set_image(custom_image(file: "coolimage.png"))
+```
