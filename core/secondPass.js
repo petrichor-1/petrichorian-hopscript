@@ -719,12 +719,46 @@ function createEventParameterUsing(prototype) {
 
 function maybeCreateVariableFromUndefinedType(block, Types, getTraitTypeWithName, validScopes, undefinedTypeFunctions, externalCallbacks, maybeDesiredTypes, doesSceneExistWithName, getObjectTypeNamed) {
 	if (maybeDesiredTypes?.includes("ObjectType")) {
-		if (block.type != Types.identifier)
-			externalCallbacks.error(new parser.SyntaxError("Should be impossible: Unknown type for object type name in set image parameter", Types.identifier, block.type, block.location))
-		const objectType = getObjectTypeNamed(block.value)
+		let blockName;
+		let blockParameters;
+		switch (block.type) {
+		case Types.identifier:
+			blockName = block.value
+			break
+		case Types.parenthesisBlock:
+			if (block.name.type != Types.identifier)
+				externalCallbacks.error(new parser.SyntaxError("Should be impossible: Unknown type for object type name in set image parameter with attributes", [Types.identifier], block.name.type, block.name.location))
+			blockName = block.name.value
+			blockParameters = block.parameters
+			break
+		default:
+			externalCallbacks.error(new parser.SyntaxError("Should be impossible: Unknown type for object type name in set image parameter", [Types.identifier, Types.parenthesisBlock], block.type, block.location))
+		}
+		const objectType = getObjectTypeNamed(blockName)
 		if (!objectType)
 			externalCallbacks.error(new parser.SyntaxError("Invalid object type", "TODO: Get all object types", block.value, block.location))
-		return undefinedTypeFunctions.createSetImageBlockForHSObjectType(objectType.type)
+		let customObjectFilename;
+		if (Array.isArray(blockParameters)) {
+			if (blockParameters.length != 1)
+				externalCallbacks.error(new parser.SyntaxError("Too many attributes in object type for set image", 1, blockParameters.length, block.location))
+			const param = blockParameters[0]
+			if (param.type != Types.parameterValue)
+				externalCallbacks.error(new parser.SyntaxError("Uncomprehensible type for attribute in object type for set image", Types.parameterValue, param.type, param.location))
+			const label = param.label
+			const value = param.value
+			if (label.type != Types.identifier)
+				externalCallbacks.error(new parser.SyntaxError("Uncomprehensible type for attribute name in object type for set image", Types.identifier, label.type, label.location))
+			if (value.type != Types.string)
+				externalCallbacks.error(new parser.SyntaxError("Attributes of object types in set image blocks must be string literals", Types.string, value.type, value.location))
+			switch (label.value) {
+			case "file":
+				customObjectFilename = value.value
+				break;
+			default:
+				externalCallbacks.error(new parser.SyntaxError("Unknown object attribute for set image block object type", "file", label.value, label.location))
+			}
+		}
+		return undefinedTypeFunctions.createSetImageBlockForHSObjectType(objectType.type, customObjectFilename)
 	}
 	switch (block.type) {
 	case Types.identifier:

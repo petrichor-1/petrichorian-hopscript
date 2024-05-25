@@ -154,7 +154,7 @@ module.exports.hopscotchify = (htnPath, options, fileFunctions, alreadyParsedPat
 		return elseAbility
 	}
 	function createMethodBlock(createBlockOfClasses, ability) {
-		const hsBlock = createMethodBlockFrom(project, whenSceneIsDefinedWithName, createBlockOfClasses)
+		const hsBlock = createMethodBlockFrom(project, whenSceneIsDefinedWithName, htnPath, fileFunctions, customObjectPaths, createBlockOfClasses)
 		ability.blocks.push(hsBlock)
 		if (hsBlock.type == 123) { //HSBlockType.ability
 			onDefinitionOfCustomBlockNamed(hsBlock.description, hsAbility => {
@@ -169,7 +169,7 @@ module.exports.hopscotchify = (htnPath, options, fileFunctions, alreadyParsedPat
 		const tempid = "TEMP" + randomUUID()
 		rulesList.push(tempid)
 		onDefinitionOfCustomRuleNamed(unSnakeCase(nameAsString), hsCustomRule => {
-			const hsCustomRuleInstance = createCustomRuleInstanceFor(project, whenSceneIsDefinedWithName, hsCustomRule, callbackForWhenRuleIsDefined)
+			const hsCustomRuleInstance = createCustomRuleInstanceFor(project, whenSceneIsDefinedWithName, hsCustomRule, callbackForWhenRuleIsDefined, htnPath, fileFunctions, customObjectPaths)
 			project.customRuleInstances.push(hsCustomRuleInstance)
 			const index = rulesList.findIndex(e => e == tempid)
 			if (index < 0)
@@ -254,7 +254,7 @@ module.exports.hopscotchify = (htnPath, options, fileFunctions, alreadyParsedPat
 	}
 
 	function createAbilityForRuleFrom(createBlockOfClasses, currentObject) {
-		const hsBlock = createOperatorBlockFrom(project,whenSceneIsDefinedWithName, createBlockOfClasses, MagicBlockTypes.event)
+		const hsBlock = createOperatorBlockFrom(project,whenSceneIsDefinedWithName, htnPath, fileFunctions, customObjectPaths, createBlockOfClasses, MagicBlockTypes.event)
 		const rule = createRuleWith(hsBlock)
 		currentObject.rules.push(rule.id)
 		project.rules.push(rule)
@@ -327,7 +327,7 @@ function createEmptyAbility() {
 	}
 }
 
-function createBlockCreationFunctionsFor(project, parametersKey, whenSceneIsDefinedWithName) {
+function createBlockCreationFunctionsFor(project, parametersKey, whenSceneIsDefinedWithName, htnPath, fileFunctions, customObjectPaths) {
 	return {
 		begin: (parametersKey => {
 			const result = {}
@@ -354,7 +354,7 @@ function createBlockCreationFunctionsFor(project, parametersKey, whenSceneIsDefi
 		addEventParameter: ((project, hsEventParameter) => project.eventParameters.push(hsEventParameter)).bind(null, project),
 		setParameterDatum: ((hsParameter, innerBlock) => hsParameter.datum = innerBlock),
 		addParameter: ((parametersKey, result, hsParameter) => result[parametersKey].push(hsParameter)).bind(null, parametersKey),
-		createOperatorBlockUsing: createOperatorBlockFrom.bind(null,project, whenSceneIsDefinedWithName),
+		createOperatorBlockUsing: createOperatorBlockFrom.bind(null,project, whenSceneIsDefinedWithName, htnPath, fileFunctions, customObjectPaths),
 		undefinedTypeFunctions: {
 			getOrAddObjectVariableNamed: getOrAddObjectVariableNamed.bind(null,project),
 			createSelfTrait: createSelfTrait,
@@ -378,18 +378,18 @@ function createBlockCreationFunctionsFor(project, parametersKey, whenSceneIsDefi
 			createNextSceneBlock: createNextSceneBlock,
 			createPreviousSceneBlock: createPreviousSceneBlock,
 			createReferenceToSceneNamed: createReferenceToSceneNamed.bind(null, project, whenSceneIsDefinedWithName),
-			createSetImageBlockForHSObjectType: createSetImageBlockForHSObjectType,
+			createSetImageBlockForHSObjectType: createSetImageBlockForHSObjectType.bind(null, project, htnPath, fileFunctions, customObjectPaths),
 		}
 	}
 }
 
-function createOperatorBlockFrom(project, whenSceneIsDefinedWithName, createBlockOfClasses, parameterType) {
-	const blockCreationFunctions = createBlockCreationFunctionsFor(project, "params", whenSceneIsDefinedWithName)
+function createOperatorBlockFrom(project, whenSceneIsDefinedWithName, htnPath, fileFunctions, customObjectPaths, createBlockOfClasses, parameterType) {
+	const blockCreationFunctions = createBlockCreationFunctionsFor(project, "params", whenSceneIsDefinedWithName, htnPath, fileFunctions, customObjectPaths)
 	return createBlockOfClasses(["operator","conditionalOperator"], blockCreationFunctions, parameterType)
 }
 
-function createMethodBlockFrom(project, whenSceneIsDefinedWithName, createBlockOfClasses) {
-	const blockCreationFunctions = createBlockCreationFunctionsFor(project, "parameters", whenSceneIsDefinedWithName)
+function createMethodBlockFrom(project, whenSceneIsDefinedWithName, htnPath, fileFunctions, customObjectPaths, createBlockOfClasses) {
+	const blockCreationFunctions = createBlockCreationFunctionsFor(project, "parameters", whenSceneIsDefinedWithName, htnPath, fileFunctions, customObjectPaths)
 	return createBlockOfClasses(["method", "control", "conditionalControl"], blockCreationFunctions, null)
 }
 
@@ -560,7 +560,7 @@ function createHsCommentFrom(comment, addBreakpointLines) {
 	return result
 }
 
-function createCustomRuleInstanceFor(project, whenSceneIsDefinedWithName, hsCustomRule, callbackForWhenRuleIsDefined) {
+function createCustomRuleInstanceFor(project, whenSceneIsDefinedWithName, hsCustomRule, callbackForWhenRuleIsDefined, htnPath, fileFunctions, customObjectPaths) {
 	const result = {
 		id: randomUUID(),
 		customRuleID: hsCustomRule.id,
@@ -574,7 +574,7 @@ function createCustomRuleInstanceFor(project, whenSceneIsDefinedWithName, hsCust
 		const newHsParameter = deepCopy(hsParameter)
 		newHsParameter.value = value
 		result.parameters.push(newHsParameter)
-	}, createOperatorBlockFrom.bind(null,project, whenSceneIsDefinedWithName),
+	}, createOperatorBlockFrom.bind(null,project, whenSceneIsDefinedWithName, htnPath, fileFunctions, customObjectPaths),
 	(i, childBlock) => {
 		const hsParameter = hsCustomRule.parameters[i]
 		const newHsParameter = deepCopy(hsParameter)
@@ -630,12 +630,18 @@ function createReferenceToSceneNamed(project, whenSceneIsDefinedWithName, name) 
 	return hsBlock
 }
 
-function createSetImageBlockForHSObjectType(type) {
-	return {
+function createSetImageBlockForHSObjectType(project, htnPath, fileFunctions, customObjectPaths, type, customObjectFilename) {
+	const result = {
 		type: type,
 		name: "", // Both of these should be empty strings
 		description: "",
 	}
+	if (customObjectFilename) {
+		const imagePath = path.resolve(path.dirname(htnPath), customObjectFilename)
+		const customObject = getOrAddcustomObjectWithPath(project, imagePath, `Image ${randomUUID()}`, fileFunctions, customObjectPaths)
+		result.customObject = customObject.id
+	}
+	return result
 }
 
 function UUIDforName(name) {

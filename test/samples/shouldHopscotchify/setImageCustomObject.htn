@@ -1,0 +1,3 @@
+text text:
+	When game_starts:
+		set_image(custom_image(file: "testImage.png"))
