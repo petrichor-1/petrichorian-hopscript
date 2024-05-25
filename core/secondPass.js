@@ -254,8 +254,13 @@ module.exports.secondPass = (htnPath, htnCode, options, stageSize, externalCallb
 								externalCallbacks.error(new parser.SyntaxError("Object rotation must be numbers", Types.number, attribute.value.type, attribute.value.location))
 							result.rotation = parseFloat(attribute.value.value)
 							break
+						case "file":
+							if (attribute.value.type != Types.string)
+								externalCallbacks.error(new parser.SyntaxError("Object custom image filename must be a string", Types.string, attribute.value.type, attribute.value.location))
+							result.customImageFilename = attribute.value.value
+							break
 						default:
-							externalCallbacks.error(new parser.SyntaxError(`Unknown object attribute '${attributeName}'`, ["x_position", "y_position", "text", "rotation", "resize_scale"], attributeName, attribute.name.location))
+							externalCallbacks.error(new parser.SyntaxError(`Unknown object attribute '${attributeName}'`, ["x_position", "y_position", "text", "rotation", "resize_scale", "file"], attributeName, attribute.name.location))
 						}
 					})
 					return result

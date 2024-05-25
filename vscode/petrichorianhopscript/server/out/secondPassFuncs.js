@@ -214,6 +214,7 @@ function prepAlreadyParsedPathsForHopscotchify() {
 function fileFunctions() {
     return {
         read: path => (0, fs_1.readFileSync)(path).toString(),
+        stat: path => (0, fs_1.statSync)(path),
         getHspreLike: getHspreLikeFrom,
     };
 }

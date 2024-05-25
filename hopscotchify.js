@@ -3,6 +3,7 @@
 const fs = require('fs')
 const {parseArgs} = require('node:util')
 const {hopscotchify} = require('./core/hopscotchify.js')
+const path = require('path')
 
 if (process.argv.length < 3)
 	return console.error(`Nope! Try ${process.argv[0]} ${process.argv[1]} <file.htn>`)
@@ -15,6 +16,9 @@ const argOptions = {
 		},
 		output: {
 			type: "string"
+		},
+		customImageDirectory: {
+			type: "string"
 		}
 	}
 }
@@ -26,9 +30,11 @@ if (parsedArgs.positionals.length != 1)
 const inputPath = parsedArgs.positionals[0]
 const ignoreParameterLabels = parsedArgs.values.ignoreParameterLabels || false
 const outputFilePath = parsedArgs.values.output
+const customImageDirectoryPath = parsedArgs.values.customImageDirectory
 
 const fileFunctions = {
 	read: path => fs.readFileSync(path).toString(),
+	stat: path => fs.statSync(path),
 	getHspreLikeFrom: (path, alreadyParsedPaths) => {
 		if (path.endsWith('.hopscotch') || path.endsWith('.hspre'))
 			return {hspreLike: JSON.parse(fs.readFileSync(path).toString())}
@@ -39,11 +45,20 @@ const fileFunctions = {
 	}
 }
 try {
-	const {hopscotchified} = hopscotchify(inputPath, {checkParameterLabels: !ignoreParameterLabels}, fileFunctions, {})
+	const {hopscotchified, customObjectPaths} = hopscotchify(inputPath, {checkParameterLabels: !ignoreParameterLabels}, fileFunctions, {})
 	const result = JSON.stringify(hopscotchified)
+	if (customImageDirectoryPath)
+		copyCustomImagesTo(customImageDirectoryPath, customObjectPaths)
 	if (!outputFilePath)
 		return console.log(result)
 	fs.writeFileSync(outputFilePath, result)
+	if (!customImageDirectoryPath) {
+		for (copIndex in customObjectPaths) {
+			const cop = customObjectPaths[copIndex]
+			console.log(`Be sure to copy the image at ${cop}`)
+		}
+		console.log("You can use the --customImageDirectory option to automatically copy these files!")
+	}
 } catch (error) {
 	try {
 		const expected = error.expected?.map ? error.expected.map(e => {
@@ -74,5 +89,15 @@ try {
 		console.log(arrowLine)
 	} catch (e2) {
 		console.log(error, e2)
+	}
+}
+
+function copyCustomImagesTo(customImageDirectoryPath, customObjectPaths) {
+	for (pathIndex in customObjectPaths) {
+		const filePath = customObjectPaths[pathIndex]
+		const image = fs.readFileSync(filePath)
+		const basename = path.basename(filePath)
+		const finalPath = path.join(customImageDirectoryPath, basename)
+		fs.writeFileSync(finalPath, image)
 	}
 }

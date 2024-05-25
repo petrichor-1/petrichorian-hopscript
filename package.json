@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "image-size": "^1.1.1",
     "peggy": "^3.0.2"
   }
 }

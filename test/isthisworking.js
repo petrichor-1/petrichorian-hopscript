@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 const {hopscotchify} = require("../core/hopscotchify.js")
-const {readdirSync, readFileSync} = require('fs')
+const {readdirSync, readFileSync, statSync} = require('fs')
 
 let isWorking = true
 const directoryPath = __dirname+"/samples/shouldHopscotchify"
 const options = {checkParameterLabels: true}
 const fileFunctions = {
 	read: path => readFileSync(path).toString(),
+	stat: path => statSync(path),
 	getHspreLikeFrom: (path, alreadyParsedPaths) => {
 		if (path.endsWith('.hopscotch') || path.endsWith('.hspre'))
 			return {hspreLike: JSON.parse(readFileSync(path).toString())}

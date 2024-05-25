@@ -1,0 +1,2 @@
+custom_image image(file: "./testImage.png"):
+	# Empty

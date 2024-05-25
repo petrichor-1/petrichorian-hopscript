@@ -2,6 +2,8 @@ const { randomUUID } = require('crypto')
 const {secondPass} = require('./secondPass.js')
 const {HSParameterType} = require('./HSParameterType.js')
 const {mergeHspreLikes} = require('./mergeHspreLikes.js')
+const path = require("path")
+const sizeOf = require("image-size")
 
 const BREAKPOINT_POSITION_KEY = "PETRICHOR_BREAKPOINT_POSITION"
 
@@ -30,6 +32,8 @@ module.exports.hopscotchify = (htnPath, options, fileFunctions, alreadyParsedPat
 		scenes: [],
 		sceneReferences: [],
 	}
+
+	const customObjectPaths = []
 
 	let customRules = {}
 	let customRuleDefinitionCallbacks = {}
@@ -93,6 +97,9 @@ module.exports.hopscotchify = (htnPath, options, fileFunctions, alreadyParsedPat
 			})
 			if (hspreLikeAndOtherInfo.hspreLike.requires_beta_editor !== undefined)
 				project.requires_beta_editor = hspreLikeAndOtherInfo.hspreLike.requires_beta_editor
+			hspreLikeAndOtherInfo.customObjectPaths.forEach(path => {
+				customObjectPaths.push(path)
+			})
 			return hspreLikeAndOtherInfo
 		},
 		customBlockAbilityFunctions: makeCustomBlockAbilityFunctions(),
@@ -137,7 +144,8 @@ module.exports.hopscotchify = (htnPath, options, fileFunctions, alreadyParsedPat
 		parameterTypes,
 		sceneNames,
 		definedCustomBlocks,
-		parsed
+		parsed,
+		customObjectPaths,
 	}
 	function createElseAbilityFor(checkIfElseBlock) {
 		const elseAbility = createEmptyAbility()
@@ -184,6 +192,13 @@ module.exports.hopscotchify = (htnPath, options, fileFunctions, alreadyParsedPat
 		hsObject.text = "" //NEEDED
 		if (objectAttributes.text) {
 			hsObject.text = objectAttributes.text
+		}
+		if (objectAttributes.customImageFilename) {
+			const imagePath = path.resolve(path.dirname(htnPath), objectAttributes.customImageFilename)
+			const customObject = getOrAddcustomObjectWithPath(project, imagePath, hsObject.name, fileFunctions, customObjectPaths)
+			hsObject.customObjectID = customObject.id
+			hsObject.width = customObject.size.width
+			hsObject.height = customObject.size.height
 		}
 		const ability = createEmptyAbility()
 		project.abilities.push(ability)
@@ -627,4 +642,35 @@ function UUIDforName(name) {
 	// TODO: Better fromat
 	// or... even better, don't use this at all.
 	return name
+}
+
+function getOrAddcustomObjectWithPath(project, customObjectAbsolutePath, nameIfCreating, fileFunctions, customObjectPaths) {
+	// FIXME: Duplicate basenames would be seen as the same.
+	//        is that acceptable?
+	const fileName = path.basename(customObjectAbsolutePath)
+	for (customObjectIndex in project.customObjects) {
+		const customObject = project.customObjects[customObject]
+		if (customObject.fileName == fileName)
+			return customObject
+	}
+	const stats = fileFunctions.stat(customObjectAbsolutePath)
+	// const buffer = Buffer.from(fileFunctions.read(customObjectFilename), "utf-8")
+	//TODO: Properly read this through fileFunctions
+	const {width, height} = sizeOf(customObjectAbsolutePath)
+	createdDate = stats.birthtime.toISOString()
+	updatedDate = stats.mtime.toISOString()
+	const customObject = {
+		createdDate,
+		updatedDate,
+		name: nameIfCreating,
+		id: randomUUID(),
+		fileName,
+		size: {
+			width,
+			height
+		}
+	}
+	project.customObjects.push(customObject)
+	customObjectPaths.push(customObjectAbsolutePath)
+	return customObject
 }

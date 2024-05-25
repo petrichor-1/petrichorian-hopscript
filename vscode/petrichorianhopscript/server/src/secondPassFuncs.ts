@@ -1,4 +1,4 @@
-import { readFileSync, statSync } from "fs"
+import { Stats, readFileSync, statSync } from "fs"
 const {HSParameterType} = require("../../../../core/HSParameterType.js")
 const {hopscotchify} = require("../../../../core/hopscotchify.js")
 let customRules: any = {}
@@ -250,9 +250,10 @@ function prepAlreadyParsedPathsForHopscotchify(): any {
 	return result
 }
 
-function fileFunctions(): {getHspreLike: (path: string, alreadyParsedPaths: any) => void, read: (path: string) => string} {
+function fileFunctions(): {getHspreLike: (path: string, alreadyParsedPaths: any) => void, read: (path: string) => string, stat: (path: string) => Stats} {
 	return {
 		read: path => readFileSync(path).toString(),
+		stat: path => statSync(path),
 		getHspreLike: getHspreLikeFrom,
 	}
 }
