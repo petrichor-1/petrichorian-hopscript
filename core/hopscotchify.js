@@ -621,12 +621,13 @@ function createReferenceToSceneNamed(project, whenSceneIsDefinedWithName, name) 
 		blockType: 10000, //HSBlockType.SceneReferenceBlock
 		description: "Scene",
 		id: randomUUID(), //TODO: Figure out what this is used for and if this is the correct value
-		scene: "PETRICHOR__PLACEHOLDER__jsdjsfsjajhs if this is still in the final project that is a bug",
+		scene: UUIDforName(hsName) //"PETRICHOR__PLACEHOLDER__jsdjsfsjajhs if this is still in the final project that is a bug",
 	}
 	project.sceneReferences.push(hsBlock)
-	whenSceneIsDefinedWithName(hsName, hsScene => {
-		hsBlock.scene = hsScene.id
-	})
+	//TODO: Do this right, don't rely on knowing the scene's id here.
+	// whenSceneIsDefinedWithName(hsName, hsScene => {
+	// 	hsBlock.scene = hsScene.id
+	// })
 	return hsBlock
 }
 
