@@ -655,8 +655,8 @@ function getOrAddcustomObjectWithPath(project, customObjectAbsolutePath, nameIfC
 	// FIXME: Duplicate basenames would be seen as the same.
 	//        is that acceptable?
 	const fileName = path.basename(customObjectAbsolutePath)
-	for (customObjectIndex in project.customObjects) {
-		const customObject = project.customObjects[customObject]
+	for (const customObjectIndex in project.customObjects) {
+		const customObject = project.customObjects[customObjectIndex]
 		if (customObject.fileName == fileName)
 			return customObject
 	}
