@@ -97,7 +97,7 @@ module.exports.hopscotchify = (htnPath, options, fileFunctions, alreadyParsedPat
 			})
 			if (hspreLikeAndOtherInfo.hspreLike.requires_beta_editor !== undefined)
 				project.requires_beta_editor = hspreLikeAndOtherInfo.hspreLike.requires_beta_editor
-			hspreLikeAndOtherInfo.customObjectPaths.forEach(path => {
+			hspreLikeAndOtherInfo.customObjectPaths?.forEach(path => {
 				customObjectPaths.push(path)
 			})
 			return hspreLikeAndOtherInfo
