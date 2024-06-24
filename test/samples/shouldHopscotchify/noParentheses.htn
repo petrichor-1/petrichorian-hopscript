@@ -1,0 +1,6 @@
+text test(text: "Test blocks with a single unlabeled parameter with no parentheses for hopscript.", x_position: 512, y_position: 384):
+	When game_starts:
+		check_once_if 7 == 7:
+			set_text(to: "Hello! 7 is indeed equal to 7! How wonderful!", color: h(200, s: 10, b: 0))
+		check_once_if (7 >= 7):
+			set_text(to: "Regular parentheses including blocks alsos till work", color: h(200, s: 10, b: 0))

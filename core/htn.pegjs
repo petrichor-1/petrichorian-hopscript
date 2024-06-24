@@ -56,7 +56,7 @@ line
 		return contents
 	}
 lineContents
-	= indentationWhitespace:nonNewlineWhitespace* block:(scene / importStatement / object / block / internalDefinition)
+	= indentationWhitespace:nonNewlineWhitespace* block:(binaryOperatorWhenBlock / scene / importStatement / object / singleArgumentNakedBlock / block / internalDefinition)
 	{
 		if (!block)
 			return null
@@ -151,6 +151,22 @@ parenthesisBlock "Parenthesis block"
 			// `.map(e=>e[0])` is a hack to get just the parameter value
 			parameters: [firstFewValues.map(e=>e[0]), finalValue].flatMap(e=>e)
 		}
+	}
+
+singleArgumentNakedBlock "Single argument block with no parameters"
+	= name:blockName nonNewlineWhitespace+ parameter:parameterValue container:blockContainer?
+	{
+		const block = {
+			// Lie a little bit
+			type: Types.parenthesisBlock,
+			location: location(),
+			name: name,
+			parameters: [parameter]
+		}
+		// Don't let the container be stolen by the parameter value
+		if (!!container || parameter.doesHaveContainer || parameter.value?.doesHaveContainer)
+			block.doesHaveContainer = true
+		return block
 	}
 
 parameterValue "Parameter"
@@ -336,6 +352,17 @@ scene "Scene"
 			type: Types.scene,
 			name: name,
 			location: location(),
+		}
+	}
+
+binaryOperatorWhenBlock "When block with binary operator"
+	= "When" whitespace+ "("? block:binaryOperatorBlock ")"? nonNewlineWhitespace* colon:":"?
+	{
+		return {
+			type: Types.whenBlock,
+			location: location(),
+			value: block,
+			doesHaveContainer: block.doesHaveContainer || !!colon
 		}
 	}
 
