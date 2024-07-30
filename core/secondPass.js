@@ -702,7 +702,7 @@ function createBlockOfClasses(externalCallbacks, options, block, Types, validSco
 			blockCreationFunctions.setParameterDatum(hsParameter, innerBlock)
 			break
 		default:
-			externalCallbacks.error(new parser.SyntaxError("Should be impossible: Unknown parameter value type", [Types.number, Types.string, Types.identifier, Types.binaryOperatorBlock, Types.parenthesisBlock], parameterValue.value.type, parameterValue.location))
+			externalCallbacks.error(new parser.SyntaxError("Should be impossible: Unknown parameter value type", [Types.number, Types.string, Types.identifier, Types.binaryOperatorBlock, Types.parenthesisBlock], parameterValue.value.type, parameterValue.value.location))
 		}
 		blockCreationFunctions.addParameter(result, hsParameter)
 	}
