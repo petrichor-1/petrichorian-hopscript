@@ -17,7 +17,7 @@ module.exports.hopscotchify = (htnPath, options, fileFunctions, alreadyParsedPat
 			width: 1024,
 			height: 768,
 		},
-		playerVersion: "3.0.0",
+		playerVersion: "2.2.3",
 		version: 34,
 		abilities: [],
 		customObjects: [],
