@@ -210,6 +210,8 @@ module.exports.hopscotchify = (htnPath, options, fileFunctions, alreadyParsedPat
 	function hasUndefinedCustomBlocks() {
 		const undefinedCustomBlockNames = Object.getOwnPropertyNames(customBlockDefinitionCallbacks).filter(e => !!customBlockDefinitionCallbacks[e])
 		const hasUndefinedCustomBlocks = undefinedCustomBlockNames.length > 0
+		if (hasUndefinedCustomBlocks)
+			console.log(undefinedCustomBlockNames)
 		return hasUndefinedCustomBlocks
 	}
 	
