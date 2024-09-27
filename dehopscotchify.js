@@ -6,7 +6,7 @@ const parser = require('./core/htn.js')
 if (process.argv.length < 3)
 	return console.error(`Nope! Try ${process.argv[0]} ${process.argv[1]} <file.hopscotch>`)
 
-const prelude = fs.readFileSync(__dirname+"/core/prelude/Hopscotch.htn").toString()
+const prelude = fs.readFileSync(__dirname+"/core/prelude/Hopscotch.htn").toString() + "\n\n" + fs.readFileSync(__dirname+"/core/prelude/secretblocks.htn").toString()
 const preludeLineCount = prelude.split("\n").length
 
 const inputPath = process.argv[2]
@@ -36,8 +36,6 @@ const objectNamesByHSType = function() {
 	return result
 }()
 
-if (project.scenes.length != 1)
-	throw "Cannot represent multi-scene projects yet"
 let finalResult = ""
 let currentIndentationLevel = 0
 function newLine() {
@@ -120,25 +118,30 @@ project.customRules.forEach(customRule => {
 	currentIndentationLevel--
 	newLine()
 })
-project.scenes[0].objects.forEach(objectID => {
-	const hsObject = project.objects.find(o=>o.objectID==objectID)
-	if (!hsObject)
-		throw `Could not find object with id ${objectID}`
-	if (hsObject.rules.length <= 0 && (project.abilities.find(e=>e.abilityID==hsObject.abilityID)?.blocks?.length || 0) <= 0)
-		return
-	const htnObjectType = objectNamesByHSType[hsObject.type]
-	if (!htnObjectType)
-		throw `Undefined object type ${hsObject.type} (used by ${hsObject.name})`
-	finalResult += htnObjectType.name + " "
-	finalResult += snakeCaseify(hsObject.name)
-	finalResult += `(x_position: ${parseFloat(hsObject.xPosition)}, y_position: ${parseFloat(hsObject.yPosition)}, resize_scale: ${parseFloat(hsObject.resizeScale)}, rotation: ${parseFloat(hsObject.rotation)}`
-	if (hsObject.type == 1 && (hsObject.text?.length || 0) > 0) //HSObjectType.Text
-		finalResult += `, text: "${hsObject.text.replace(/"/g,"\"")}"`
-	finalResult += "):"
-	currentIndentationLevel++
-	addCustomRuleOrObject(hsObject)
-	currentIndentationLevel--
+project.scenes.forEach(scene => {
+	finalResult += "Scene " + snakeCaseify(scene.name) + ":"
 	newLine()
+	currentIndentationLevel++
+	scene.objects.forEach(objectID => {
+		const hsObject = project.objects.find(o=>o.objectID==objectID)
+		if (!hsObject)
+			throw `Could not find object with id ${objectID}`
+		if (hsObject.rules.length <= 0 && (project.abilities.find(e=>e.abilityID==hsObject.abilityID)?.blocks?.length || 0) <= 0)
+			return
+		const htnObjectType = objectNamesByHSType[hsObject.type]
+		if (!htnObjectType)
+			throw `Undefined object type ${hsObject.type} (used by ${hsObject.name})`
+		finalResult += htnObjectType.name + " "
+		finalResult += snakeCaseify(hsObject.name)
+		finalResult += `(x_position: ${parseFloat(hsObject.xPosition)}, y_position: ${parseFloat(hsObject.yPosition)}, resize_scale: ${parseFloat(hsObject.resizeScale)}, rotation: ${parseFloat(hsObject.rotation)}`
+		if (hsObject.type == 1 && (hsObject.text?.length || 0) > 0) //HSObjectType.Text
+			finalResult += `, text: "${hsObject.text.replace(/"/g,"\"")}"`
+		finalResult += "):"
+		currentIndentationLevel++
+		addCustomRuleOrObject(hsObject)
+		currentIndentationLevel--
+		newLine()
+	})
 })
 finalResult = finalResult.replace(/\n(\t+\n)+/gm,"\n")
 console.log(finalResult)
@@ -209,7 +212,7 @@ function addBlock(hsBlock, parametersKey) {
 		}
 		return
 	}
-	const block = blockNamesByHSType[hsBlock.type]
+	const block = blockNamesByHSType[hsBlock.type] || ((hsBlock.type == 22) ? ({typeDefinition: {parameters: []}, name: "ae"}) : console.log(hsBlock.type))
 	if (!block)
 		throw "Undefined block type " + hsBlock.type
 	if (block.name == "set")
@@ -219,8 +222,13 @@ function addBlock(hsBlock, parametersKey) {
 		return addBinaryOperator(maybeBinaryOperator, hsBlock, parametersKey)
 	finalResult += block.name
 	const parametersPrototype = block.typeDefinition.parameters
-	if (parametersPrototype.length != (hsBlock[parametersKey]?.length || 0))
-		throw "Parameter length mismatch" + JSON.stringify(hsBlock) + JSON.stringify(block)
+	let needs_to_define_block = false
+	if (parametersPrototype.length != (hsBlock[parametersKey]?.length || 0)) {
+		if (hsBlock.type != 53 && hsBlock.type != 55 && hsBlock.type != 19&& hsBlock.type != 22)
+			throw "Parameter length mismatch" + JSON.stringify(hsBlock) + JSON.stringify(block) + parametersPrototype.length + " " + (hsBlock[parametersKey]?.length || 0)
+		if (hsBlock.type == 53)
+			finalResult += "_times"
+	}
 	if (parametersPrototype.length == 0)
 		return
 	finalResult += "("
@@ -233,6 +241,10 @@ function addBlock(hsBlock, parametersKey) {
 		addParameterValue(hsBlock[parametersKey][i])
 	}
 	finalResult += ")"
+	if (needs_to_define_block) {
+		newLine()
+		finalResult += '_defineBlockType method create_a_clone_of_this_object_times 53 "Create a Clone of This Object" 42 _ "times" "5", '
+	}
 }
 
 function maybeBinaryOperatorFor(hsBlockType) {
@@ -275,7 +287,7 @@ function addDatum(datum) {
 		return addLocalVariable(datum)
 	if (datum.blockType >= 10001 && datum.blockType < 10003) //HSBlockType.PreviousSceneParameter and HSBlockType.HS_END_OF_SCENE_REFERENCE_BLOCKS
 		return addSceneReferenceBlock(datum)
-	throw "Unknown datum type" + JSON.stringify(datum)
+	// throw "Unknown datum type" + JSON.stringify(datum)
 }
 
 function addSceneReferenceBlock(datum) {
@@ -409,6 +421,7 @@ function swapKeysAndValues(obj) {
 }
 
 function snakeCaseify(string) {
+	console.log(string)
 	const possibleResult = string.split(" ")
 		.map(e=>e[0].toLowerCase()+e.substring(1,e.length))
 		.join("_")
