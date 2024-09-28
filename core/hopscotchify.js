@@ -9,6 +9,7 @@ const BREAKPOINT_POSITION_KEY = "PETRICHOR_BREAKPOINT_POSITION"
 
 const MagicBlockTypes = {
 	event: -10140000,
+	whileHack: -1014010,
 }
 
 module.exports.hopscotchify = (htnPath, options, fileFunctions, alreadyParsedPaths) => {
@@ -134,6 +135,20 @@ module.exports.hopscotchify = (htnPath, options, fileFunctions, alreadyParsedPat
 		setRequiresBetaEditor: (value)=>{project.requires_beta_editor = value},
 		createSceneNamed: createScene.bind(null, project, findSceneWithName, sceneDefinitionCallbacks),
 	})
+	// Apply while loop hack
+	// Will replace every "while" block in the project with a recursive check once if block
+	// Spooky
+	hopscotchified.abilities.forEach(ability => {
+		ability.blocks.map(block => {
+			if (block.type != MagicBlockTypes.whileHack)
+				return block
+			block.type = 122 //HSBlockType.CheckOnceIf
+			block.description = "Check Once If"
+			hopscotchified.abilities.find(a=>a.abilityID==block.controlScript.abilityID).blocks.push(block)
+			return block
+		})
+	})
+	// End while loop application
 	return {
 		hopscotchified,
 		objectTypes,

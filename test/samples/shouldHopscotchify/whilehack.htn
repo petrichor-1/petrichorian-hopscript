@@ -1,0 +1,8 @@
+Import "whilehack.htn"
+
+text while_hack_test:
+	When game_starts:
+		count = 0
+		while count < 0:
+			increase(count, by: 1)
+		set_text(to: count, color: h(0, s: 0, b: 0))

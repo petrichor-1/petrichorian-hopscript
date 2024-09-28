@@ -1,0 +1,6 @@
+#======================#
+# Hack for while loops #
+#======================#
+
+# Implementation hardcoded in core/hopscotchify.js
+_defineBlockType conditionalControl while -1014010 "While" 49 _ "" "", 
