@@ -30,6 +30,7 @@ _defineObjectType space_pod 10 "spacepod.png" 150 150
 _defineObjectType raccoon 31 "raccoon.png" 172.5 172.5
 _defineObjectType bird 32 "bird.png" 150 150
 _defineObjectType crocodile 3001 "crocodileJaws.png" 288 164
+_defineObjectType tiger 75 "tiger.png" 150 150
 #Jungle
 _defineObjectType banyan 26 "banyan.png" 600 600
 _defineObjectType parrot 20 "parrot-flying-object.png" 150 150
