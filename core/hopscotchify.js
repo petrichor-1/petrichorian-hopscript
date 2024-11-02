@@ -498,7 +498,7 @@ function createLocalVariableNamed(snakeCaseName) {
 
 function getOrAddObjectVariableNamed(project, name) {
 	const hsName = unSnakeCase(name)
-	const maybeExistingVariable = project.variables.find(variable=>variable.name == hsName)
+	const maybeExistingVariable = project.variables.find(variable=>variable.name == hsName && variable.type == 8000) // 8000 = HSBlockType.Object
 	if (maybeExistingVariable)
 		return maybeExistingVariable
 	const hsVariable = {
@@ -512,7 +512,7 @@ function getOrAddObjectVariableNamed(project, name) {
 
 function getOrAddUserVariableNamed(project, name) {
 	const hsName = unSnakeCase(name)
-	const maybeExistingVariable = project.variables.find(variable=>variable.name == hsName)
+	const maybeExistingVariable = project.variables.find(variable=>variable.name == hsName && variable.type == 8008) // 8007 = HSBlockType.User
 	if (maybeExistingVariable)
 		return maybeExistingVariable
 	const hsVariable = {
@@ -526,7 +526,7 @@ function getOrAddUserVariableNamed(project, name) {
 
 function getOrAddGameVariableNamed(project, name) {
 	const hsName = unSnakeCase(name)
-	const maybeExistingVariable = project.variables.find(variable=>variable.name == hsName)
+	const maybeExistingVariable = project.variables.find(variable=>variable.name == hsName && variable.type == 8003) // 8003 = HSBlockType.Game
 	if (maybeExistingVariable)
 		return maybeExistingVariable
 	const hsVariable = {
