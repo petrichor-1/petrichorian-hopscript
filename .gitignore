@@ -1,3 +1,4 @@
 node_modules
 core/mergeHsprelikes.js
 core/mergeLists.js
+*.hopscotch

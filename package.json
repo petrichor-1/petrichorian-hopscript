@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "adm-zip": "^0.5.16",
     "image-size": "^1.1.1",
     "peggy": "^3.0.2"
   }
